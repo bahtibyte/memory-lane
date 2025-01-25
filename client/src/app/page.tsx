@@ -31,6 +31,7 @@ function getYearsSpan(dates: string[]) {
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});
+  const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
   const sortedEntries = [...DUMMY_DATA.photo_entries].sort((a, b) => 
     new Date(b.photo_date).getTime() - new Date(a.photo_date).getTime()
   );
@@ -68,8 +69,47 @@ export default function Home() {
     }));
   };
 
+  // Add escape key handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedImage(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, []);
+
   return (
     <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)]">
+      {/* Add the fullscreen overlay */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="relative w-full h-full p-4 flex items-center justify-center">
+            <Image
+              src={selectedImage.url}
+              alt={selectedImage.title}
+              className="max-h-[90vh] max-w-[90vw] object-contain"
+              onClick={(e) => e.stopPropagation()}
+              width={1920}
+              height={1080}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="max-w-[1000px] mx-auto">
         {/* Group Name Header */}
         <h1 className="text-[32px] md:text-[50px] font-bold mb-8">{DUMMY_DATA.group}</h1>
@@ -165,14 +205,17 @@ export default function Home() {
                               </div>
                             )}
                             {/* Main image */}
-                            <div className={`relative ${isPortrait ? 'h-full' : ''} flex items-center justify-center`}>
+                            <div 
+                              className={`relative ${isPortrait ? 'h-full' : ''} flex items-center justify-center cursor-pointer`}
+                              onClick={() => setSelectedImage({ url: entry.photo_url, title: entry.photo_title })}
+                            >
                               <Image
                                 src={entry.photo_url}
                                 alt={entry.photo_title}
                                 fill={isPortrait}
                                 width={!isPortrait ? 1000 : undefined}
                                 height={!isPortrait ? 600 : undefined}
-                                className="rounded-md shadow-md object-contain"
+                                className="rounded-md shadow-md object-contain hover:opacity-90 transition-opacity"
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 onLoad={(e) => handleImageLoad(e, entry.photo_url)}
                               />
