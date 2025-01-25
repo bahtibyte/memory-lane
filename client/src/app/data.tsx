@@ -4,8 +4,6 @@ export const DUMMY_DATA = {
     "group": "Queens College",
     "photos_count": 5,
     "friends_count": 13,
-    "years_count": 2,
-    "months_count": 9,
     "photo_entries": [
         {
             "photo_url": "https://cdn.britannica.com/34/235834-050-C5843610/two-different-breeds-of-cats-side-by-side-outdoors-in-the-garden.jpg",

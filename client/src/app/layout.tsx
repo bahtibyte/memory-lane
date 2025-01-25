@@ -9,8 +9,15 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Hello World",
-  description: "A simple Hello World app",
+  title: "Photo Timeline",
+  description: "A visual journey through time - view your photos and memories in a beautiful timeline format",
+  keywords: ["photos", "timeline", "memories", "gallery", "photo journal"],
+  authors: [{ name: "Photo Timeline Team" }],
+  openGraph: {
+    title: "Photo Timeline",
+    description: "A visual journey through time - view your photos and memories in a beautiful timeline format",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

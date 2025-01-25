@@ -18,7 +18,17 @@ function getDaysAgo(dateString: string) {
   return `${diffDays} days ago`;
 }
 
+function getYearsSpan(dates: string[]) {
+  if (dates.length === 0) return "0";
+  const oldestDate = new Date(Math.min(...dates.map(date => new Date(date).getTime())));
+  const today = new Date();
+  const diffYears = (today.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+  return diffYears.toFixed(1);
+}
+
 export default function Home() {
+  const yearsSpan = getYearsSpan(DUMMY_DATA.photo_entries.map(entry => entry.photo_date));
+  
   return (
     <div className="min-h-screen p-8 bg-[rgb(30,30,30)]">
       <div className="max-w-[1000px] mx-auto">
@@ -37,12 +47,8 @@ export default function Home() {
               <p className="text-white text-[16px] md:text-[24px]">Friends</p>
             </div>
             <div className="text-left ml-20">
-              <p className="text-[24px] md:text-[36px] font-bold text-[#CCC7F8]">{DUMMY_DATA.years_count}</p>
+              <p className="text-[24px] md:text-[36px] font-bold text-[#CCC7F8]">{yearsSpan}</p>
               <p className="text-white text-[16px] md:text-[24px]">Years</p>
-            </div>
-            <div className="text-left ml-20">
-              <p className="text-[24px] md:text-[36px] font-bold text-[#CCC7F8]">{DUMMY_DATA.months_count}</p>
-              <p className="text-white text-[16px] md:text-[24px]">Months</p>
             </div>
           </div>
         </div>
