@@ -22,10 +22,22 @@ function getDaysAgo(dateString: string) {
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
-  const oldestDate = new Date(Math.min(...dates.map(date => new Date(date).getTime())));
-  const today = new Date();
-  const diffYears = (today.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
-  return diffYears.toFixed(1);
+  try {
+    // Convert date strings to iOS-friendly format (replace hyphens with slashes)
+    const oldestDate = new Date(Math.min(...dates.map(date => 
+      new Date(date.replace(/-/g, '/')).getTime()
+    )));
+    const today = new Date();
+    
+    // Check if oldestDate is valid
+    if (isNaN(oldestDate.getTime())) return "0";
+    
+    const diffYears = (today.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+    return Math.max(0, diffYears).toFixed(1);
+  } catch (error) {
+    console.error('Error calculating years span:', error);
+    return "0";
+  }
 }
 
 export default function Home() {
@@ -80,6 +92,20 @@ export default function Home() {
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, []);
+
+  // Add effect to handle body scroll locking
+  useEffect(() => {
+    if (selectedImage) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to ensure scroll is restored when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedImage]);
 
   return (
     <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)]">
