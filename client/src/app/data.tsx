@@ -1,5 +1,3 @@
-
-
 export const DUMMY_DATA = {
     "group": "Queens College",
     "friends": {
@@ -27,14 +25,14 @@ export const DUMMY_DATA = {
     "photo_entries": [
         {
             "photo_url": "https://cdn.discordapp.com/attachments/1274116404282654732/1332128086778450010/Untitled17_20240818225233.PNG?ex=67961ab5&is=6794c935&hm=08500df344686c68287682a229393cd9f6ec796f46ba07f55045453148284014&",
-            "photo_date": "2024-08-19",
+            "photo_date": "08/19/2024",
             "photo_title": "Queens Park",
             "photo_caption": "Spontanous pickelball and bandminton games while it was super windy."
         },
 
         {
             "photo_url": "https://cdn.discordapp.com/attachments/1274116404282654732/1332128370011537448/image.jpg?ex=67961af9&is=6794c979&hm=2e5533a917f8c7ed0bffdb3380997ebeae50f77c43dfb155a1aea06c9aa7d537&",
-            "photo_date": "2023-08-10",
+            "photo_date": "08/10/2023",
             "photo_title": "Joseph's Wedding",
             "photo_caption": "Joseph got married while all of us were still in school."
         },
@@ -64,7 +62,7 @@ export const DUMMY_DATA = {
         },
         {
             "photo_url": "https://cdn.discordapp.com/attachments/764244491582177323/1332786538635067413/image.jpg?ex=679685b0&is=67953430&hm=489efb1c76204ccf62727e2c95de4e428d2c7619b39da3556b698830dbae6bba&",
-            "photo_date": "2023-04-10",
+            "photo_date": "04/10/2023",
             "photo_title": "Burger Spot",
             "photo_caption": "Random burger spot meet."
         },
