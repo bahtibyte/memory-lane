@@ -4,7 +4,7 @@ import { DUMMY_DATA } from '../../data';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { StatsContainer } from '../components/StatsContainer';
+import { StatsContainer } from '../../components/StatsContainer';
 
 function formatDate(dateString: string) {
   const date = new Date(dateString.replace(/-/g, '/'));
