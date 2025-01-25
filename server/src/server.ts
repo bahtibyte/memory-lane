@@ -1,40 +1,19 @@
-import express, { Request, Response } from 'express';
-import crypto from 'crypto';
-import { upload, uploadPhoto } from './api.js';
-
-// Define interfaces
-interface Group {
-  id: string;
-  groupName: string;
-  generatedLink: string;
-}
+import express from 'express';
+import { initializeDB } from './rds.js';
+import { createGroup, editGroup, upload, uploadPhoto } from './api.js';
 
 const app = express();
 app.use(express.json());
 
-// Simulated Database
-const groups: Group[] = [];
-
-// Create Group
-app.post('/api/groups', (req: any, res: any) => {
-  const { groupName } = req.body;
-
-  if (!groupName) {
-    return res.status(400).json({ error: 'Group name is required' });
-  }
-
-  const newGroup: Group = {
-    id: crypto.randomUUID(),
-    groupName,
-    generatedLink: `http://example.com/groups/${crypto.randomUUID()}`,
-  };
-
-  groups.push(newGroup);
-  res.status(201).json(newGroup);
-});
-
-// Upload Photo
+app.post('/api/create-group', createGroup);
+app.post('/api/edit-group', editGroup);
 app.post('/api/upload-photo', upload.single('photo'), uploadPhoto);
+
+// Initialize database
+if (!await initializeDB()) {
+  console.error('Failed to initialize database');
+  process.exit(1);
+}
 
 // Start the server
 const PORT = 3005;

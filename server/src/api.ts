@@ -4,6 +4,7 @@ dotenv.config();
 import AWS from 'aws-sdk';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import { rds } from './rds.js';
 
 // Setup S3 client access.
 const s3 = new AWS.S3({
@@ -11,6 +12,8 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.NODE_AWS_S3_SECRET_KEY,
   region: process.env.NODE_AWS_S3_REGION
 });
+
+const CLIENT_ADDRESS = process.env.NODE_CLIENT_ADDRESS!;
 
 export const upload = multer({
   storage: multer.memoryStorage(),
@@ -26,6 +29,44 @@ export const upload = multer({
   }
 });
 
+export const createGroup = async (req: any, res: any) => {
+  const { group_name } = req.body;
+
+  if (!group_name) {
+    return res.status(400).json({ error: 'Group name is required' });
+  }
+
+  const group_id = uuidv4().split('-')[0]; // Takes first segment of UUID (8 characters)
+  const group_url = `${CLIENT_ADDRESS}/timeline/${group_id}`;
+
+  console.log(`Creating group with id: ${group_id} and name: ${group_name}`);
+  try {
+    const result = await rds.query(
+      `INSERT INTO ml_group (group_name, group_url) VALUES ($1, $2) RETURNING *`,
+      [group_name, group_url]
+    );
+    console.log('result', result);
+    return res.status(200).json({
+      'result': result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error creating group:', error);
+    return res.status(500).json({ error: 'Failed to create group' });
+  }
+}
+
+export const editGroup = async (req: any, res: any) => {
+  const { group_id, group_name } = req.body;
+  console.log(`Editing group with id: ${group_id} and name: ${group_name}`);
+
+  // TODO: Implement this.
+
+  return res.status(200).json({
+    group_id,
+    group_name,
+  });
+}
+
 export const uploadPhoto = async (req: any, res: any) => {
   const { file } = req;
   const { group_id, photo_title, photo_date, photo_caption } = req.body;
@@ -34,18 +75,40 @@ export const uploadPhoto = async (req: any, res: any) => {
     return res.status(400).json({ error: 'Photo is required' });
   }
 
-  if (!group_id || !photo_title || !photo_date || !photo_caption) {
+  if (!group_id || isNaN(Number(group_id)) || !photo_title || !photo_date || !photo_caption) {
     return res.status(400).json({ error: 'missing required fields.' });
   }
 
-  // TODO: Validate group_id exists in database.
+  // check if group_id exists in database
+  const group_exists = await rds.query(
+    `SELECT * FROM ml_group WHERE id = $1`,
+    [group_id]
+  );
+  if (group_exists.rowCount === 0) {
+    res.status(400).json({ error: 'Group ID does not exist.' });
+    return;
+  }
 
   console.log('Uploading photo to s3...');
   try {
     const photo_url = await uploadImageToS3(file.buffer, file.originalname, file.mimetype);
+
+    const result = await rds.query(
+      `INSERT INTO ml_photos (group_id, photo_url, photo_title, photo_date, photo_caption) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [group_id, photo_url, photo_title, photo_date, photo_caption]
+    );
+
+    if (result.rowCount === 0) {
+      res.status(400).json({ error: 'Failed to upload photo to database.' });
+      return;
+    }
+
+    const group = group_exists.rows[0];
     res.status(200).json({
       message: 'Photo uploaded successfully',
       group_id,
+      group_name: group.group_name,
+      group_url: group.group_url,
       photo_url: photo_url,
       photo_title: photo_title,
       photo_date: photo_date,
