@@ -42,10 +42,9 @@ export const createGroup = async (req: any, res: any) => {
   console.log(`Creating group with id: ${group_id} and name: ${group_name}`);
   try {
     const result = await rds.query(
-      `INSERT INTO ml_group (group_name, group_url) VALUES ($1, $2) RETURNING *`,
-      [group_name, group_url]
+      `INSERT INTO ml_group (group_id, group_name, group_url) VALUES ($1, $2, $3) RETURNING *`,
+      [group_id, group_name, group_url]
     );
-    console.log('result', result);
     return res.status(200).json({
       'result': result.rows[0]
     });
@@ -67,6 +66,36 @@ export const editGroup = async (req: any, res: any) => {
   });
 }
 
+export const getTimeline = async (req: any, res: any) => {
+  const { group_id } = req.query;
+  console.log(`Getting timeline for group with id: ${group_id}`);
+
+  // check if group_id exists in database
+  const group_exists = await rds.query(
+    `SELECT * FROM ml_group WHERE group_id = $1`,
+    [group_id]
+  );
+  if (group_exists.rowCount === 0) {
+    res.status(400).json({ error: 'Group ID does not exist.' });
+    return;
+  }
+
+  const group = group_exists.rows[0];
+
+  // get all photos for this group
+  const photos = await rds.query(
+    `SELECT photo_url, photo_title, photo_date, photo_caption FROM ml_photos WHERE group_id = $1`,
+    [group_id]
+  );
+
+  res.status(200).json({
+    group_name: group.group_name,
+    group_url: group.group_url,
+    "photo_entries": photos.rows,
+    friends: {}
+  });
+}
+
 export const uploadPhoto = async (req: any, res: any) => {
   const { file } = req;
   const { group_id, photo_title, photo_date, photo_caption } = req.body;
@@ -75,13 +104,13 @@ export const uploadPhoto = async (req: any, res: any) => {
     return res.status(400).json({ error: 'Photo is required' });
   }
 
-  if (!group_id || isNaN(Number(group_id)) || !photo_title || !photo_date || !photo_caption) {
+  if (!group_id || !photo_title || !photo_date || !photo_caption) {
     return res.status(400).json({ error: 'missing required fields.' });
   }
 
   // check if group_id exists in database
   const group_exists = await rds.query(
-    `SELECT * FROM ml_group WHERE id = $1`,
+    `SELECT * FROM ml_group WHERE group_id = $1`,
     [group_id]
   );
   if (group_exists.rowCount === 0) {
