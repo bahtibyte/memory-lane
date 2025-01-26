@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { StatsContainer } from '../../components/StatsContainer';
 import { ImageOverlay } from '../../components/ImageOverlay';
 import { PhotoEntry } from '../../components/PhotoEntry';
+import { getTimeline } from '@/app/utils/api';
 
 
 function getYearsSpan(dates: string[]) {
@@ -41,20 +42,17 @@ export default function Timeline() {
   useEffect(() => {
     const fetchTimelineData = async () => {
       try {
-        // Use DUMMY_DATA for 'test' slug
-        if (params.slug?.[0] === 'test') {
+        if (!params.slug?.[0]) {
+        } else if (params.slug?.[0] === 'test') {
           setTimelineData(DUMMY_DATA);
         } else {
           console.log('Fetching timeline data for group:', params.slug?.[0]);
-          const response = await fetch(`http://localhost:3005/api/get-timeline?group_id=${params.slug?.[0]}`, {
-            method: 'GET'
-          });
-          if (!response.ok) {
-            console.log('Failed to fetch timeline data:', response);
+          const timeline = await getTimeline(params.slug?.[0]);
+          if (!timeline) {
+            console.log('Failed to fetch timeline data:', timeline);
             setFailedToLoad(true);
           }
-          const data = await response.json();
-          setTimelineData(data);
+          setTimelineData(timeline);
         }
       } catch (error) {
         console.error('Error fetching timeline data:', error);
@@ -128,7 +126,7 @@ export default function Timeline() {
       </div>
     );
   }
-  
+
   if (!params.slug || params.slug.length > 1 || failedToLoad) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
