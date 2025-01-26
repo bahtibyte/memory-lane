@@ -1,11 +1,11 @@
 'use client';
-import { DUMMY_DATA } from '../../data';
+import { DUMMY_DATA } from '../data';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { StatsContainer } from '../../components/StatsContainer';
-import { ImageOverlay } from '../../components/ImageOverlay';
-import { PhotoEntry } from '../../components/PhotoEntry';
+import { StatsContainer } from '../components/StatsContainer';
+import { ImageOverlay } from '../components/ImageOverlay';
+import { PhotoEntry } from '../components/PhotoEntry';
 import { getTimeline } from '@/app/utils/api';
 
 
@@ -30,7 +30,8 @@ function getYearsSpan(dates: string[]) {
 }
 
 export default function Timeline() {
-  const params = useParams();
+  const group_id = useParams()['group-id'] as string;
+
   const [timelineData, setTimelineData] = useState(DUMMY_DATA);
   const [loading, setLoading] = useState(true);
   const [failedToLoad, setFailedToLoad] = useState(false);
@@ -42,12 +43,12 @@ export default function Timeline() {
   useEffect(() => {
     const fetchTimelineData = async () => {
       try {
-        if (!params.slug?.[0]) {
-        } else if (params.slug?.[0] === 'test') {
+        if (!group_id) {
+        } else if (group_id === 'demo') {
           setTimelineData(DUMMY_DATA);
         } else {
-          console.log('Fetching timeline data for group:', params.slug?.[0]);
-          const timeline = await getTimeline(params.slug?.[0]);
+          console.log('Fetching timeline data for group:',group_id);
+          const timeline = await getTimeline(group_id);
           if (!timeline) {
             console.log('Failed to fetch timeline data:', timeline);
             setFailedToLoad(true);
@@ -63,7 +64,7 @@ export default function Timeline() {
     };
 
     fetchTimelineData();
-  }, [params.slug]);
+  }, [group_id]);
 
 
   useEffect(() => {
@@ -127,7 +128,7 @@ export default function Timeline() {
     );
   }
 
-  if (!params.slug || params.slug.length > 1 || failedToLoad) {
+  if (!group_id || failedToLoad) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Page not found</h1>
@@ -137,7 +138,6 @@ export default function Timeline() {
       </div>
     );
   }
-
 
   // Update the data source for sorted entries and stats
   const sortedEntries = [...timelineData.photo_entries].sort((a, b) =>
@@ -150,13 +150,45 @@ export default function Timeline() {
   // Function to get year from date string
   const getYear = (dateString: string) => new Date(dateString).getFullYear();
 
+  // Add early return for empty photo state
+  if (photoCount === 0) {
+    return (
+      <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
+        <h1 className="text-white text-2xl mb-4">{timelineData.group_name} timeline!</h1>
+        <h1 className="text-white text-2xl mb-4">No group photos added yet</h1>
+        <Link 
+          href={`/${group_id}/upload-photo`} 
+          className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors"
+        >
+          Upload first photo
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)]">
       {selectedImage && <ImageOverlay image={selectedImage} onClose={() => setSelectedImage(null)} />}
 
       <div className="max-w-[1000px] mx-auto">
-        {/* Group Name Header */}
-        <h1 className="text-[32px] md:text-[50px] font-bold mb-8">{timelineData.group_name}</h1>
+        {/* Header with Group Name and Action Buttons */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-[32px] md:text-[50px] font-bold">{timelineData.group_name}</h1>
+          <div className="flex gap-4">
+            <Link 
+              href={`/${group_id}/upload-photo`}
+              className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors text-sm md:text-base"
+            >
+              Upload Photo
+            </Link>
+            <Link 
+              href={`/${group_id}/edit-group`}
+              className="px-4 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors text-sm md:text-base"
+            >
+              Edit Group
+            </Link>
+          </div>
+        </div>
 
         <StatsContainer photoCount={photoCount} friendsCount={friendsCount} yearsSpan={yearsSpan} />
 

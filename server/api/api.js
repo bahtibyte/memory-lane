@@ -29,6 +29,7 @@ export const upload = multer({
     }
   }
 });
+
 function hash(passcode) {
   return argon2.hash(passcode, {
     type: argon2.argon2id,
@@ -37,14 +38,16 @@ function hash(passcode) {
     parallelism: 4 // degree of parallelism
   });
 }
+
 export const createGroup = async (req, res) => {
   const { group_name, email, passcode } = req.body;
   if (!group_name || !email || !passcode) {
     return res.status(400).json({ error: 'Group name, email, and password are required' });
   }
   const group_id = uuidv4().split('-')[0]; // Takes first segment of UUID (8 characters)
-  const group_url = `${CLIENT_ADDRESS}/timeline/${group_id}`;
+  const group_url = `${CLIENT_ADDRESS}/${group_id}`;
   console.log(`Creating group with id: ${group_id} and name: ${group_name}`);
+
   try {
     // Hash the passcode using Argon2id (recommended variant)
     const hashed = hash(passcode);
@@ -59,6 +62,7 @@ export const createGroup = async (req, res) => {
     return res.status(500).json({ error: 'Failed to create group' });
   }
 };
+
 export const editGroup = async (req, res) => {
   const { group_id, group_name } = req.body;
   console.log(`Editing group with id: ${group_id} and name: ${group_name}`);
@@ -68,6 +72,7 @@ export const editGroup = async (req, res) => {
     group_name,
   });
 };
+
 export const getTimeline = async (req, res) => {
   const { group_id } = req.query;
   console.log(`Getting timeline for group with id: ${group_id}`);
@@ -79,7 +84,7 @@ export const getTimeline = async (req, res) => {
   }
   const group = group_exists.rows[0];
   // get all photos for this group
-  const photos = await rds.query(`SELECT photo_url, photo_title, photo_date, photo_caption FROM ml_photos WHERE group_id = $1`, [group_id]);
+  const photos = await rds.query(`SELECT photo_id, photo_url, photo_title, photo_date, photo_caption FROM ml_photos WHERE group_id = $1`, [group_id]);
   res.status(200).json({
     group_name: group.group_name,
     group_url: group.group_url,
@@ -87,6 +92,7 @@ export const getTimeline = async (req, res) => {
     friends: {}
   });
 };
+
 export const uploadPhoto = async (req, res) => {
   const { file } = req;
   const { group_id, photo_title, photo_date, photo_caption } = req.body;
@@ -127,6 +133,7 @@ export const uploadPhoto = async (req, res) => {
     res.status(500).json({ error: 'Failed to upload photo to s3.' });
   }
 };
+
 async function uploadImageToS3(buffer, fileName, mimeType) {
   const fileExtension = fileName.split('.').pop() || '';
   const newFileName = `${uuidv4()}.${fileExtension}`;
