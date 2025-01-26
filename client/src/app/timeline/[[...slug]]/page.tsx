@@ -30,19 +30,43 @@ function getYearsSpan(dates: string[]) {
 
 export default function Timeline() {
   const params = useParams();
+  const [timelineData, setTimelineData] = useState(DUMMY_DATA);
+  const [loading, setLoading] = useState(true);
+  const [failedToLoad, setFailedToLoad] = useState(false);
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
-  const sortedEntries = [...DUMMY_DATA.photo_entries].sort((a, b) =>
-    new Date(b.photo_date).getTime() - new Date(a.photo_date).getTime()
-  );
-  const yearsSpan = getYearsSpan(sortedEntries.map(entry => entry.photo_date));
-  const photoCount = sortedEntries.length;
-  const friendsCount = Object.keys(DUMMY_DATA.friends).length;
 
-  // Function to get year from date string
-  const getYear = (dateString: string) => new Date(dateString).getFullYear();
+  useEffect(() => {
+    const fetchTimelineData = async () => {
+      try {
+        // Use DUMMY_DATA for 'test' slug
+        if (params.slug?.[0] === 'test') {
+          setTimelineData(DUMMY_DATA);
+        } else {
+          console.log('Fetching timeline data for group:', params.slug?.[0]);
+          const response = await fetch(`http://localhost:3005/api/get-timeline?group_id=${params.slug?.[0]}`, {
+            method: 'GET'
+          });
+          if (!response.ok) {
+            console.log('Failed to fetch timeline data:', response);
+            setFailedToLoad(true);
+          }
+          const data = await response.json();
+          setTimelineData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching timeline data:', error);
+        setFailedToLoad(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTimelineData();
+  }, [params.slug]);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -97,7 +121,15 @@ export default function Timeline() {
     };
   }, [selectedImage]);
 
-  if (!params.slug || params.slug.length > 1) {
+  if (loading) {
+    return (
+      <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
+        <h1 className="text-white text-2xl">Loading...</h1>
+      </div>
+    );
+  }
+  
+  if (!params.slug || params.slug.length > 1 || failedToLoad) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Page not found</h1>
@@ -108,13 +140,25 @@ export default function Timeline() {
     );
   }
 
+
+  // Update the data source for sorted entries and stats
+  const sortedEntries = [...timelineData.photo_entries].sort((a, b) =>
+    new Date(b.photo_date).getTime() - new Date(a.photo_date).getTime()
+  );
+  const yearsSpan = getYearsSpan(sortedEntries.map(entry => entry.photo_date));
+  const photoCount = sortedEntries.length;
+  const friendsCount = Object.keys(timelineData.friends).length;
+
+  // Function to get year from date string
+  const getYear = (dateString: string) => new Date(dateString).getFullYear();
+
   return (
     <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)]">
       {selectedImage && <ImageOverlay image={selectedImage} onClose={() => setSelectedImage(null)} />}
 
       <div className="max-w-[1000px] mx-auto">
         {/* Group Name Header */}
-        <h1 className="text-[32px] md:text-[50px] font-bold mb-8">{DUMMY_DATA.group}</h1>
+        <h1 className="text-[32px] md:text-[50px] font-bold mb-8">{timelineData.group_name}</h1>
 
         <StatsContainer photoCount={photoCount} friendsCount={friendsCount} yearsSpan={yearsSpan} />
 

@@ -1,5 +1,5 @@
 export const DUMMY_DATA = {
-    "group": "Queens College",
+    "group_name": "Queens College",
     "friends": {
         'id1': {
             "name": "John Doe",
@@ -24,7 +24,7 @@ export const DUMMY_DATA = {
     },
     "photo_entries": [
         {
-            "photo_url": "https://cdn.discordapp.com/attachments/1274116404282654732/1332128086778450010/Untitled17_20240818225233.PNG?ex=67961ab5&is=6794c935&hm=08500df344686c68287682a229393cd9f6ec796f46ba07f55045453148284014&",
+            "photo_url": "https://memory-lane-photos.s3.us-east-2.amazonaws.com/photo.png",
             "photo_date": "08/19/2024",
             "photo_title": "Queens Park",
             "photo_caption": "Spontanous pickelball and bandminton games while it was super windy."
