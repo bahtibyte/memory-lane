@@ -30,20 +30,20 @@ export const upload = multer({
 });
 
 export const createGroup = async (req: any, res: any) => {
-  const { group_name } = req.body;
+  const { group_name, email, password } = req.body;
 
-  if (!group_name) {
-    return res.status(400).json({ error: 'Group name is required' });
+  if (!group_name || !email || !password) {
+    return res.status(400).json({ error: 'Group name, email, and password are required' });
   }
-
+  
   const group_id = uuidv4().split('-')[0]; // Takes first segment of UUID (8 characters)
   const group_url = `${CLIENT_ADDRESS}/timeline/${group_id}`;
 
   console.log(`Creating group with id: ${group_id} and name: ${group_name}`);
   try {
     const result = await rds.query(
-      `INSERT INTO ml_group (group_id, group_name, group_url) VALUES ($1, $2, $3) RETURNING *`,
-      [group_id, group_name, group_url]
+      `INSERT INTO ml_group (group_id, group_name, group_url, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [group_id, group_name, group_url, email, password]
     );
     return res.status(200).json({
       'result': result.rows[0]
