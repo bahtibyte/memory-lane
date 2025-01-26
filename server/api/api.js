@@ -66,10 +66,54 @@ export const createGroup = async (req, res) => {
 export const editGroup = async (req, res) => {
   const { group_id, group_name } = req.body;
   console.log(`Editing group with id: ${group_id} and name: ${group_name}`);
-  // TODO: Implement this.
+  
+  /** TODO: Implement this.
+   * 
+   * This function is used to edit the group name for now. Future features will include editing
+   * the friends list.
+   * 
+   * Parameters:
+   * - group_id
+   * - group_name
+   * - passcode
+   *  
+   * Requirements
+   * 1. Check if group_id exists in database.
+   * 2. Validate hashed passcode with the one in the database.
+   * 3. Update the group_name in the database if passcode is correct.
+   * 4. Return the updated group_name.
+   */
+
   return res.status(200).json({
     group_id,
     group_name,
+  });
+};
+
+export const deletePhoto = async (req, res) => {
+  const { photo_id } = req.body;
+  console.log(`Deleting photo with id: ${photo_id}`);
+
+  /** TODO: Implement this.
+   * 
+   * This function is used to delete a photo from the database.
+   * 
+   * Parameters:
+   * - group_id
+   * - passcode
+   * - photo_id
+   * 
+   * Requirements:
+   * 1. check if group_id exists in database.
+   * 2. validate hashed passcode with the one in the database.
+   * 3. delete the photo from the database if exists.
+   * 4. return the deleted photo.
+   */
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Photo deleted successfully',
+    photo_id,
   });
 };
 
@@ -93,7 +137,42 @@ export const getTimeline = async (req, res) => {
   });
 };
 
+export const getGroupInfo = async (req, res) => {
+  /** TODO: Implement this.
+   * 
+   * This function is used to get the group info using the email and passcode. We will avoid
+   * resetting passcodes or asking server to send group info to email.
+   * 
+   * Parameters:
+   * - email
+   * - passcode
+   * 
+   * Requirements:
+   * 1. check if email exists in database.
+   * 2. validate hashed passcode with the one in the database.
+   * 3. return the group info.
+   */
+
+  res.status(200).json({
+    'status': 'success',
+    'group': {
+      'group_id': 'demo',
+      'group_name': 'Demo Group',
+      'group_url': '',
+    } 
+  });
+};
+
 export const uploadPhoto = async (req, res) => {
+  /** TODO: Add passcode validation.
+   * 
+   * Additional Parameters:
+   * - passcode
+   * 
+   * Requirements:
+   * 1. validate hashed passcode with the one in the database.
+   */
+
   const { file } = req;
   const { group_id, photo_title, photo_date, photo_caption } = req.body;
   if (!file) {

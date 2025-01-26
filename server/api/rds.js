@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import pg from 'pg';
+
 /**
  * AWS RDS Postgres database client.
  */
@@ -14,6 +15,7 @@ export const rds = new pg.Client({
         rejectUnauthorized: false
     }
 });
+
 /**
  * Must be called before any database operations are performed.
  */
