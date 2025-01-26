@@ -2,6 +2,8 @@ CREATE TABLE ml_group (
     group_id VARCHAR(10) PRIMARY KEY,
     group_name VARCHAR(255) NOT NULL,
     group_url VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL,
+    passcode VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -5,6 +5,7 @@ import AWS from 'aws-sdk';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { rds } from './rds.js';
+import argon2 from 'argon2';
 
 // Setup S3 client access.
 const s3 = new AWS.S3({
@@ -29,10 +30,19 @@ export const upload = multer({
   }
 });
 
-export const createGroup = async (req: any, res: any) => {
-  const { group_name, email, password } = req.body;
+function hash(passcode: string) {
+  return argon2.hash(passcode, {
+    type: argon2.argon2id,
+    memoryCost: 65536, // 64MB in KiB
+    timeCost: 3, // number of iterations
+    parallelism: 4 // degree of parallelism
+  });
+}
 
-  if (!group_name || !email || !password) {
+export const createGroup = async (req: any, res: any) => {
+  const { group_name, email, passcode } = req.body;
+
+  if (!group_name || !email || !passcode) {
     return res.status(400).json({ error: 'Group name, email, and password are required' });
   }
   
@@ -41,12 +51,16 @@ export const createGroup = async (req: any, res: any) => {
 
   console.log(`Creating group with id: ${group_id} and name: ${group_name}`);
   try {
+    // Hash the passcode using Argon2id (recommended variant)
+    const hashed = hash(passcode);
+
     const result = await rds.query(
-      `INSERT INTO ml_group (group_id, group_name, group_url, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [group_id, group_name, group_url, email, password]
+      `INSERT INTO ml_group (group_id, group_name, group_url, email, passcode) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [group_id, group_name, group_url, email, hashed]
     );
+    const { passcode: _, ...safeResult } = result.rows[0];
     return res.status(200).json({
-      'result': result.rows[0]
+      'result': safeResult
     });
   } catch (error) {
     console.error('Error creating group:', error);
