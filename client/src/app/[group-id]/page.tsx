@@ -1,27 +1,27 @@
 'use client';
-import { DUMMY_DATA } from '../data';
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { StatsContainer } from '../components/StatsContainer';
 import { ImageOverlay } from '../components/ImageOverlay';
 import { PhotoEntry } from '../components/PhotoEntry';
-import { getTimeline } from '@/app/utils/api';
+import { useTimeline } from '@/app/context/timeline-context';
 
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
   try {
-    // Convert date strings to iOS-friendly format (replace hyphens with slashes)
-    const oldestDate = new Date(Math.min(...dates.map(date =>
-      new Date(date.replace(/-/g, '/')).getTime()
-    )));
-    const today = new Date();
+    // Find oldest and newest dates
+    const timestamps = dates.map(date => new Date(date).getTime());
+    const oldestDate = new Date(Math.min(...timestamps));
+    const newestDate = new Date(Math.max(...timestamps));
 
-    // Check if oldestDate is valid
-    if (isNaN(oldestDate.getTime())) return "0";
+    // Check if dates are valid
+    if (isNaN(oldestDate.getTime()) || isNaN(newestDate.getTime())) return "0";
 
-    const diffYears = (today.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+    // Calculate difference in years
+    const diffYears = (newestDate.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
     return Math.max(0, diffYears).toFixed(1);
   } catch (error) {
     console.error('Error calculating years span:', error);
@@ -31,41 +31,20 @@ function getYearsSpan(dates: string[]) {
 
 export default function Timeline() {
   const group_id = useParams()['group-id'] as string;
-
-  const [timelineData, setTimelineData] = useState(DUMMY_DATA);
-  const [loading, setLoading] = useState(true);
-  const [failedToLoad, setFailedToLoad] = useState(false);
+  const {
+    timelineData,
+    loading,
+    failedToLoad,
+    fetchData
+  } = useTimeline();
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
 
   useEffect(() => {
-    const fetchTimelineData = async () => {
-      try {
-        if (!group_id) {
-        } else if (group_id === 'demo') {
-          setTimelineData(DUMMY_DATA);
-        } else {
-          console.log('Fetching timeline data for group:',group_id);
-          const timeline = await getTimeline(group_id);
-          if (!timeline) {
-            console.log('Failed to fetch timeline data:', timeline);
-            setFailedToLoad(true);
-          }
-          setTimelineData(timeline);
-        }
-      } catch (error) {
-        console.error('Error fetching timeline data:', error);
-        setFailedToLoad(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTimelineData();
-  }, [group_id]);
-
+    fetchData(group_id);
+  }, [group_id, fetchData]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -128,7 +107,7 @@ export default function Timeline() {
     );
   }
 
-  if (!group_id || failedToLoad) {
+  if (!group_id || failedToLoad || !timelineData) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Page not found</h1>
@@ -156,8 +135,8 @@ export default function Timeline() {
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">{timelineData.group_name} timeline!</h1>
         <h1 className="text-white text-2xl mb-4">No group photos added yet</h1>
-        <Link 
-          href={`/${group_id}/upload-photo`} 
+        <Link
+          href={`/${group_id}/upload-photo`}
           className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors"
         >
           Upload first photo
@@ -175,13 +154,13 @@ export default function Timeline() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-[32px] md:text-[50px] font-bold">{timelineData.group_name}</h1>
           <div className="flex gap-4">
-            <Link 
+            <Link
               href={`/${group_id}/upload-photo`}
               className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors text-sm md:text-base"
             >
               Upload Photo
             </Link>
-            <Link 
+            <Link
               href={`/${group_id}/edit-group`}
               className="px-4 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors text-sm md:text-base"
             >

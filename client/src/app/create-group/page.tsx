@@ -63,7 +63,7 @@ export default function CreateGroup() {
             </a>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div>
               <label htmlFor="groupName" className="block text-sm font-medium mb-1">
                 Group Name
@@ -101,6 +101,7 @@ export default function CreateGroup() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border rounded-md text-black"
                 required
+                autoComplete="new-password"
               />
             </div>
             <button

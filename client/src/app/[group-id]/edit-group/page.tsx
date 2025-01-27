@@ -3,47 +3,29 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { DUMMY_DATA } from '@/app/data';
-import { getTimeline } from '@/app/utils/api';
-
+import { useTimeline } from '@/app/context/timeline-context';
 
 export default function EditGroupPage() {
   const group_id = useParams()['group-id'] as string;
-
   const router = useRouter();
+  
+  const { 
+    timelineData, 
+    setTimelineData, 
+    loading, 
+    failedToLoad, 
+    fetchData
+  } = useTimeline();
+  
   const [groupName, setGroupName] = useState('');
-  const [timelineData, setTimelineData] = useState(DUMMY_DATA);
-  const [loading, setLoading] = useState(true);
-  const [failedToLoad, setFailedToLoad] = useState(false);
+
+  useEffect(() => { fetchData(group_id); }, [group_id, fetchData]);
 
   useEffect(() => {
-    const fetchTimelineData = async () => {
-      try {
-        if (!group_id) {
-          setFailedToLoad(true);
-        } else if (group_id === 'demo') {
-          setTimelineData(DUMMY_DATA);
-          setGroupName(DUMMY_DATA.group_name);
-        } else {
-          console.log('Fetching timeline data for group:', group_id);
-          const timeline = await getTimeline(group_id);
-          if (!timeline) {
-            console.log('Failed to fetch timeline data:', timeline);
-            setFailedToLoad(true);
-          }
-          setTimelineData(timeline);
-          setGroupName(timeline.group_name);
-        }
-      } catch (error) {
-        console.error('Error fetching timeline data:', error);
-        setFailedToLoad(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTimelineData();
-  }, [group_id]);
+    if (timelineData) {
+      setGroupName(timelineData.group_name);
+    }
+  }, [timelineData]);
 
   const handleUpdateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +37,13 @@ export default function EditGroupPage() {
         },
         body: JSON.stringify({ name: groupName }),
       });
+      // Update the context with the new group name
+      if (timelineData) {
+        setTimelineData({
+          ...timelineData,
+          group_name: groupName
+        });
+      }
       router.refresh();
     } catch (error) {
       console.error('Error updating group:', error);
@@ -68,18 +57,17 @@ export default function EditGroupPage() {
       await fetch(`/api/photos/${photoId}`, {
         method: 'DELETE',
       });
-      // Refresh group data after deletion
-      //   const updatedGroup = {
-      //     ...group!,
-      //     photos: group!.photos.filter(photo => photo.id !== photoId)
-      //   };
-      // setGroup(updatedGroup);
+      // Update the context by removing the deleted photo
+      if (timelineData) {
+        setTimelineData({
+          ...timelineData,
+          photo_entries: timelineData.photo_entries.filter((_, index) => index !== photoId)
+        });
+      }
     } catch (error) {
       console.error('Error deleting photo:', error);
     }
   };
-
-  console.log(timelineData);
 
   if (loading) {
     return (
@@ -101,7 +89,7 @@ export default function EditGroupPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 max-w-[1000px] mx-auto">
       <Link
         href={`/${group_id}`}
         className="inline-block mb-4 text-blue-500 hover:text-blue-600"
@@ -119,7 +107,7 @@ export default function EditGroupPage() {
             id="groupName"
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
-            className="border p-2 rounded w-full max-w-md"
+            className="border p-2 rounded w-full max-w-md text-black"
           />
         </div>
         <button
@@ -132,7 +120,7 @@ export default function EditGroupPage() {
 
       <h2 className="text-xl font-semibold mb-4">Photos</h2>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border">
+        <table className="min-w-full text-black bg-white border">
           <thead>
             <tr>
               <th className="border p-2">Title</th>
@@ -143,15 +131,15 @@ export default function EditGroupPage() {
             </tr>
           </thead>
           <tbody>
-            {timelineData.photo_entries.map((photo, index) => (
+            {timelineData?.photo_entries.map((photo, index) => (
               <tr key={index}>
-                <td className="border p-2 whitespace-normal">
+                <td className="border p-2 whitespace-normal text-black">
                   {photo.photo_title || 'Untitled'}
                 </td>
-                <td className="border p-2 whitespace-normal">
+                <td className="border p-2 whitespace-normal text-black">
                   {photo.photo_caption || 'No description'}
                 </td>
-                <td className="border p-2">
+                <td className="border p-2 text-black">
                   <a
                     href={photo.photo_url}
                     target="_blank"
@@ -161,7 +149,7 @@ export default function EditGroupPage() {
                     View Photo
                   </a>
                 </td>
-                <td className="border p-2 text-center">
+                <td className="border p-2 text-center text-black">
                   <Link
                     href={`/${group_id}/edit-photo/todo`}
                     className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 inline-block"
@@ -169,7 +157,7 @@ export default function EditGroupPage() {
                     Edit
                   </Link>
                 </td>
-                <td className="border p-2 text-center">
+                <td className="border p-2 text-center text-black">
                   <button
                     onClick={() => handleDeletePhoto(index)}
                     className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"

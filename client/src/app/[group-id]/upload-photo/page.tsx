@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { uploadPhoto } from '@/app/utils/api';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 
 export default function UploadPage() {
@@ -12,10 +13,24 @@ export default function UploadPage() {
   const [caption, setCaption] = useState('');
   const [date, setDate] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string>('');
   const [success, setSuccess] = useState(false);
   const [groupUrl, setGroupUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const handlePhotoChange = (file: File | null) => {
+    if (photoUrl) {
+      URL.revokeObjectURL(photoUrl);
+    }
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPhotoUrl(url);
+    } else {
+      setPhotoUrl('');
+    }
+    setPhoto(file);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -57,6 +72,16 @@ export default function UploadPage() {
     }
   };
 
+  const resetForm = () => {
+    setSuccess(false);
+    setTitle('');
+    setCaption('');
+    setDate('');
+    setPhoto(null);
+    setPhotoUrl('');
+    setError('');
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-6">
       <Link
@@ -72,13 +97,34 @@ export default function UploadPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block mb-2">Photo*</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-              className="w-full p-2 border rounded"
-              required
-            />
+            {photo && photoUrl && (
+              <div className="relative w-full h-[400px] overflow-hidden rounded-lg">
+                <div
+                  className="absolute inset-0 blur-xl scale-110"
+                  style={{
+                    backgroundImage: `url(${photoUrl})`,
+                    backgroundPosition: 'center',
+                    backgroundSize: 'cover',
+                  }}
+                />
+                <Image
+                  src={photoUrl}
+                  alt="Preview"
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 800px"
+                />
+              </div>
+            )}
+            <div className="mt-4">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
+                className="w-full p-2 border rounded text-white"
+                required
+              />
+            </div>
           </div>
 
           <div>
@@ -87,7 +133,7 @@ export default function UploadPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded text-gray-900"
               required
             />
           </div>
@@ -97,7 +143,7 @@ export default function UploadPage() {
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded text-gray-900"
               rows={3}
             />
           </div>
@@ -108,7 +154,7 @@ export default function UploadPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full p-2 border rounded"
+              className="w-full p-2 border rounded text-gray-900"
               required
             />
           </div>
@@ -143,6 +189,12 @@ export default function UploadPage() {
               View your group: <Link href={groupUrl} className="text-blue-500 underline" rel="noopener noreferrer">{groupUrl}</Link>
             </div>
           )}
+          <button
+            onClick={resetForm}
+            className="mt-4 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+          >
+            Upload Another Photo
+          </button>
         </div>
       )}
 

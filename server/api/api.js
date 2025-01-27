@@ -30,8 +30,8 @@ export const upload = multer({
   }
 });
 
-function hash(passcode) {
-  return argon2.hash(passcode, {
+async function hash(passcode) {
+  return await argon2.hash(passcode, {
     type: argon2.argon2id,
     memoryCost: 65536, // 64MB in KiB
     timeCost: 3, // number of iterations
@@ -50,7 +50,7 @@ export const createGroup = async (req, res) => {
 
   try {
     // Hash the passcode using Argon2id (recommended variant)
-    const hashed = hash(passcode);
+    const hashed = await hash(passcode);
     const result = await rds.query(`INSERT INTO ml_group (group_id, group_name, group_url, email, passcode) VALUES ($1, $2, $3, $4, $5) RETURNING *`, [group_id, group_name, group_url, email, hashed]);
     const { passcode: _, ...safeResult } = result.rows[0];
     return res.status(200).json({
@@ -130,12 +130,41 @@ export const getTimeline = async (req, res) => {
   // get all photos for this group
   const photos = await rds.query(`SELECT photo_id, photo_url, photo_title, photo_date, photo_caption FROM ml_photos WHERE group_id = $1`, [group_id]);
   res.status(200).json({
+    group_id: group.group_id,
     group_name: group.group_name,
     group_url: group.group_url,
     "photo_entries": photos.rows,
     friends: {}
   });
 };
+
+export const editPhoto = async (req, res) => {
+  /** TODO: Implement this. 
+   * 
+   * This function is used to edit a photo in the database.
+   * 
+   * Parameters:
+   * - group_id
+   * - passcode
+   * - photo_id
+   * - photo_title
+   * - photo_date
+   * - photo_caption
+   * 
+   * Requirements:
+   * 1. check if group_id exists in database.
+   * 2. validate hashed passcode with the one in the database.
+   * 3. update the photo in the database if passcode is correct.
+   * 4. update the photo_title, photo_date, and photo_caption in the database.
+   * 5. return the updated photo.
+   */
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Photo edited successfully',
+    photo_id,
+  });
+}
 
 export const getGroupInfo = async (req, res) => {
   /** TODO: Implement this.
