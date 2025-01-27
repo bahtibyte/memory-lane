@@ -5,7 +5,13 @@ import { createGroup, editGroup, getTimeline, upload, uploadPhoto, convertHeic }
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.NODE_CLIENT_ADDRESS,
+    methods: ["GET", "POST", "DELETE"],
+    credentials: true, // If you use cookies or HTTP authentication
+  })
+);
 app.use(express.json());
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
