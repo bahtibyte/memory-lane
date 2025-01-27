@@ -5,9 +5,12 @@ import { uploadPhoto } from '@/app/utils/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
+import heicConvert from 'heic-convert';
+import { PhotoEntry, useTimeline } from '@/app/context/timeline-context';
 
 export default function UploadPage() {
   const group_id = useParams()['group-id'] as string;
+  const { timelineData, setTimelineData } = useTimeline();
 
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
@@ -18,18 +21,62 @@ export default function UploadPage() {
   const [groupUrl, setGroupUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
 
-  const handlePhotoChange = (file: File | null) => {
+  const convertHeicToJpeg = async (file: File): Promise<File> => {
+    try {
+      const buffer = await file.arrayBuffer();
+      const convertedBuffer = await heicConvert({
+        buffer: Buffer.from(new Uint8Array(buffer)),
+        format: 'JPEG',
+        quality: 0.9
+      });
+      
+      const convertedFile = new File(
+        [convertedBuffer],
+        file.name.replace(/\.(heic|HEIC)$/, '.jpg'),
+        { type: 'image/jpeg' }
+      );
+      
+      return convertedFile;
+    } catch (error) {
+      console.error('Error converting HEIC:', error);
+      throw new Error('Failed to convert HEIC image');
+    }
+  };
+
+  const handlePhotoChange = async (file: File | null) => {
     if (photoUrl) {
       URL.revokeObjectURL(photoUrl);
     }
+
     if (file) {
-      const url = URL.createObjectURL(file);
-      setPhotoUrl(url);
+      try {
+        // Check if file is HEIC
+        const isHeic = file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic');
+        
+        if (isHeic) {
+          setIsConverting(true);
+        }
+        
+        // Convert if it's HEIC, otherwise use original file
+        const processedFile = isHeic ? await convertHeicToJpeg(file) : file;
+        
+        const url = URL.createObjectURL(processedFile);
+        setPhotoUrl(url);
+        setPhoto(processedFile);
+      } catch (error) {
+        console.log('Error processing image:', error);
+        setError('Failed to process image. Please try a different format.');
+        setPhoto(null);
+        setPhotoUrl('');
+      } finally {
+        setIsConverting(false);
+      }
     } else {
       setPhotoUrl('');
+      setPhoto(null);
     }
-    setPhoto(file);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -54,6 +101,21 @@ export default function UploadPage() {
       });
 
       if (result) {
+        // Add the new photo to timeline data
+        if (timelineData) {
+          const newPhotoEntry: PhotoEntry = {
+            photo_date: date,
+            photo_url: result.photo_url,
+            photo_title: title,
+            photo_caption: caption
+          };
+          
+          setTimelineData({
+            ...timelineData,
+            photo_entries: [...timelineData.photo_entries, newPhotoEntry]
+          });
+        }
+
         setSuccess(true);
         setGroupUrl(result.group_url);
         // Reset form
@@ -94,7 +156,7 @@ export default function UploadPage() {
       <h1 className="text-2xl font-bold mb-6">Upload Photo</h1>
 
       {!success && (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div>
             <label className="block mb-2">Photo*</label>
             {photo && photoUrl && (
@@ -119,7 +181,7 @@ export default function UploadPage() {
             <div className="mt-4">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,.heic,.HEIC"
                 onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
                 className="w-full p-2 border rounded text-white"
                 required
@@ -127,46 +189,56 @@ export default function UploadPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block mb-2">Title*</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2 border rounded text-gray-900"
-              required
-            />
-          </div>
+          {isConverting && (
+            <div className="p-3 bg-blue-100 text-blue-700 rounded">
+              Photo being converted...
+            </div>
+          )}
 
-          <div>
-            <label className="block mb-2">Caption</label>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              className="w-full p-2 border rounded text-gray-900"
-              rows={3}
-            />
-          </div>
+          {photo && !isConverting && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block mb-2">Title*</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full p-2 border rounded text-gray-900"
+                  required
+                />
+              </div>
 
-          <div>
-            <label className="block mb-2">Date*</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full p-2 border rounded text-gray-900"
-              required
-            />
-          </div>
+              <div>
+                <label className="block mb-2">Caption</label>
+                <textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  className="w-full p-2 border rounded text-gray-900"
+                  rows={3}
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-          >
-            {isLoading ? 'Uploading...' : 'Upload Photo'}
-          </button>
-        </form>
+              <div>
+                <label className="block mb-2">Date*</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full p-2 border rounded text-gray-900"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
+              >
+                {isLoading ? 'Uploading...' : 'Upload Photo'}
+              </button>
+            </form>
+          )}
+        </div>
       )}
 
       {error && (

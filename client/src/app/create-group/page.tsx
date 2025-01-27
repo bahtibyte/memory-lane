@@ -10,11 +10,13 @@ export default function CreateGroup() {
   });
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-  const [groupInfo, setGroupInfo] = useState<{ name: string; url: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [groupInfo, setGroupInfo] = useState<{ name: string; url: string; email: string; passcode: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
       const response = await createGroup(formData);
@@ -23,7 +25,9 @@ export default function CreateGroup() {
         setIsSuccess(true);
         setGroupInfo({
           name: response.result.group_name,
-          url: response.result.group_url
+          url: response.result.group_url,
+          email: formData.email,
+          passcode: formData.passcode
         });
       } else {
         throw new Error('Failed to create group');
@@ -31,6 +35,8 @@ export default function CreateGroup() {
     } catch (error) {
       console.error('Error:', error);
       setError(error instanceof Error ? error.message : 'Failed to create group');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -54,13 +60,19 @@ export default function CreateGroup() {
         {isSuccess && groupInfo ? (
           <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
             <h2 className="text-xl mb-2">Group Created Successfully!</h2>
-            <p>Your timeline for {groupInfo.name} is accessible here:</p>
+            <p className="mb-2">Your timeline for {groupInfo.name} is accessible here:</p>
             <a
               href={groupInfo.url}
-              className="text-blue-600 hover:text-blue-800 underline"
+              className="text-blue-600 hover:text-blue-800 underline block mb-4"
             >
               {groupInfo.url}
             </a>
+            <div className="mt-4 p-4 bg-yellow-50 rounded-md">
+              <p className="font-medium mb-2">Important: Save these details</p>
+              <p className="mb-1">Email: {groupInfo.email}</p>
+              <p className="mb-2">Passcode: {groupInfo.passcode}</p>
+              <p className="text-red-600 text-sm">Please save your passcode! You will need it to manage your group timeline.</p>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
@@ -106,9 +118,10 @@ export default function CreateGroup() {
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
+              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors disabled:bg-blue-300"
+              disabled={isLoading}
             >
-              Create Group
+              {isLoading ? 'Creating Group...' : 'Create Group'}
             </button>
           </form>
         )}

@@ -22,7 +22,8 @@ function getYearsSpan(dates: string[]) {
 
     // Calculate difference in years
     const diffYears = (newestDate.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    return Math.max(0, diffYears).toFixed(1);
+    const fixedYears = Math.max(0, diffYears).toFixed(1);
+    return fixedYears == "1.0" ? "1" : fixedYears;
   } catch (error) {
     console.error('Error calculating years span:', error);
     return "0";

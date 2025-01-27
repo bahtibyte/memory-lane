@@ -18,7 +18,9 @@ export function StatsContainer({ photoCount, friendsCount, yearsSpan }: StatsCon
         </div>
         <div className="text-left">
           <p className="text-[20px] sm:text-[24px] md:text-[36px] font-bold text-[#CCC7F8]">{yearsSpan}</p>
-          <p className="text-white text-[14px] sm:text-[16px] md:text-[24px]">Years</p>
+          <p className="text-white text-[14px] sm:text-[16px] md:text-[24px]">
+            {yearsSpan === "1" ? "Year" : "Years"}
+          </p>
         </div>
       </div>
     </div>
