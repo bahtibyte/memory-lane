@@ -19,7 +19,7 @@ const CLIENT_ADDRESS = process.env.NODE_CLIENT_ADDRESS;
 export const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 15 * 1024 * 1024, // 15MB limit
+    fileSize: 25 * 1024 * 1024, // Increased to 25MB limit
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -223,29 +223,36 @@ export const uploadPhoto = async (req, res) => {
    * 1. validate hashed passcode with the one in the database.
    */
 
+  console.log("received request to upload photo");
   const { file } = req;
   const { group_id, photo_title, photo_date, photo_caption } = req.body;
   if (!file) {
+    console.log("no file received");
     return res.status(400).json({ error: 'Photo is required' });
   }
   if (!group_id || !photo_title || !photo_date || !photo_caption) {
+    console.log("missing required fields");
     return res.status(400).json({ error: 'missing required fields.' });
   }
   // check if group_id exists in database
   const group_exists = await rds.query(`SELECT * FROM ml_group WHERE group_id = $1`, [group_id]);
   if (group_exists.rowCount === 0) {
+    console.log("group does not exist");
     res.status(400).json({ error: 'Group ID does not exist.' });
     return;
   }
   console.log('Uploading photo to s3...');
   try {
+    console.log("original name: ", file.originalname, "mimetype: ", file.mimetype);
     const photo_url = await uploadImageToS3(file.buffer, file.originalname, file.mimetype);
     const result = await rds.query(`INSERT INTO ml_photos (group_id, photo_url, photo_title, photo_date, photo_caption) VALUES ($1, $2, $3, $4, $5) RETURNING *`, [group_id, photo_url, photo_title, photo_date, photo_caption]);
     if (result.rowCount === 0) {
+      console.log("failed to upload photo to database");
       res.status(400).json({ error: 'Failed to upload photo to database.' });
       return;
     }
     const group = group_exists.rows[0];
+    console.log("photo uploaded successfully");
     res.status(200).json({
       message: 'Photo uploaded successfully',
       group_id,

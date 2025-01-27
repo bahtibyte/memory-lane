@@ -21,6 +21,7 @@ export default function UploadPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [conversionTime, setConversionTime] = useState(0);
 
   const handlePhotoChange = async (file: File | null) => {
     if (photoUrl) {
@@ -29,31 +30,55 @@ export default function UploadPage() {
 
     if (file) {
       try {
+        // Add file size check
+        if (file.size > 25 * 1024 * 1024) {
+          throw new Error('File size too large. Please choose a file under 25MB.');
+        }
+
         // Check if file is HEIC
-        const isHeic = file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic');
+        const isHeic = file.type === 'image/heic' || 
+                      file.type === 'image/heif' || 
+                      file.name.toLowerCase().endsWith('.heic') ||
+                      file.name.toLowerCase().endsWith('.heif');
 
         if (isHeic) {
           setIsConverting(true);
-          // Convert HEIC to JPEG
-          const convertedBlob = await convertHeic({ photo: file });
-          if (!convertedBlob) {
-            throw new Error('Failed to convert photo');
+          setConversionTime(0);
+          const timer = setInterval(() => {
+            setConversionTime(prev => prev + 1);
+          }, 1000);
+          
+          try {
+            const convertedBlob = await convertHeic({ photo: file });
+            clearInterval(timer);
+            
+            if (!convertedBlob) {
+              throw new Error('HEIC conversion failed');
+            }
+
+            const processedFile = new File([convertedBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
+              type: 'image/jpeg'
+            });
+
+            // Verify converted file size
+            if (processedFile.size === 0) {
+              throw new Error('Converted file is empty');
+            }
+
+            const url = URL.createObjectURL(processedFile);
+            setPhotoUrl(url);
+            setPhoto(processedFile);
+          } catch (conversionError) {
+            console.error('HEIC conversion error:', conversionError);
+            throw new Error('Failed to convert HEIC photo. Please try saving the photo as JPEG first.');
           }
-          // Create a new File from the converted Blob
-          const processedFile = new File([convertedBlob], file.name.replace(/\.heic$/i, '.jpg'), {
-            type: 'image/jpeg'
-          });
-          const url = URL.createObjectURL(processedFile);
-          setPhotoUrl(url);
-          setPhoto(processedFile);
         } else {
-          // Not HEIC, use original file
           const url = URL.createObjectURL(file);
           setPhotoUrl(url);
           setPhoto(file);
         }
       } catch (error) {
-        console.log('Error processing image:', error);
+        console.error('Error processing image:', error);
         setError('Failed to process image. Please try a different format.');
         setPhoto(null);
         setPhotoUrl('');
@@ -178,7 +203,8 @@ export default function UploadPage() {
 
           {isConverting && (
             <div className="p-3 bg-blue-100 text-blue-700 rounded">
-              Photo being converted...
+              <p>iPhone HEIC files need time to be converted to JPG</p>
+              <p>Converting photo... {conversionTime} seconds elapsed</p>
             </div>
           )}
 

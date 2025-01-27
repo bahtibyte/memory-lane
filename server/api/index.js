@@ -5,9 +5,11 @@ import { createGroup, editGroup, getTimeline, upload, uploadPhoto, convertHeic }
 
 const app = express();
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 app.use(
   cors({
-    origin: process.env.NODE_CLIENT_ADDRESS,
+    origin: !isDevelopment ? process.env.NODE_CLIENT_ADDRESS : true,
     methods: ["GET", "POST", "DELETE"],
     credentials: true, // If you use cookies or HTTP authentication
   })
@@ -24,7 +26,7 @@ app.get('/api/get-timeline', getTimeline);
 initializeDB();
 
 // Add development server listening
-if (process.env.NODE_ENV === 'development') {
+if (isDevelopment) {
   const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => {
     console.log(`Development server running on port ${PORT}`);
