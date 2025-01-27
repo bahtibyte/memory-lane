@@ -63,3 +63,23 @@ export const uploadPhoto = async (formData: {
     return null;
   }
 }
+
+
+export const convertHeic = async (formData: { photo: File }): Promise<Blob | null> => {
+  try {
+    const photoFormData = new FormData();
+    photoFormData.append('photo', formData.photo);
+
+    const response = await fetch(`${API}/convert-heic`, {
+      method: 'POST',
+      body: photoFormData,
+    });
+    if (!response.ok) {
+      throw new Error('Failed to convert photo');
+    }
+    return await response.blob();
+  } catch (error) {
+    console.log('Error converting photo:', error);
+    return null;
+  }
+}

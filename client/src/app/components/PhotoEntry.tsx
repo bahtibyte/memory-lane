@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import React from 'react';
 
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -56,6 +57,12 @@ export function PhotoEntry({
   onImageClick,
 }: PhotoEntryProps) {
   const isPortrait = imageDimensions[entry.photo_url]?.height > imageDimensions[entry.photo_url]?.width;
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    setImageLoaded(true);
+    onImageLoad(e, entry.photo_url);
+  };
 
   return (
     <div key={index}>
@@ -84,7 +91,7 @@ export function PhotoEntry({
 
             <div className="flex-1">
               <div className="relative w-full">
-                <div className={`relative ${isPortrait ? 'h-[50vh]' : ''} bg-black`}>
+                <div className={`relative ${isPortrait ? 'h-[50vh]' : 'max-h-[600px]'} bg-black`}>
                   {isPortrait && (
                     <div className="absolute inset-0 overflow-hidden">
                       <Image
@@ -99,7 +106,7 @@ export function PhotoEntry({
                     </div>
                   )}
                   <div
-                    className={`relative ${isPortrait ? 'h-full' : ''} flex items-center justify-center cursor-pointer`}
+                    className={`relative ${isPortrait ? 'h-full' : ''} flex items-center justify-center cursor-pointer max-w-[1000px] mx-auto`}
                     onClick={() => onImageClick(entry.photo_url, entry.photo_title)}
                   >
                     <Image
@@ -108,9 +115,11 @@ export function PhotoEntry({
                       fill={isPortrait}
                       width={!isPortrait ? 1000 : undefined}
                       height={!isPortrait ? 600 : undefined}
-                      className="rounded-md shadow-md object-contain hover:opacity-90 transition-opacity"
+                      className={`rounded-md shadow-md object-contain hover:opacity-90 transition-opacity ${
+                        imageLoaded ? 'opacity-100' : 'opacity-0'
+                      }`}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      onLoad={(e) => onImageLoad(e, entry.photo_url)}
+                      onLoad={handleImageLoad}
                     />
                   </div>
                 </div>

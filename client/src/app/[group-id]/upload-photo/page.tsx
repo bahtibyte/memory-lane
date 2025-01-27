@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { uploadPhoto } from '@/app/utils/api';
+import { convertHeic, uploadPhoto } from '@/app/utils/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import heicConvert from 'heic-convert';
 import { PhotoEntry, useTimeline } from '@/app/context/timeline-context';
 
 export default function UploadPage() {
@@ -23,28 +22,6 @@ export default function UploadPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
 
-  const convertHeicToJpeg = async (file: File): Promise<File> => {
-    try {
-      const buffer = await file.arrayBuffer();
-      const convertedBuffer = await heicConvert({
-        buffer: Buffer.from(new Uint8Array(buffer)),
-        format: 'JPEG',
-        quality: 0.9
-      });
-      
-      const convertedFile = new File(
-        [convertedBuffer],
-        file.name.replace(/\.(heic|HEIC)$/, '.jpg'),
-        { type: 'image/jpeg' }
-      );
-      
-      return convertedFile;
-    } catch (error) {
-      console.error('Error converting HEIC:', error);
-      throw new Error('Failed to convert HEIC image');
-    }
-  };
-
   const handlePhotoChange = async (file: File | null) => {
     if (photoUrl) {
       URL.revokeObjectURL(photoUrl);
@@ -54,17 +31,27 @@ export default function UploadPage() {
       try {
         // Check if file is HEIC
         const isHeic = file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic');
-        
+
         if (isHeic) {
           setIsConverting(true);
+          // Convert HEIC to JPEG
+          const convertedBlob = await convertHeic({ photo: file });
+          if (!convertedBlob) {
+            throw new Error('Failed to convert photo');
+          }
+          // Create a new File from the converted Blob
+          const processedFile = new File([convertedBlob], file.name.replace(/\.heic$/i, '.jpg'), {
+            type: 'image/jpeg'
+          });
+          const url = URL.createObjectURL(processedFile);
+          setPhotoUrl(url);
+          setPhoto(processedFile);
+        } else {
+          // Not HEIC, use original file
+          const url = URL.createObjectURL(file);
+          setPhotoUrl(url);
+          setPhoto(file);
         }
-        
-        // Convert if it's HEIC, otherwise use original file
-        const processedFile = isHeic ? await convertHeicToJpeg(file) : file;
-        
-        const url = URL.createObjectURL(processedFile);
-        setPhotoUrl(url);
-        setPhoto(processedFile);
       } catch (error) {
         console.log('Error processing image:', error);
         setError('Failed to process image. Please try a different format.');
@@ -109,7 +96,7 @@ export default function UploadPage() {
             photo_title: title,
             photo_caption: caption
           };
-          
+
           setTimelineData({
             ...timelineData,
             photo_entries: [...timelineData.photo_entries, newPhotoEntry]

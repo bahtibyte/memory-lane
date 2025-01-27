@@ -5,6 +5,7 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { rds } from './rds.js';
 import argon2 from 'argon2';
+import heicConvert from "heic-convert";
 
 // Setup S3 client access.
 const s3 = new AWS.S3({
@@ -191,6 +192,26 @@ export const getGroupInfo = async (req, res) => {
     } 
   });
 };
+
+export const convertHeic = async (req, res) => {
+  try {
+    console.log('Converting HEIC to JPEG...');
+    const { file } = req;
+
+    const outputBuffer = await heicConvert({
+      buffer: file.buffer,
+      format: "JPEG",
+      quality: 0.9,
+    });
+
+    // Send the converted file back as a response
+    res.set("Content-Type", "image/jpeg");
+    res.send(outputBuffer);
+  } catch (error) {
+    console.error("Error converting HEIC:", error);
+    res.status(500).send("Failed to convert image");
+  }
+}
 
 export const uploadPhoto = async (req, res) => {
   /** TODO: Add passcode validation.
