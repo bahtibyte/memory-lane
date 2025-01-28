@@ -12,12 +12,6 @@ export default function LandingPage() {
         >
           Create New Group
         </Link>
-        <Link
-          href="/demo"
-          className="text-blue-500 hover:underline mt-4"
-        >
-          View demo timeline here
-        </Link>
       </div>
     </main>
   );
