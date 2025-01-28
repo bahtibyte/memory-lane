@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { initializeDB } from './rds.js';
-import { createGroup, editGroup, getTimeline, upload, uploadPhoto, convertHeic } from './api.js';
+import { createGroup, editGroup, getTimeline, presignedS3Url, createPhotoEntry } from './api.js';
 
 const app = express();
 
@@ -20,8 +20,8 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.get("/", (req, res) => res.send("Express on Vercel"));
 app.post('/api/create-group', createGroup);
 app.post('/api/edit-group', editGroup);
-app.post('/api/convert-heic', upload.single('photo'), convertHeic);
-app.post('/api/upload-photo', upload.single('photo'), uploadPhoto);
+app.post('/api/create-photo-entry', createPhotoEntry);
+app.get('/api/generate-s3-url', presignedS3Url);
 app.get('/api/get-timeline', getTimeline);
 
 initializeDB();

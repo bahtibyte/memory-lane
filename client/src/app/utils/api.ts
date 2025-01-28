@@ -34,24 +34,40 @@ export const createGroup = async (formData: { group_name: string, email: string,
   }
 }
 
-export const uploadPhoto = async (formData: {
+export const generateS3Url = async (file_name: string) => {
+  try {
+    const response = await fetch(`${API}/generate-s3-url?file_name=${file_name}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to create group');
+    }
+    return data;
+  } catch (error) {
+    console.log('Error fetching timeline:', error);
+    return null;
+  }
+}
+
+export const createPhotoEntry = async (formData: {
   group_id: string,
   title: string,
   caption: string,
   date: string,
-  photo: File
+  photo_url: string,
 }) => {
   try {
-    const photoFormData = new FormData();
-    photoFormData.append('group_id', formData.group_id);
-    photoFormData.append('photo_title', formData.title);
-    photoFormData.append('photo_caption', formData.caption);
-    photoFormData.append('photo_date', formData.date);
-    photoFormData.append('photo', formData.photo);
-
-    const response = await fetch(`${API}/upload-photo`, {
+    const response = await fetch(`${API}/create-photo-entry`, {
       method: 'POST',
-      body: photoFormData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        group_id: formData.group_id,
+        photo_title: formData.title,
+        photo_caption: formData.caption,
+        photo_date: formData.date,
+        photo_url: formData.photo_url,
+      }),
     });
     const data = await response.json();
     if (!response.ok) {

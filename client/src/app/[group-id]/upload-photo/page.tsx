@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { convertHeic, uploadPhoto } from '@/app/utils/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { PhotoEntry, useTimeline } from '@/app/context/timeline-context';
+import { generateS3Url , createPhotoEntry} from '@/app/utils/api';
 
 export default function UploadPage() {
   const group_id = useParams()['group-id'] as string;
@@ -20,8 +20,7 @@ export default function UploadPage() {
   const [groupUrl, setGroupUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
-  const [conversionTime, setConversionTime] = useState(0);
+  const [isUploadingToS3, setIsUploadingToS3] = useState(false);
 
   const handlePhotoChange = async (file: File | null) => {
     if (photoUrl) {
@@ -30,60 +29,53 @@ export default function UploadPage() {
 
     if (file) {
       try {
-        // Add file size check
-        if (file.size > 25 * 1024 * 1024) {
-          throw new Error('File size too large. Please choose a file under 25MB.');
+        setIsUploadingToS3(true);
+        // Check if file is an image
+        if (!file.type.startsWith('image/')) {
+          throw new Error('Please select an image file.');
         }
 
-        // Check if file is HEIC
+        // Check if file is HEIC and reject it
         const isHeic = file.type === 'image/heic' || 
                       file.type === 'image/heif' || 
                       file.name.toLowerCase().endsWith('.heic') ||
                       file.name.toLowerCase().endsWith('.heif');
 
         if (isHeic) {
-          setIsConverting(true);
-          setConversionTime(0);
-          const timer = setInterval(() => {
-            setConversionTime(prev => prev + 1);
-          }, 1000);
-          
-          try {
-            const convertedBlob = await convertHeic({ photo: file });
-            clearInterval(timer);
-            
-            if (!convertedBlob) {
-              throw new Error('HEIC conversion failed');
-            }
+          throw new Error('HEIC files are not supported. Please convert to JPEG or PNG before uploading.');
+        }
 
-            const processedFile = new File([convertedBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
-              type: 'image/jpeg'
-            });
+        // Get S3 presigned URL
+        const s3UrlData = await generateS3Url(file.name);
+        console.log('S3 URL Data:', s3UrlData);
 
-            // Verify converted file size
-            if (processedFile.size === 0) {
-              throw new Error('Converted file is empty');
-            }
+        if (s3UrlData.presignedUrl) {
+          // Upload file to S3
+          const uploadResponse = await fetch(s3UrlData.presignedUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+              'Content-Type': file.type,
+            },
+          });
 
-            const url = URL.createObjectURL(processedFile);
-            setPhotoUrl(url);
-            setPhoto(processedFile);
-          } catch (conversionError) {
-            console.error('HEIC conversion error:', conversionError);
-            throw new Error('Failed to convert HEIC photo. Please try saving the photo as JPEG first.');
+          if (!uploadResponse.ok) {
+            throw new Error('Failed to upload file to S3');
           }
-        } else {
-          const url = URL.createObjectURL(file);
-          setPhotoUrl(url);
+          console.log('File uploaded to S3', uploadResponse);
+          // Use the S3 URL for preview
+          setPhotoUrl(s3UrlData.photo_url);
           setPhoto(file);
+        } else {
+          throw new Error('Failed to get presigned URL');
         }
       } catch (error) {
         console.error('Error processing image:', error);
-        setError('Failed to process image. Please try a different format.');
+        setError(error instanceof Error ? error.message : 'Failed to process image.');
         setPhoto(null);
         setPhotoUrl('');
       } finally {
-        setIsConverting(false);
+        setIsUploadingToS3(false);
       }
     } else {
       setPhotoUrl('');
@@ -104,12 +96,12 @@ export default function UploadPage() {
     }
 
     try {
-      const result = await uploadPhoto({
+      const result = await createPhotoEntry({
         group_id,
         title,
         caption,
         date,
-        photo
+        photo_url: photoUrl
       });
 
       if (result) {
@@ -171,24 +163,34 @@ export default function UploadPage() {
         <div className="space-y-4">
           <div>
             <label className="block mb-2">Photo*</label>
-            {photo && photoUrl && (
-              <div className="relative w-full h-[400px] overflow-hidden rounded-lg">
-                <div
-                  className="absolute inset-0 blur-xl scale-110"
-                  style={{
-                    backgroundImage: `url(${photoUrl})`,
-                    backgroundPosition: 'center',
-                    backgroundSize: 'cover',
-                  }}
-                />
-                <Image
-                  src={photoUrl}
-                  alt="Preview"
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 100vw, 800px"
-                />
+            {isUploadingToS3 && (
+              <div className="mt-2 p-2 bg-blue-100 text-blue-700 rounded">
+                Photo is being uploaded, please wait...
               </div>
+            )}
+            {photo && photoUrl && (
+              <>
+                <div className="relative w-full h-[400px] overflow-hidden rounded-lg">
+                  <div
+                    className="absolute inset-0 blur-xl scale-110"
+                    style={{
+                      backgroundImage: `url(${photoUrl})`,
+                      backgroundPosition: 'center',
+                      backgroundSize: 'cover',
+                    }}
+                  />
+                  <Image
+                    src={photoUrl}
+                    alt="Preview"
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 800px"
+                  />
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  Photo URL: {photoUrl}
+                </div>
+              </>
             )}
             <div className="mt-4">
               <input
@@ -201,14 +203,7 @@ export default function UploadPage() {
             </div>
           </div>
 
-          {isConverting && (
-            <div className="p-3 bg-blue-100 text-blue-700 rounded">
-              <p>iPhone HEIC files need time to be converted to JPG</p>
-              <p>Converting photo... {conversionTime} seconds elapsed</p>
-            </div>
-          )}
-
-          {photo && !isConverting && (
+          {photo && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block mb-2">Title*</label>
