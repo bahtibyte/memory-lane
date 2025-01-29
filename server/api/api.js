@@ -24,6 +24,32 @@ async function hash(passcode) {
   });
 }
 
+async function verifyGroup(group_id, passcode) {
+  try {
+    // Check if the group exists
+    const groupQuery = await rds.query(`SELECT passcode FROM ml_group WHERE group_id = $1`, [group_id]);
+
+    if (groupQuery.rowCount === 0) {
+      return { success: false, message: 'Group does not exist.' };
+    }
+
+    const storedPasscode = groupQuery.rows[0].passcode;
+
+    // Verify the hashed passcode
+    const isValidPasscode = await argon2.verify(storedPasscode, passcode);
+
+    if (!isValidPasscode) {
+      return { success: false, message: 'Invalid passcode.' };
+    }
+
+    return { success: true, message: 'Group verified successfully.', group: groupQuery.rows[0] };
+  } catch (error) {
+    console.error('Error verifying group:', error);
+    return { success: false, message: 'An error occurred while verifying the group.' };
+  }
+};
+
+
 export const createGroup = async (req, res) => {
   const { group_name, email, passcode } = req.body;
   if (!group_name || !email || !passcode) {
@@ -49,57 +75,76 @@ export const createGroup = async (req, res) => {
 };
 
 export const editGroup = async (req, res) => {
-  const { group_id, group_name } = req.body;
+  const { group_id, group_name, passcode } = req.body;
   console.log(`Editing group with id: ${group_id} and name: ${group_name}`);
 
-  /** TODO: Implement this.
-   * 
-   * This function is used to edit the group name for now. Future features will include editing
-   * the friends list.
-   * 
-   * Parameters:
-   * - group_id
-   * - group_name
-   * - passcode
-   *  
-   * Requirements
-   * 1. Check if group_id exists in database.
-   * 2. Validate hashed passcode with the one in the database.
-   * 3. Update the group_name in the database if passcode is correct.
-   * 4. Return the updated group_name.
-   */
+  if (!group_id || !group_name || !passcode) {
+    return res.status(400).json({ error: 'Group ID, name, and passcode are required' });
+  }
 
-  return res.status(200).json({
-    group_id,
-    group_name,
-  });
+  try {
+    // Verify the group exists and passcode is valid
+    const verification = await verifyGroup(group_id, passcode);
+    if (!verification.success) {
+      return res.status(400).json({ error: verification.message });
+    }
+
+    // Update the group name in the database
+    const result = await rds.query(
+      `UPDATE ml_group SET group_name = $1 WHERE group_id = $2 RETURNING *`,
+      [group_name, group_id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(400).json({ error: 'Failed to update group name.' });
+    }
+
+    // Return the updated group_name
+    return res.status(200).json({
+      message: 'Group name updated successfully.',
+      group_id,
+      group_name,
+    });
+
+  } catch (error) {
+    console.error('Error editing group:', error);
+    return res.status(500).json({ error: 'An error occurred while editing the group.' });
+  }
 };
 
+
 export const deletePhoto = async (req, res) => {
-  const { photo_id } = req.body;
+  const { group_id, passcode, photo_id } = req.body;
+
+  if (!group_id || !passcode || !photo_id) {
+    return res.status(400).json({ error: 'Group ID, passcode, and photo ID are required.' });
+  }
   console.log(`Deleting photo with id: ${photo_id}`);
+  try {
+    const verification = await verifyGroup(group_id, passcode);
+    if (!verification.success) {
+      return res.status(400).json({ error: verification.message });
+    }
 
-  /** TODO: Implement this.
-   * 
-   * This function is used to delete a photo from the database.
-   * 
-   * Parameters:
-   * - group_id
-   * - passcode
-   * - photo_id
-   * 
-   * Requirements:
-   * 1. check if group_id exists in database.
-   * 2. validate hashed passcode with the one in the database.
-   * 3. delete the photo from the database if exists.
-   * 4. return the deleted photo.
-   */
+    // Delete the photo
+    const deleteResult = await rds.query(
+      `DELETE FROM ml_photos WHERE photo_id = $1 AND group_id = $2 RETURNING *`,
+      [photo_id, group_id]
+    );
 
-  return res.status(200).json({
-    status: 'success',
-    message: 'Photo deleted successfully',
-    photo_id,
-  });
+    if (deleteResult.rowCount === 0) {
+      return res.status(400).json({ error: 'Failed to delete photo.' });
+    }
+
+    // Step 4: Return the deleted photo
+    return res.status(200).json({
+      message: 'Photo deleted successfully.',
+      deletedPhoto: deleteResult.rows[0],
+    });
+  } catch (error) {
+    console.error('Error deleting photo:', error);
+    return res.status(500).json({ error: 'An error occurred while deleting the photo.' });
+  }
 };
 
 export const getTimeline = async (req, res) => {
@@ -124,57 +169,88 @@ export const getTimeline = async (req, res) => {
 };
 
 export const editPhoto = async (req, res) => {
-  /** TODO: Implement this. 
-   * 
-   * This function is used to edit a photo in the database.
-   * 
-   * Parameters:
-   * - group_id
-   * - passcode
-   * - photo_id
-   * - photo_title
-   * - photo_date
-   * - photo_caption
-   * 
-   * Requirements:
-   * 1. check if group_id exists in database.
-   * 2. validate hashed passcode with the one in the database.
-   * 3. update the photo in the database if passcode is correct.
-   * 4. update the photo_title, photo_date, and photo_caption in the database.
-   * 5. return the updated photo.
-   */
+  const {group_id, passcode, photo_id, photo_title, photo_date, photo_caption} = req.body;
+  console.log(`Editing photo with id: ${photo_id}`);
 
-  return res.status(200).json({
-    status: 'success',
-    message: 'Photo edited successfully',
-    photo_id,
-  });
+  if(!group_id || !passcode || !photo_id) {
+    return res.status(400).json({ error: 'Group ID, passcode, and photo ID are required.' });
+  }
+
+  try {
+    const verification = await verifyGroup(group_id, passcode);
+    if (!verification.success) {
+      return res.status(400).json({ error: verification.message });
+    }
+
+    //Update the photo details
+    const updateQuery = `
+      UPDATE ml_photos 
+      SET photo_title = $1, photo_date = $2, photo_caption = $3 
+      WHERE photo_id = $4 AND group_id = $5
+      RETURNING *;
+    `;
+
+    const { rows } = await rds.query(updateQuery, [photo_title, photo_date, photo_caption, photo_id, group_id]);
+
+    if (rows.length === 0) {
+      return res.status(400).json({ error: 'Photo not found or update failed.' });
+    }
+
+    // Step 5: Return updated photo details
+    return res.status(200).json({
+      message: 'Photo updated successfully.',
+      updatedPhoto: rows[0]
+    });
+  }
+  catch(err) {
+    console.error('Error editing photo:', err);
+    return res.status(500).json({ error: 'An error occurred while editing the photo.' });
+  }
 }
 
 export const getGroupInfo = async (req, res) => {
-  /** TODO: Implement this.
-   * 
-   * This function is used to get the group info using the email and passcode. We will avoid
-   * resetting passcodes or asking server to send group info to email.
-   * 
-   * Parameters:
-   * - email
-   * - passcode
-   * 
-   * Requirements:
-   * 1. check if email exists in database.
-   * 2. validate hashed passcode with the one in the database.
-   * 3. return the group info.
-   */
+  const { email, passcode } = req.body;
 
-  res.status(200).json({
-    'status': 'success',
-    'group': {
-      'group_id': 'demo',
-      'group_name': 'Demo Group',
-      'group_url': '',
+  console.log(`Fetching group info for email: ${email}`);
+
+  if (!email || !passcode) {
+    return res.status(400).json({ error: 'Email and passcode are required.' });
+  }
+
+  try {
+    // Step 1: Check if the email exists in the database
+    const groupQuery = await rds.query(
+      `SELECT group_id, group_name, passcode FROM ml_group WHERE email = $1`,
+      [email]
+    );
+
+    if (groupQuery.rowCount === 0) {
+      return res.status(400).json({ error: 'Group with this email does not exist.' });
     }
-  });
+
+    const group = groupQuery.rows[0];
+
+    // Step 2: Validate hashed passcode
+    const isValidPasscode = await argon2.verify(group.passcode, passcode);
+    if (!isValidPasscode) {
+      return res.status(400).json({ error: 'Invalid passcode.' });
+    }
+
+    // Step 3: Return the group info (excluding passcode for security)
+    res.status(200).json({
+      'status': 'success',
+      'group': {
+        'group_id': 'demo',
+        'group_name': 'Demo Group',
+        'group_url': '',
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching group info:', error);
+    return res.status(500).json({ error: 'An error occurred while retrieving the group info.' });
+  }
+  
 };
 
 export const presignedS3Url = async (req, res) => {
@@ -255,5 +331,6 @@ export const createPhotoEntry = async (req, res) => {
     photo_title: photo_title,
     photo_date: photo_date,
     photo_caption: photo_caption,
+    photo_id: result.rows[0].photo_id,
   });
 };
