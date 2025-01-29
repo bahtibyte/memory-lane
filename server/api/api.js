@@ -85,16 +85,19 @@ export const editGroup = async (req, res) => {
   try {
     // Verify the group exists and passcode is valid
     const verification = await verifyGroup(group_id, passcode);
-    
     if (!verification.success) {
       return res.status(400).json({ error: verification.message });
     }
 
     // Update the group name in the database
-    await rds.query(
-      `UPDATE ml_group SET group_name = $1 WHERE group_id = $2`,
+    const result = await rds.query(
+      `UPDATE ml_group SET group_name = $1 WHERE group_id = $2 RETURNING *`,
       [group_name, group_id]
     );
+
+    if (result.rowCount === 0) {
+      return res.status(400).json({ error: 'Failed to update group name.' });
+    }
 
     // Return the updated group_name
     return res.status(200).json({
@@ -119,21 +122,24 @@ export const deletePhoto = async (req, res) => {
   console.log(`Deleting photo with id: ${photo_id}`);
   try {
     const verification = await verifyGroup(group_id, passcode);
-    
     if (!verification.success) {
       return res.status(400).json({ error: verification.message });
     }
 
     // Delete the photo
     const deleteResult = await rds.query(
-      `DELETE FROM ml_photos WHERE photo_id = $1 AND group_id = $2`,
+      `DELETE FROM ml_photos WHERE photo_id = $1 AND group_id = $2 RETURNING *`,
       [photo_id, group_id]
     );
+
+    if (deleteResult.rowCount === 0) {
+      return res.status(400).json({ error: 'Failed to delete photo.' });
+    }
 
     // Step 4: Return the deleted photo
     return res.status(200).json({
       message: 'Photo deleted successfully.',
-      deleteResult,
+      deletedPhoto: deleteResult.rows[0],
     });
   } catch (error) {
     console.error('Error deleting photo:', error);
@@ -172,7 +178,6 @@ export const editPhoto = async (req, res) => {
 
   try {
     const verification = await verifyGroup(group_id, passcode);
-    
     if (!verification.success) {
       return res.status(400).json({ error: verification.message });
     }
