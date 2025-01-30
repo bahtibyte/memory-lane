@@ -62,7 +62,7 @@ export default function LandingPage() {
 
         {/* Description Below Everything */}
         <p className="mt-6 text-gray-400 text-lg lg:text-xl text-left pl-[5%] max-w-2xl">
-          Your friend group's journey, captured in a <span className="text-purple-300 bg-clip-text bg-gradient-to-r from-pink-200 to-purple-400 hover:text-transparent transition-colors cursor-pointer">timeline</span>.
+          Your friend group&apos;s journey, captured in a <span className="text-purple-300 bg-clip-text bg-gradient-to-r from-pink-200 to-purple-400 hover:text-transparent transition-colors cursor-pointer">timeline</span>.
         </p>
       </div>
     </main>
