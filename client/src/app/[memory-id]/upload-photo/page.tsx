@@ -18,7 +18,6 @@ export default function UploadPage() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string>('');
   const [success, setSuccess] = useState(false);
-  const [groupUrl, setGroupUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingToS3, setIsUploadingToS3] = useState(false);
@@ -115,7 +114,6 @@ export default function UploadPage() {
         }
 
         setSuccess(true);
-        setGroupUrl(result.group_url);
         // Reset form
         setTitle('');
         setCaption('');
