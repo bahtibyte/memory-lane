@@ -33,7 +33,7 @@ function getYearsSpan(dates: string[]) {
 export default function Timeline() {
   const group_id = useParams()['group-id'] as string;
   const {
-    timelineData,
+    memoryLane,
     loading,
     failedToLoad,
     fetchData
@@ -108,7 +108,7 @@ export default function Timeline() {
     );
   }
 
-  if (!group_id || failedToLoad || !timelineData) {
+  if (!group_id || failedToLoad || !memoryLane) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Page not found</h1>
@@ -120,12 +120,12 @@ export default function Timeline() {
   }
 
   // Update the data source for sorted entries and stats
-  const sortedEntries = [...timelineData.photo_entries].sort((a, b) =>
+  const sortedEntries = [...memoryLane.photo_entries].sort((a, b) =>
     new Date(b.photo_date).getTime() - new Date(a.photo_date).getTime()
   );
   const yearsSpan = getYearsSpan(sortedEntries.map(entry => entry.photo_date));
   const photoCount = sortedEntries.length;
-  const friendsCount = Object.keys(timelineData.friends).length;
+  const friendsCount = 0;
 
   // Function to get year from date string
   const getYear = (dateString: string) => new Date(dateString).getFullYear();
@@ -134,7 +134,7 @@ export default function Timeline() {
   if (photoCount === 0) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
-        <h1 className="text-white text-2xl mb-4">{timelineData.group_name} timeline!</h1>
+        <h1 className="text-white text-2xl mb-4">{memoryLane.group_info.group_name} timeline!</h1>
         <h1 className="text-white text-2xl mb-4">No group photos added yet</h1>
         <Link
           href={`/${group_id}/upload-photo`}
@@ -153,7 +153,7 @@ export default function Timeline() {
       <div className="max-w-[1000px] mx-auto">
         {/* Header with Group Name and Action Buttons */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-[32px] md:text-[50px] font-bold">{timelineData.group_name}</h1>
+          <h1 className="text-[32px] md:text-[50px] font-bold">{memoryLane.group_info.group_name}</h1>
           <div className="flex gap-4">
             <Link
               href={`/${group_id}/upload-photo`}

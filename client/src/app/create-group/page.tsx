@@ -4,14 +4,12 @@ import { createGroup } from '../utils/api';
 
 export default function CreateGroup() {
   const [formData, setFormData] = useState({
-    group_name: '',
-    email: '',
-    passcode: ''
+    group_name: ''
   });
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [groupInfo, setGroupInfo] = useState<{ name: string; url: string; email: string; passcode: string } | null>(null);
+  const [groupInfo, setGroupInfo] = useState<{ name: string; url: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,8 +24,6 @@ export default function CreateGroup() {
         setGroupInfo({
           name: response.result.group_name,
           url: response.result.group_url,
-          email: formData.email,
-          passcode: formData.passcode
         });
       } else {
         throw new Error('Failed to create group');
@@ -67,12 +63,6 @@ export default function CreateGroup() {
             >
               {groupInfo.url}
             </a>
-            <div className="mt-4 p-4 bg-yellow-50 rounded-md">
-              <p className="font-medium mb-2">Important: Save these details</p>
-              <p className="mb-1">Email: {groupInfo.email}</p>
-              <p className="mb-2">Passcode: {groupInfo.passcode}</p>
-              <p className="text-red-600 text-sm">Please save your passcode! You will need it to manage your group timeline.</p>
-            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
@@ -87,33 +77,6 @@ export default function CreateGroup() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border rounded-md text-black"
                 required
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md text-black"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                id="passcode"
-                value={formData.passcode}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md text-black"
-                required
-                autoComplete="new-password"
               />
             </div>
             <button

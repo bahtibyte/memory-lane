@@ -18,6 +18,19 @@ export function getDaysAgo(dateString: string): string {
 
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
+  
+  // If more than 365 days, show years and months
+  if (diffDays > 365) {
+    const years = Math.floor(diffDays / 365);
+    const remainingDays = diffDays % 365;
+    const months = Math.floor(remainingDays / 30);
+    
+    if (months === 0) {
+      return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+    }
+    return `${years} ${years === 1 ? 'year' : 'years'}, ${months} ${months === 1 ? 'month' : 'months'} ago`;
+  }
+  
   return `${diffDays} days ago`;
 }
 
@@ -59,7 +72,7 @@ export function PhotoEntry({
 }: PhotoEntryProps) {
   const isPortrait = imageDimensions[entry.photo_url]?.height > imageDimensions[entry.photo_url]?.width;
   const [imageLoaded, setImageLoaded] = React.useState(false);
-
+  
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     setImageLoaded(true);
     onImageLoad(e, entry.photo_url);
@@ -126,6 +139,7 @@ export function PhotoEntry({
                 </div>
               </div>
             </div>
+
           </div>
 
           <div className="mt-2 ml-[calc(80px+16px)] sm:ml-[calc(140px+32px)] md:ml-[calc(200px+32px)]">

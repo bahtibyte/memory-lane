@@ -1,7 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import { initializeDB } from './rds.js';
-import { createGroup, editGroup, getTimeline, presignedS3Url, createPhotoEntry, deletePhoto, editPhoto } from './api.js';
+import {
+  createGroup,
+  updateGroupName,
+  presignedS3Url,
+  createPhotoEntry,
+  deletePhoto,
+  editPhoto,
+  getMemoryLane,
+  updateGroupPrivacy,
+  updateGroupAlias
+} from './api.js';
 
 const app = express();
 
@@ -14,17 +24,18 @@ app.use(
     credentials: true, // If you use cookies or HTTP authentication
   })
 );
-app.use(express.json({ limit: '15mb' })); // Adjust the limit as needed
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+app.use(express.json()); // Adjust the limit as needed
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
 app.post('/api/create-group', createGroup);
-app.post('/api/edit-group', editGroup);
-app.post('/api/delete-photo', deletePhoto);
+app.post('/api/update-group-name', updateGroupName);
+app.post('/api/update-group-privacy', updateGroupPrivacy);
+app.post('/api/update-group-alias', updateGroupAlias);
+app.delete('/api/delete-photo', deletePhoto);
 app.post('/api/edit-photo', editPhoto);
 app.post('/api/create-photo-entry', createPhotoEntry);
 app.get('/api/generate-s3-url', presignedS3Url);
-app.get('/api/get-timeline', getTimeline);
+app.get('/api/get-memory-lane', getMemoryLane);
 
 initializeDB();
 

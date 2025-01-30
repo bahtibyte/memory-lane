@@ -1,20 +1,20 @@
 const API = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
 
-export const getTimeline = async (group_id: string) => {
+export const getMemoryLane = async (memory_lane: string) => {
   try {
-    const response = await fetch(`${API}/get-timeline?group_id=${group_id}`);
+    const response = await fetch(`${API}/get-memory-lane?memory_lane=${memory_lane}`);
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to create group');
+      throw new Error(data.error || 'Failed to retrieve memory lane');
     }
     return data;
   } catch (error) {
-    console.log('Error fetching timeline:', error);
+    console.log('Error fetching memory lane:', error);
     return null;
   }
 }
 
-export const createGroup = async (formData: { group_name: string, email: string, passcode: string }) => {
+export const createGroup = async (formData: { group_name: string }) => {
   try {
     const response = await fetch(`${API}/create-group`, {
       method: 'POST',
@@ -49,7 +49,7 @@ export const generateS3Url = async (file_name: string) => {
 }
 
 export const createPhotoEntry = async (formData: {
-  group_id: string,
+  memory_lane: string,
   title: string,
   caption: string,
   date: string,
@@ -62,7 +62,7 @@ export const createPhotoEntry = async (formData: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        group_id: formData.group_id,
+        memory_lane: formData.memory_lane,
         photo_title: formData.title,
         photo_caption: formData.caption,
         photo_date: formData.date,
@@ -80,22 +80,111 @@ export const createPhotoEntry = async (formData: {
   }
 }
 
-
-export const convertHeic = async (formData: { photo: File }): Promise<Blob | null> => {
+export const deletePhoto = async (memory_lane: string, photo_id: number) => {
   try {
-    const photoFormData = new FormData();
-    photoFormData.append('photo', formData.photo);
-
-    const response = await fetch(`${API}/convert-heic`, {
-      method: 'POST',
-      body: photoFormData,
+    const response = await fetch(`${API}/delete-photo`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ memory_lane, photo_id })
     });
-    if (!response.ok) {
-      throw new Error('Failed to convert photo');
-    }
-    return await response.blob();
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.log('Error converting photo:', error);
+    console.log('Error deleting photo:', error);
+    return null;
+  }
+}
+
+export const editPhoto = async (formData: {
+  memory_lane: string,
+  photo_id: number,
+  photo_title: string,
+  photo_date: string,
+  photo_caption: string,
+}) => {
+  try {
+    const response = await fetch(`${API}/edit-photo`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    }); 
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to edit photo');
+    }
+    return data;
+  } catch (error) {
+    console.log('Error editing photo:', error);
+    return null;
+  }
+}
+
+export const updateGroupName = async (formData: {
+  memory_lane: string,
+  group_name: string,
+}) => {
+  try {
+    const response = await fetch(`${API}/update-group-name`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update group name');
+    }
+    return data;
+  } catch (error) {
+    console.log('Error updating group name:', error);
+    return null;
+  }
+}
+
+export const updateGroupPrivacy = async (formData: {
+  memory_lane: string,
+  is_public: boolean,
+  passcode: string,
+}) => {
+  try {
+    const response = await fetch(`${API}/update-group-privacy`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update group privacy');
+    }
+    return data;
+  } catch (error) {
+    console.log('Error updating group privacy:', error);
+    return null;
+  }
+}
+
+export const updateGroupAlias = async (formData: {
+  memory_lane: string,
+  alias: string | null,
+}) => {
+  try {
+    const response = await fetch(`${API}/update-group-alias`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    });
+    return await response.json();
+  } catch (error) {
+    console.log('Error updating group alias:', error);
     return null;
   }
 }

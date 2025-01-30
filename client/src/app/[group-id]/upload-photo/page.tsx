@@ -4,12 +4,12 @@ import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { PhotoEntry, useTimeline } from '@/app/context/timeline-context';
+import { useTimeline } from '@/app/context/timeline-context';
 import { generateS3Url , createPhotoEntry} from '@/app/utils/api';
 
 export default function UploadPage() {
   const group_id = useParams()['group-id'] as string;
-  const { timelineData, setTimelineData } = useTimeline();
+  const { memoryLane, setMemoryLane } = useTimeline();
 
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
@@ -97,7 +97,7 @@ export default function UploadPage() {
 
     try {
       const result = await createPhotoEntry({
-        group_id,
+        memory_lane: group_id,
         title,
         caption,
         date,
@@ -106,17 +106,10 @@ export default function UploadPage() {
 
       if (result) {
         // Add the new photo to timeline data
-        if (timelineData) {
-          const newPhotoEntry: PhotoEntry = {
-            photo_date: date,
-            photo_url: result.photo_url,
-            photo_title: title,
-            photo_caption: caption
-          };
-
-          setTimelineData({
-            ...timelineData,
-            photo_entries: [...timelineData.photo_entries, newPhotoEntry]
+        if (memoryLane) {
+          setMemoryLane({
+            group_info: memoryLane.group_info,
+            photo_entries: [...memoryLane.photo_entries, result.photo_entry]
           });
         }
 
@@ -269,12 +262,21 @@ export default function UploadPage() {
               View your group: <Link href={groupUrl} className="text-blue-500 underline" rel="noopener noreferrer">{groupUrl}</Link>
             </div>
           )}
-          <button
-            onClick={resetForm}
-            className="mt-4 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-          >
-            Upload Another Photo
-          </button>
+          <div className="mt-4 flex gap-4">
+            <Link
+              href={`/${group_id}`}
+              className="flex-1 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 text-center"
+            >
+              Back to Memory Lane
+            </Link>
+            <Link
+              href={`/${group_id}/upload-photo`}
+              onClick={resetForm}
+              className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 text-center"
+            >
+              Upload Another Photo
+            </Link>
+          </div>
         </div>
       )}
 
