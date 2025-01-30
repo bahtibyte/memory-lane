@@ -8,7 +8,7 @@ import { useTimeline } from '@/app/context/timeline-context';
 import { generateS3Url , createPhotoEntry} from '@/app/utils/api';
 
 export default function UploadPage() {
-  const group_id = useParams()['group-id'] as string;
+  const memory_id = useParams()['memory-id'] as string;
   const { memoryLane, setMemoryLane } = useTimeline();
 
   const [title, setTitle] = useState('');
@@ -97,7 +97,7 @@ export default function UploadPage() {
 
     try {
       const result = await createPhotoEntry({
-        memory_lane: group_id,
+        memory_id: memory_id,
         title,
         caption,
         date,
@@ -108,7 +108,7 @@ export default function UploadPage() {
         // Add the new photo to timeline data
         if (memoryLane) {
           setMemoryLane({
-            group_info: memoryLane.group_info,
+            group_data: memoryLane.group_data,
             photo_entries: [...memoryLane.photo_entries, result.photo_entry]
           });
         }
@@ -144,7 +144,7 @@ export default function UploadPage() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <Link
-        href={`/${group_id}`}
+        href={`/${memory_id}`}
         className="inline-block mb-4 text-blue-500 hover:text-blue-600"
       >
         ← Back to Group
@@ -264,13 +264,13 @@ export default function UploadPage() {
           )}
           <div className="mt-4 flex gap-4">
             <Link
-              href={`/${group_id}`}
+              href={`/${memory_id}`}
               className="flex-1 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 text-center"
             >
               Back to Memory Lane
             </Link>
             <Link
-              href={`/${group_id}/upload-photo`}
+              href={`/${memory_id}/upload-photo`}
               onClick={resetForm}
               className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 text-center"
             >

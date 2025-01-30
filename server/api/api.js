@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
+
 import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 import { rds } from './rds.js';
@@ -24,15 +25,15 @@ async function hash(passcode) {
   });
 }
 
-function build_group_info(id_lookup, group_info) {
+function build_group_data(group_lookup, group_data) {
   return {
-    'uuid': id_lookup.uuid,
-    'group_name': group_info.group_name,
-    'group_url': group_url(id_lookup.uuid),
-    'is_public': group_info.is_public,
-    'passcode': group_info.passcode,
-    'alias': id_lookup.alias,
-    'alias_url': alias_url(id_lookup.alias),
+    'uuid': group_lookup.uuid,
+    'group_name': group_data.group_name,
+    'group_url': group_url(group_lookup.uuid),
+    'is_public': group_data.is_public,
+    'passcode': group_data.passcode,
+    'alias': group_lookup.alias,
+    'alias_url': alias_url(group_lookup.alias),
   }
 }
 
@@ -61,10 +62,10 @@ async function verifyGroup(group_id, passcode) {
   }
 };
 
-async function ml_id_lookup(memory_lane) {
+async function ml_group_lookup(memory_id) {
   const result = await rds.query(
-    `SELECT * FROM ml_id_lookup WHERE uuid = $1 OR alias = $1`,
-    [memory_lane]
+    `SELECT * FROM ml_group_lookup WHERE uuid = $1 OR alias = $1`,
+    [memory_id]
   );
   return result;
 }
@@ -84,25 +85,25 @@ export const createGroup = async (req, res) => {
     return res.status(400).json({ error: 'Group name is required' });
   }
   const uuid = uuidv4();
-  console.log(`Creating new ml_id_lookup entry with uuid: ${uuid}`);
+  console.log(`Creating new ml_group_lookup entry with uuid: ${uuid}`);
 
   try {
     // Start transaction
     await rds.query('BEGIN');
 
-    const id_lookup_result = await rds.query(
-      `INSERT INTO ml_id_lookup (uuid) VALUES ($1) RETURNING *`,
+    const group_lookup_result = await rds.query(
+      `INSERT INTO ml_group_lookup (uuid) VALUES ($1) RETURNING *`,
       [uuid]
     );
 
-    if (id_lookup_result.rowCount === 0) {
+    if (group_lookup_result.rowCount === 0) {
       await rds.query('ROLLBACK');
       return res.status(400).json({ error: 'Failed to create group' });
     }
 
     const group_info_result = await rds.query(
       `INSERT INTO ml_group_info (group_id, group_name) VALUES ($1, $2) RETURNING *`,
-      [id_lookup_result.rows[0].group_id, group_name]
+      [group_lookup_result.rows[0].group_id, group_name]
     );
 
     if (group_info_result.rowCount === 0) {
@@ -111,14 +112,14 @@ export const createGroup = async (req, res) => {
     }
     await rds.query('COMMIT');
 
-    const id_lookup = id_lookup_result.rows[0];
-    const group_info = group_info_result.rows[0];
+    const group_lookup = group_lookup_result.rows[0];
+    const group_data = group_info_result.rows[0];
 
     return res.status(200).json({
       'result': {
-        'uuid': id_lookup.uuid,
-        'group_name': group_info.group_name,
-        'group_url': group_url(id_lookup.uuid),
+        'uuid': group_lookup.uuid,
+        'group_name': group_data.group_name,
+        'group_url': group_url(group_lookup.uuid),
       },
     });
   }
@@ -131,20 +132,20 @@ export const createGroup = async (req, res) => {
 };
 
 export const updateGroupName = async (req, res) => {
-  const { memory_lane, group_name } = req.body;
-  console.log(`Editing memory lane: ${memory_lane} and name: ${group_name}`);
+  const { memory_id, group_name } = req.body;
+  console.log(`Editing memory lane: ${memory_id} and name: ${group_name}`);
 
-  if (!memory_lane || !group_name) {
+  if (!memory_id || !group_name) {
     return res.status(400).json({ error: 'Memory lane and name are required' });
   }
 
-  const lookup_result = await ml_id_lookup(memory_lane);
+  const lookup_result = await ml_group_lookup(memory_id);
   if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_lane}.` });
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
 
-  const id_lookup = lookup_result.rows[0];
-  const group_id = id_lookup.group_id;
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
 
   // Update the group name in the database
   const result = await rds.query(
@@ -159,21 +160,21 @@ export const updateGroupName = async (req, res) => {
   // Return the updated group_name
   return res.status(200).json({
     message: 'Group name updated successfully.',
-    group_info: build_group_info(id_lookup, result.rows[0])
+    group_data: build_group_data(group_lookup, result.rows[0])
   });
 };
 
 export const updateGroupPrivacy = async (req, res) => {
-  const { memory_lane, is_public, passcode } = req.body;
-  console.log(`Updating group privacy for id: ${memory_lane}, is_public: ${is_public}, and passcode: ${passcode}`);
+  const { memory_id, is_public, passcode } = req.body;
+  console.log(`Updating group privacy for id: ${memory_id}, is_public: ${is_public}, and passcode: ${passcode}`);
 
-  const lookup_result = await ml_id_lookup(memory_lane);
+  const lookup_result = await ml_group_lookup(memory_id);
   if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_lane}.` });
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
 
-  const id_lookup = lookup_result.rows[0];
-  const group_id = id_lookup.group_id;
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
 
   const update_result = await rds.query(
     `UPDATE ml_group_info SET is_public = $1, passcode = $2 WHERE group_id = $3 RETURNING *`,
@@ -186,62 +187,62 @@ export const updateGroupPrivacy = async (req, res) => {
 
   return res.status(200).json({
     message: 'Group privacy updated successfully.',
-    group_info: build_group_info(id_lookup, update_result.rows[0])
+    group_data: build_group_data(group_lookup, update_result.rows[0])
   });
 }
 
 export const updateGroupAlias = async (req, res) => {
-  const { memory_lane, alias } = req.body;
-  console.log(`Updating group alias for id: ${memory_lane}, alias: ${alias}`);
+  const { memory_id, alias } = req.body;
+  console.log(`Updating group alias for id: ${memory_id}, alias: ${alias}`);
 
-  const lookup_result = await ml_id_lookup(memory_lane);
+  const lookup_result = await ml_group_lookup(memory_id);
   if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_lane}.` });
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
-  const id_lookup = lookup_result.rows[0];
+  const group_lookup = lookup_result.rows[0];
 
-  const conflicting_alias = await ml_id_lookup(alias);
+  const conflicting_alias = await ml_group_lookup(alias);
   if (conflicting_alias.rowCount > 0) {
     return res.status(400).json({ error: `Alias ${alias} already exists.` });
   }
 
   const update_result = await rds.query(
-    `UPDATE ml_id_lookup SET alias = $1 WHERE group_id = $2 RETURNING *`,
-    [alias, id_lookup.group_id]
+    `UPDATE ml_group_lookup SET alias = $1 WHERE group_id = $2 RETURNING *`,
+    [alias, group_lookup.group_id]
   );
 
   const updated_id_lookup = update_result.rows[0];
   
   const group_info_result = await rds.query(
     `SELECT * FROM ml_group_info WHERE group_id = $1`,
-    [id_lookup.group_id]
+    [group_lookup.group_id]
   );
 
   if (group_info_result.rowCount === 0) {
     return res.status(400).json({ error: 'Failed to update group alias.' });
   }
 
-  const group_info = group_info_result.rows[0];
+  const group_data = group_info_result.rows[0];
 
   return res.status(200).json({
     message: 'Group alias updated successfully.',
-    group_info: build_group_info(updated_id_lookup, group_info)
+    group_data: build_group_data(updated_id_lookup, group_data)
   });
 }
 
 export const deletePhoto = async (req, res) => {
-  const { memory_lane, photo_id } = req.body;
+  const { memory_id, photo_id } = req.body;
 
-  if (!memory_lane || !photo_id) {
+  if (!memory_id || !photo_id) {
     return res.status(400).json({ error: 'Memory lane and photo ID are required.' });
   }
   console.log(`Deleting photo with id: ${photo_id}`);
-  const lookup_result = await ml_id_lookup(memory_lane);
+  const lookup_result = await ml_group_lookup(memory_id);
   if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_lane}.` });
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
-  const id_lookup = lookup_result.rows[0];
-  const group_id = id_lookup.group_id;
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
 
   // Delete the photo
   const deleteResult = await rds.query(
@@ -261,16 +262,16 @@ export const deletePhoto = async (req, res) => {
 };
 
 export const getMemoryLane = async (req, res) => {
-  const { memory_lane } = req.query;
-  console.log(`Getting memory lane for id: ${memory_lane}`);
+  const { memory_id } = req.query;
+  console.log(`Getting memory lane for id: ${memory_id}`);
 
-  const lookup_result = await ml_id_lookup(memory_lane);
+  const lookup_result = await ml_group_lookup(memory_id);
   if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_lane}.` });
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
 
-  const id_lookup = lookup_result.rows[0];
-  const group_id = id_lookup.group_id;
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
 
   const memoryLane = await rds.query(
     `SELECT * FROM ml_group_info WHERE group_id = $1`,
@@ -289,21 +290,21 @@ export const getMemoryLane = async (req, res) => {
   );
 
   return res.status(200).json({
-    'group_info': build_group_info(id_lookup, group),
+    'group_data': build_group_data(group_lookup, group),
     'photo_entries': photos_results.rows,
   });
 };
 
 export const editPhoto = async (req, res) => {
-  const { memory_lane, photo_id, photo_title, photo_date, photo_caption } = req.body;
+  const { memory_id, photo_id, photo_title, photo_date, photo_caption } = req.body;
 
-  const lookup_result = await ml_id_lookup(memory_lane);
+  const lookup_result = await ml_group_lookup(memory_id);
   if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_lane}.` });
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
 
-  const id_lookup = lookup_result.rows[0];
-  const group_id = id_lookup.group_id;
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
 
   const update_result = await rds.query(
     `UPDATE ml_photos SET photo_title = $1, photo_date = $2, photo_caption = $3 WHERE photo_id = $4 AND group_id = $5 RETURNING *`,
@@ -389,18 +390,18 @@ export const presignedS3Url = async (req, res) => {
 
 export const createPhotoEntry = async (req, res) => {
   console.log("received request to upload photo");
-  const { memory_lane, photo_title, photo_date, photo_caption, photo_url } = req.body;
-  if (!memory_lane || !photo_url || !photo_title || !photo_date || !photo_caption) {
+  const { memory_id, photo_title, photo_date, photo_caption, photo_url } = req.body;
+  if (!memory_id || !photo_url || !photo_title || !photo_date || !photo_caption) {
     console.log("missing required fields");
     return res.status(400).json({ error: 'missing required fields.' });
   }
 
-  const lookup_result = await ml_id_lookup(memory_lane);
+  const lookup_result = await ml_group_lookup(memory_id);
   if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_lane}.` });
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
-  const id_lookup = lookup_result.rows[0];
-  const group_id = id_lookup.group_id;
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
 
   // Insert the photo entry into the database.
   const result = await rds.query(

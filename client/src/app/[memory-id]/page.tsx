@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { StatsContainer } from '../components/StatsContainer';
-import { ImageOverlay } from '../components/ImageOverlay';
-import { PhotoEntry } from '../components/PhotoEntry';
+import { ImageOverlay } from '../components/photos/ImageOverlay';
+import { PhotoEntry } from '../components/photos/PhotoEntry';
 import { useTimeline } from '@/app/context/timeline-context';
 
 
@@ -31,7 +31,7 @@ function getYearsSpan(dates: string[]) {
 }
 
 export default function Timeline() {
-  const group_id = useParams()['group-id'] as string;
+  const memory_id = useParams()['memory-id'] as string;
   const {
     memoryLane,
     loading,
@@ -44,8 +44,8 @@ export default function Timeline() {
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
 
   useEffect(() => {
-    fetchData(group_id);
-  }, [group_id, fetchData]);
+    fetchData(memory_id);
+  }, [memory_id, fetchData]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -108,7 +108,7 @@ export default function Timeline() {
     );
   }
 
-  if (!group_id || failedToLoad || !memoryLane) {
+  if (!memory_id || failedToLoad || !memoryLane) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Page not found</h1>
@@ -134,10 +134,10 @@ export default function Timeline() {
   if (photoCount === 0) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
-        <h1 className="text-white text-2xl mb-4">{memoryLane.group_info.group_name} timeline!</h1>
+        <h1 className="text-white text-2xl mb-4">{memoryLane.group_data.group_name} timeline!</h1>
         <h1 className="text-white text-2xl mb-4">No group photos added yet</h1>
         <Link
-          href={`/${group_id}/upload-photo`}
+          href={`/${memory_id}/upload-photo`}
           className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors"
         >
           Upload first photo
@@ -153,16 +153,16 @@ export default function Timeline() {
       <div className="max-w-[1000px] mx-auto">
         {/* Header with Group Name and Action Buttons */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-[32px] md:text-[50px] font-bold">{memoryLane.group_info.group_name}</h1>
+          <h1 className="text-[32px] md:text-[50px] font-bold">{memoryLane.group_data.group_name}</h1>
           <div className="flex gap-4">
             <Link
-              href={`/${group_id}/upload-photo`}
+              href={`/${memory_id}/upload-photo`}
               className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors text-sm md:text-base"
             >
               Upload Photo
             </Link>
             <Link
-              href={`/${group_id}/edit-group`}
+              href={`/${memory_id}/edit-group`}
               className="px-4 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors text-sm md:text-base"
             >
               Edit Group

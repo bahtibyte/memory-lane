@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import CloseIcon from '../icons/CloseIcon';
 
 interface ImageOverlayProps {
   image: {
@@ -18,10 +19,9 @@ export function ImageOverlay({ image, onClose }: ImageOverlayProps) {
         onClick={onClose}
         className="absolute top-4 right-4 text-white hover:text-gray-300 z-50"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <CloseIcon />
       </button>
+
       <div className="relative w-full h-full p-4 flex items-center justify-center">
         <Image
           src={image.url}

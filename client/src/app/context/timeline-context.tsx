@@ -22,9 +22,9 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const FETCH_COOLDOWN = 2000; // 2 seconds cooldown between fetches
 
-  const fetchData = async (memory_lane: string | null) => {
-    if (!memory_lane) {
-      console.log('no memory_lane, not fetching');
+  const fetchData = async (memory_id: string | null) => {
+    if (!memory_id) {
+      console.log('no memory_id, not fetching');
       return;
     }
     if (failedToLoad) {
@@ -32,12 +32,12 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (memoryLane && (memoryLane.group_info.uuid === memory_lane || memoryLane.group_info.alias === memory_lane)) {
+    if (memoryLane && (memoryLane.group_data.uuid === memory_id || memoryLane.group_data.alias === memory_id)) {
       console.log('already have data, not fetching');
       return;
     }
 
-    console.log('requesting a fetch for', memory_lane);
+    console.log('requesting a fetch for', memory_id);
     const now = Date.now();
     if (now - lastFetchTime < FETCH_COOLDOWN) {
       console.log('fetching too frequently, skipping');
@@ -46,7 +46,7 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
     setLastFetchTime(now);
     setLoading(true);
 
-    const data = await getMemoryLane(memory_lane);
+    const data = await getMemoryLane(memory_id);
     if (data) {
       setMemoryLane(data);
     } else {

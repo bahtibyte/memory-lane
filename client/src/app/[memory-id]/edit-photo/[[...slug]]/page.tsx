@@ -18,7 +18,7 @@ export default function EditPhotoPage() {
   const router = useRouter();
   const params = useParams();
 
-  const group_id = params['group-id'] as string;
+  const memory_id = params['memory-id'] as string;
   const photo_id = parseInt(params.slug?.[0] || '0');
 
   const { memoryLane, loading, fetchData, setMemoryLane } = useTimeline();
@@ -30,7 +30,7 @@ export default function EditPhotoPage() {
     photo_caption: '',
   });
 
-  useEffect(() => { fetchData(group_id); }, [group_id, fetchData]);
+  useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
 
   useEffect(() => {
     if (memoryLane && photo_id) {
@@ -58,7 +58,7 @@ export default function EditPhotoPage() {
     return (
       <div className="min-h-screen p-4 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Photo not found</h1>
-        <Link href={`/${group_id}`} className="text-[#CCC7F8] hover:text-white underline">
+        <Link href={`/${memory_id}`} className="text-[#CCC7F8] hover:text-white underline">
           Go back to timeline
         </Link>
       </div>
@@ -79,7 +79,7 @@ export default function EditPhotoPage() {
     console.log('Saving changes:', formData);
 
     const result = await editPhoto({
-      memory_lane: group_id,
+      memory_id: memory_id,
       photo_id: photo_id,
       photo_title: formData.photo_title,
       photo_date: formData.photo_date,
@@ -88,10 +88,10 @@ export default function EditPhotoPage() {
 
     if (result && memoryLane) {
       setMemoryLane({
-        group_info: memoryLane.group_info,
+        group_data: memoryLane.group_data,
         photo_entries: memoryLane.photo_entries.map(entry => entry.photo_id === photo_id ? result.updated_photo : entry)
       });
-      router.push(`/${group_id}`);
+      router.push(`/${memory_id}`);
     }
   };
 
@@ -158,7 +158,7 @@ export default function EditPhotoPage() {
 
           <div className="flex gap-4 pt-4">
             <Link
-              href={`/${group_id}`}
+              href={`/${memory_id}`}
               className="flex-1 px-4 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors text-center"
             >
               Cancel

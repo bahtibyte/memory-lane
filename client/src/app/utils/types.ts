@@ -1,20 +1,9 @@
-
-
-
-export interface TimelineData {
-  group_id: string;
-  group_name: string;
-  photo_entries: PhotoEntry[];
-  friends: { [key: string]: Friend };
-  // Add other fields as needed
-}
-
 export interface MemoryLane {
-  group_info: GroupInfo;
+  group_data: GroupData;
   photo_entries: PhotoEntry[];
 }
 
-export interface GroupInfo {
+export interface GroupData {
   uuid: string;
   group_name: string;
   group_url: string;

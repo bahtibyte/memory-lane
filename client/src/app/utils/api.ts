@@ -1,8 +1,8 @@
 const API = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
 
-export const getMemoryLane = async (memory_lane: string) => {
+export const getMemoryLane = async (memory_id: string) => {
   try {
-    const response = await fetch(`${API}/get-memory-lane?memory_lane=${memory_lane}`);
+    const response = await fetch(`${API}/get-memory-lane?memory_id=${memory_id}`);
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.error || 'Failed to retrieve memory lane');
@@ -49,7 +49,7 @@ export const generateS3Url = async (file_name: string) => {
 }
 
 export const createPhotoEntry = async (formData: {
-  memory_lane: string,
+  memory_id: string,
   title: string,
   caption: string,
   date: string,
@@ -62,7 +62,7 @@ export const createPhotoEntry = async (formData: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        memory_lane: formData.memory_lane,
+        memory_id: formData.memory_id,
         photo_title: formData.title,
         photo_caption: formData.caption,
         photo_date: formData.date,
@@ -80,14 +80,14 @@ export const createPhotoEntry = async (formData: {
   }
 }
 
-export const deletePhoto = async (memory_lane: string, photo_id: number) => {
+export const deletePhoto = async (memory_id: string, photo_id: number) => {
   try {
     const response = await fetch(`${API}/delete-photo`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ memory_lane, photo_id })
+      body: JSON.stringify({ memory_id, photo_id })
     });
     const data = await response.json();
     return data;
@@ -98,7 +98,7 @@ export const deletePhoto = async (memory_lane: string, photo_id: number) => {
 }
 
 export const editPhoto = async (formData: {
-  memory_lane: string,
+  memory_id: string,
   photo_id: number,
   photo_title: string,
   photo_date: string,
@@ -124,7 +124,7 @@ export const editPhoto = async (formData: {
 }
 
 export const updateGroupName = async (formData: {
-  memory_lane: string,
+  memory_id: string,
   group_name: string,
 }) => {
   try {
@@ -147,7 +147,7 @@ export const updateGroupName = async (formData: {
 }
 
 export const updateGroupPrivacy = async (formData: {
-  memory_lane: string,
+  memory_id: string,
   is_public: boolean,
   passcode: string,
 }) => {
@@ -171,7 +171,7 @@ export const updateGroupPrivacy = async (formData: {
 }
 
 export const updateGroupAlias = async (formData: {
-  memory_lane: string,
+  memory_id: string,
   alias: string | null,
 }) => {
   try {
