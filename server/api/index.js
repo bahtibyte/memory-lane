@@ -10,8 +10,9 @@ import {
   editPhoto,
   getMemoryLane,
   updateGroupPrivacy,
-  updateGroupAlias
+  updateGroupAlias,
 } from './api.js';
+import { verifyAuth, setRefreshToken, getUser, clearRefreshToken } from './auth.js';
 
 const app = express();
 
@@ -27,6 +28,11 @@ app.use(
 app.use(express.json()); // Adjust the limit as needed
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
+
+app.post('/api/set-refresh-token', verifyAuth, setRefreshToken);
+app.post('/api/clear-refresh-token', verifyAuth, clearRefreshToken);
+app.get('/api/get-user', verifyAuth, getUser);
+
 app.post('/api/create-group', createGroup);
 app.post('/api/update-group-name', updateGroupName);
 app.post('/api/update-group-privacy', updateGroupPrivacy);

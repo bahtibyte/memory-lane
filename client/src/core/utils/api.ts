@@ -1,4 +1,70 @@
+import { getAccessToken } from "./tokens";
+import { User } from "./types";
+
 const API = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
+
+export const setRefreshToken = async (refresh_token: string) => {
+  try {
+    const response = await fetch(`${API}/set-refresh-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAccessToken()}`
+      },
+      body: JSON.stringify({ refresh_token }),
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to set refresh token');
+    }
+    return response;
+  } catch (error) {
+    console.log('Error setting refresh token:', error);
+    return null;
+  }
+}
+
+export const clearRefreshToken = async () => {
+  try {
+    const response = await fetch(`${API}/clear-refresh-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAccessToken()}`
+      },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to set refresh token');
+    }
+    return response;
+  } catch (error) {
+    console.log('Error setting refresh token:', error);
+    return null;
+  }
+}
+
+
+
+export const getUser = async (): Promise<User | null> => {
+  try {
+    const response = await fetch(`${API}/get-user`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAccessToken()}`
+      },
+    });
+    const data = await response.json();
+    if (!response.ok || !data.user) {
+      return null;
+    }
+    return data.user;
+  } catch (error) {
+    console.log('Error fetching user:', error);
+    return null;
+  }
+}
 
 export const getMemoryLane = async (memory_id: string) => {
   try {

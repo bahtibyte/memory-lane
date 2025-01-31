@@ -11,7 +11,9 @@
   "description": "",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.738.0",
     "argon2": "^0.41.1",
+    "aws-jwt-verify": "^5.0.0",
     "aws-sdk": "^2.1692.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

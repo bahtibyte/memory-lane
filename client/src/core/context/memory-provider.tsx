@@ -1,9 +1,9 @@
 'use client';
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { getMemoryLane } from '../utils/api';
-import { MemoryLane } from '../utils/types';
+import { getMemoryLane } from '../../core/utils/api';
+import { MemoryLane } from '../../core/utils/types';
 
-interface TimelineContextType {
+interface MemoryLaneContextType {
   memoryLane: MemoryLane | null;
   setMemoryLane: (data: MemoryLane | null) => void;
   loading: boolean;
@@ -13,9 +13,9 @@ interface TimelineContextType {
   fetchData: (group_id: string) => void;
 }
 
-const TimelineContext = createContext<TimelineContextType | undefined>(undefined);
+const MemoryLaneContext = createContext<MemoryLaneContextType | undefined>(undefined);
 
-export function TimelineProvider({ children }: { children: ReactNode }) {
+export function MemoryLaneProvider({ children }: { children: ReactNode }) {
   const [memoryLane, setMemoryLane] = useState<MemoryLane | null>(null);
   const [loading, setLoading] = useState(false);
   const [failedToLoad, setFailedToLoad] = useState(false);
@@ -57,7 +57,7 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <TimelineContext.Provider
+    <MemoryLaneContext.Provider
       value={{
         memoryLane,
         setMemoryLane,
@@ -69,14 +69,14 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </TimelineContext.Provider>
+    </MemoryLaneContext.Provider>
   );
 }
 
-export function useTimeline() {
-  const context = useContext(TimelineContext);
+export function useMemoryLane() {
+  const context = useContext(MemoryLaneContext);
   if (context === undefined) {
-    throw new Error('useTimeline must be used within a TimelineProvider');
+    throw new Error('useMemoryLane must be used within a MemoryLaneProvider');
   }
   return context;
 }

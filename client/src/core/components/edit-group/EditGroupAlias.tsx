@@ -1,5 +1,5 @@
-import { updateGroupAlias } from "@/app/utils/api";
-import { MemoryLane } from "@/app/utils/types";
+import { updateGroupAlias } from "@/core/utils/api";
+import { MemoryLane } from "@/core/utils/types";
 import { useRouter } from "next/dist/client/components/navigation";
 import Link from "next/link";
 import { useState } from "react";

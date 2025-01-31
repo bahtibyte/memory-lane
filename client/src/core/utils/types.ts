@@ -1,3 +1,11 @@
+
+export interface User {
+  username: string;
+  email: string;
+  profile_name: string;
+  profile_url: string;
+}
+
 export interface MemoryLane {
   group_data: GroupData;
   photo_entries: PhotoEntry[];

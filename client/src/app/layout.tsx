@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "../styles/globals.css";
 import { Roboto } from 'next/font/google';
-import { TimelineProvider } from './context/timeline-context';
-import { AuthProvider } from "./context/auth-provider";
+import { MemoryLaneProvider } from '@/core/context/memory-provider';
+import { AuthProvider } from "@/core/context/auth-provider";
 
 const roboto = Roboto({
   weight: '500',
@@ -13,6 +13,9 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Photo Timeline",
   description: "A visual journey through time - view your photos and memories in a beautiful timeline format",
+  icons: {
+    icon: '/favicon.ico',
+  },
   keywords: ["photos", "timeline", "memories", "gallery", "photo journal"],
   authors: [{ name: "Photo Timeline Team" }],
   openGraph: {
@@ -31,9 +34,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={roboto.className}>
         <AuthProvider>
-          <TimelineProvider>
+          <MemoryLaneProvider>
             {children}
-          </TimelineProvider>
+          </MemoryLaneProvider>
         </AuthProvider>
       </body>
     </html>

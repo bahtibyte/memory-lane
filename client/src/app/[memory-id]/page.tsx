@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { StatsContainer } from '../components/StatsContainer';
-import { ImageOverlay } from '../components/photos/ImageOverlay';
-import { PhotoEntry } from '../components/photos/PhotoEntry';
-import { useTimeline } from '@/app/context/timeline-context';
-
+import { StatsContainer } from '../../core/components/StatsContainer';
+import { ImageOverlay } from '../../core/components/photos/ImageOverlay';
+import { PhotoEntry } from '../../core/components/photos/PhotoEntry';
+import { useMemoryLane } from '@/core/context/memory-provider';
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
@@ -37,7 +36,7 @@ export default function Timeline() {
     loading,
     failedToLoad,
     fetchData
-  } = useTimeline();
+  } = useMemoryLane();
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});

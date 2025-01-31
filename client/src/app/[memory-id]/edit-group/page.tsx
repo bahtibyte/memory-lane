@@ -2,14 +2,14 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useTimeline } from '@/app/context/timeline-context';
-import EditGroupName from '@/app/components/edit-group/EditGroupName';
-import EditGroupPrivacy from '@/app/components/edit-group/EditGroupPrivacy';
-import EditGroupAlias from '@/app/components/edit-group/EditGroupAlias';
-import EditGroupPhotos from '@/app/components/edit-group/EditGroupPhotos';
-import BackToGroup from '@/app/components/BackToGroup';
-import Loading from '@/app/components/Loading';
-import PageNotFound from '@/app/components/PageNotFound';
+import { useMemoryLane } from '@/core/context/memory-provider';
+import EditGroupName from '@/core/components/edit-group/EditGroupName';
+import EditGroupPrivacy from '@/core/components/edit-group/EditGroupPrivacy';
+import EditGroupAlias from '@/core/components/edit-group/EditGroupAlias';
+import EditGroupPhotos from '@/core/components/edit-group/EditGroupPhotos';
+import BackToGroup from '@/core/components/BackToGroup';
+import Loading from '@/core/components/Loading';
+import PageNotFound from '@/core/components/PageNotFound';
 
 export default function EditGroupPage() {
   const memory_id = useParams()['memory-id'] as string;
@@ -20,7 +20,7 @@ export default function EditGroupPage() {
     loading,
     failedToLoad,
     fetchData
-  } = useTimeline();
+  } = useMemoryLane();
 
   useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
 

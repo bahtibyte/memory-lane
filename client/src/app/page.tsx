@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import GetStarted from './components/landing/GetStarted';
+import GetStarted from '../core/components/landing/GetStarted';
 
 export default function LandingPage() {
   return (

@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useTimeline } from '@/app/context/timeline-context';
+import { useMemoryLane } from '@/core/context/memory-provider';
 import Link from 'next/link';
-import { PhotoEntry } from '@/app/utils/types';
-import { editPhoto } from '@/app/utils/api';
+import { PhotoEntry } from '@/core/utils/types';
+import { editPhoto } from '@/core/utils/api';
 
 interface PhotoFormData {
   photo_date: string;
@@ -21,7 +21,7 @@ export default function EditPhotoPage() {
   const memory_id = params['memory-id'] as string;
   const photo_id = parseInt(params.slug?.[0] || '0');
 
-  const { memoryLane, loading, fetchData, setMemoryLane } = useTimeline();
+  const { memoryLane, loading, fetchData, setMemoryLane } = useMemoryLane();
   const [photoEntry, setPhotoEntry] = useState<PhotoEntry | null>(null);
 
   const [formData, setFormData] = useState<PhotoFormData>({

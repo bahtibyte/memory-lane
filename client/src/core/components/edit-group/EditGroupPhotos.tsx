@@ -1,5 +1,5 @@
-import { deletePhoto } from "@/app/utils/api";
-import { MemoryLane } from "@/app/utils/types";
+import { deletePhoto } from "@/core/utils/api";
+import { MemoryLane } from "@/core/utils/types";
 import Link from "next/link";
 
 interface EditGroupPhotosProps {

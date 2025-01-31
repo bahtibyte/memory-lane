@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateGroupName } from '@/app/utils/api';
-import { MemoryLane } from '@/app/utils/types';
+import { updateGroupName } from '@/core/utils/api';
+import { MemoryLane } from '@/core/utils/types';
 import EditIcon from '../icons/EditIcon';
 
 interface EditGroupNameProps {

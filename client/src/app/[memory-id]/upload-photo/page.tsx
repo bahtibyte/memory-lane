@@ -4,12 +4,12 @@ import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { useTimeline } from '@/app/context/timeline-context';
-import { generateS3Url , createPhotoEntry} from '@/app/utils/api';
+import { useMemoryLane } from '@/core/context/memory-provider';
+import { generateS3Url , createPhotoEntry} from '@/core/utils/api';
 
 export default function UploadPage() {
   const memory_id = useParams()['memory-id'] as string;
-  const { memoryLane, setMemoryLane } = useTimeline();
+  const { memoryLane, setMemoryLane } = useMemoryLane();
   const groupName = memoryLane?.group_data.group_name || 'Loading...';
 
   const [title, setTitle] = useState('');

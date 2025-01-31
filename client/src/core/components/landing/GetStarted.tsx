@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/app/context/auth-provider";
+import { useAuth } from "@/core/context/auth-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -21,7 +21,7 @@ export default function GetStarted() {
       return;
     }
 
-    router.push(isAuthenticated ? "/groups" : "/auth");
+    router.push(isAuthenticated ? "/my-groups" : "/authentication");
   };
 
   return (
