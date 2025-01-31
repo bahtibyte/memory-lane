@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import GetStarted from './components/landing/GetStarted';
 
 export default function LandingPage() {
   return (
@@ -40,12 +41,8 @@ export default function LandingPage() {
 
           {/* Buttons Positioned on Top of the Line & Shifted Right */}
           <div className="absolute right-10 flex gap-4">
-            <Link
-              href="/create-group"
-              className="px-6 py-3 text-lg bg-gradient-to-r from-pink-200 to-purple-400 text-black rounded-full hover:from-pink-100 hover:to-purple-300 transition-all"
-            >
-              GET STARTED
-            </Link>
+            <GetStarted />
+
             <Link
               href="/demo"
               className="px-6 py-3 text-lg bg-black border-2 border-purple-300 text-purple-300 rounded-full hover:bg-purple-300 hover:text-black transition-colors"

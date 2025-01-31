@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Roboto } from 'next/font/google';
 import { TimelineProvider } from './context/timeline-context';
+import { AuthProvider } from "./context/auth-provider";
 
 const roboto = Roboto({
   weight: '500',
@@ -29,9 +30,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={roboto.className}>
-        <TimelineProvider>
-          {children}
-        </TimelineProvider>
+        <AuthProvider>
+          <TimelineProvider>
+            {children}
+          </TimelineProvider>
+        </AuthProvider>
       </body>
     </html>
   );
