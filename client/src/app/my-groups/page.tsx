@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/core/context/auth-provider";
 import { Routes } from "@/core/utils/routes";
 import { useRouter } from "next/navigation";
-import SignOutButton from "@/core/components/SignOutButton";
+import SignOutButton from "@/app/components/SignOutButton";
 import Image from "next/image";
-import LoadingScreen from "@/core/components/Loading";
+import LoadingScreen from "@/app/components/Loading";
 import { createGroup, getOwnedGroups } from '@/core/utils/api';
 import { GroupData } from "@/core/utils/types";
 

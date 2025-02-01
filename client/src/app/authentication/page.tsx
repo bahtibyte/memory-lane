@@ -8,7 +8,7 @@ import { setTokens } from '@/core/utils/tokens';
 import { getUser } from '@/core/utils/api';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/core/utils/routes';
-import LoadingScreen from '@/core/components/Loading';
+import LoadingScreen from '@/app/components/Loading';
 
 export default function AuthPage() {
   const router = useRouter();

@@ -1,5 +1,5 @@
-import { useAuth } from '../context/auth-provider';
-import { clearTokens } from '../utils/tokens';
+import { useAuth } from '../../core/context/auth-provider';
+import { clearTokens } from '../../core/utils/tokens';
 
 export default function SignOutButton() {
   const { setUser } = useAuth();

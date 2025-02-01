@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { StatsContainer } from '@/core/components/StatsContainer';
-import { ImageOverlay } from '@/core/components/photos/ImageOverlay';
-import { PhotoEntry } from '@/core/components/photos/PhotoEntry';
+import { StatsContainer } from '@/app/components/StatsContainer';
+import { ImageOverlay } from '@/app/components/photos/ImageOverlay';
+import { PhotoEntry } from '@/app/components/photos/PhotoEntry';
 import { useMemoryLane } from '@/core/context/memory-provider';
 import { useAuth } from '@/core/context/auth-provider';
-import LoadingScreen from '@/core/components/Loading';
+import LoadingScreen from '@/app/components/Loading';
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
