@@ -3,7 +3,6 @@
 import { useState, FormEvent, DragEvent } from 'react';
 import Image from 'next/image';
 import { generateS3Url, createPhotoEntry } from '@/core/utils/api';
-import browseIcon from '@/app/[memory-id]/upload-photo/browseIcon.png';
 
 interface PhotoUploadProps {
   memory_id: string;
@@ -172,11 +171,12 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
           ) : (
             <div className="flex flex-col items-center space-y-4">
               <Image
-                src={browseIcon}
+                src={"/browseIcon.png"}
                 alt="Upload"
                 width={96}
                 height={96}
                 className="text-purple-300"
+
               />
               <div className="text-center space-y-2">
                 <p className="text-purple-300 text-lg font-medium">
