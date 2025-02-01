@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemoryLane } from '@/core/context/memory-provider';
-
 import PhotoUpload from '@/app/[memory-id]/upload-photo/PhotoUpload';
 import { useEffect, useState } from 'react';
+import { PhotoEntry } from '@/core/utils/types';
 
 export default function UploadPage() {
   const memory_id = useParams()['memory-id'] as string;
@@ -14,7 +14,7 @@ export default function UploadPage() {
 
   const groupName = memoryLane?.group_data.group_name || 'Loading...';
 
-  const handleSuccess = (photoEntry: any) => {
+  const handleSuccess = (photoEntry: PhotoEntry) => {
     if (memoryLane) {
       setMemoryLane({
         group_data: memoryLane.group_data,

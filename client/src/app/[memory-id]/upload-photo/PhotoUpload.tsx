@@ -3,10 +3,11 @@
 import { useState, FormEvent, DragEvent } from 'react';
 import Image from 'next/image';
 import { generateS3Url, createPhotoEntry } from '@/core/utils/api';
+import { PhotoEntry } from '@/core/utils/types';
 
 interface PhotoUploadProps {
   memory_id: string;
-  onSuccess?: (photoEntry: any) => void;
+  onSuccess: (photoEntry: PhotoEntry) => void;
 }
 
 export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) {
@@ -15,10 +16,9 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
   const [date, setDate] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string>('');
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingToS3, setIsUploadingToS3] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePhotoChange = async (file: File | null) => {
     if (photoUrl) {
@@ -95,7 +95,6 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess(false);
     setIsLoading(true);
 
     if (!photo || !title || !date) {
@@ -114,8 +113,7 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
       });
 
       if (result) {
-        setSuccess(true);
-        onSuccess?.(result.photo_entry);
+        onSuccess(result.photo_entry);
         resetForm();
       } else {
         setError('Failed to upload photo. Please try again.');

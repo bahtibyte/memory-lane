@@ -9,7 +9,6 @@ import Image from "next/image";
 import LoadingScreen from "@/core/components/Loading";
 import { createGroup, getOwnedGroups } from '@/core/utils/api';
 import { GroupData } from "@/core/utils/types";
-import DefaultGroupImage from '../public/default-group.png';
 
 
 
