@@ -1,7 +1,23 @@
-import { getAccessToken } from "./tokens";
+import { getAccessToken, getCookies } from "./tokens";
 import { User } from "./types";
 
 const API = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
+
+const ACCESS_TOKEN_EXPIRE_BUFFER = 0; // 1 day
+
+export const getAuthorization = async (): Promise<string | null> => {
+  const cookies = getCookies();
+  const expires_at = Number(cookies["expires_at"]);
+  console.log("[api]: Expires at.", expires_at);
+  if (Date.now() >= expires_at - ACCESS_TOKEN_EXPIRE_BUFFER) {
+    console.log("[api]: Refreshing tokens.");
+    const response = await refreshTokens();
+    console.log("[api]: Refresh tokens response.", response);
+    return null;
+  }
+  console.log("[api]: Returning authorziation token.");
+  return `Bearer ${cookies["access_token"]}`;
+}
 
 export const setRefreshToken = async (refresh_token: string) => {
   try {
@@ -24,6 +40,17 @@ export const setRefreshToken = async (refresh_token: string) => {
   }
 }
 
+export const refreshTokens = async () => {
+  const response = await fetch(`${API}/refresh-tokens`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+  return response;
+}
+
 export const clearRefreshToken = async () => {
   try {
     const response = await fetch(`${API}/clear-refresh-token`, {
@@ -43,8 +70,6 @@ export const clearRefreshToken = async () => {
     return null;
   }
 }
-
-
 
 export const getUser = async (): Promise<User | null> => {
   try {
@@ -86,6 +111,7 @@ export const createGroup = async (formData: { group_name: string }) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAccessToken()}`
       },
       body: JSON.stringify(formData)
     });
@@ -96,6 +122,31 @@ export const createGroup = async (formData: { group_name: string }) => {
     return data;
   } catch (error) {
     console.log('Error creating group:', error);
+    return null;
+  }
+}
+
+export const getOwnedGroups = async () => {
+  try {
+    const bearer = await getAuthorization();
+    if (!bearer) {
+      console.log("[api]: No bearer token found.");
+      return null;
+    }
+    const response = await fetch(`${API}/get-owned-groups`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': bearer
+      },
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch owned groups');
+    }
+    return data;
+  } catch (error) {
+    console.log('Error fetching owned groups:', error);
     return null;
   }
 }
@@ -177,7 +228,7 @@ export const editPhoto = async (formData: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(formData)
-    }); 
+    });
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.error || 'Failed to edit photo');

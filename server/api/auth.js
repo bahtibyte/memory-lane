@@ -1,4 +1,4 @@
-import { CognitoIdentityProviderClient, GetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { CognitoIdentityProviderClient, GetUserCommand, InitiateAuthCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { rds } from './rds.js';
 
@@ -19,17 +19,14 @@ const verifier = CognitoJwtVerifier.create({
 export const verifyAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  console.log("authHeader checking: ", authHeader);
   if (!authHeader) {
     return res.status(401).json({ message: 'No authorization header' });
   }
 
   try {
     const token = authHeader.replace('Bearer ', '');
-    console.log("token: ", token);
     const payload = await verifier.verify(token);
     req.userAuth = payload;
-    console.log("payload: ", payload);
 
     next();
   } catch (err) {
@@ -40,13 +37,41 @@ export const verifyAuth = async (req, res, next) => {
 
 export const setRefreshToken = async (req, res) => {
   const { refresh_token } = req.body;
+  console.log("[auth]: Setting refresh token.", refresh_token);
+  const response = await cognitoClient.send(new InitiateAuthCommand({
+    AuthFlow: "REFRESH_TOKEN_AUTH",
+    ClientId: COGNITO_CLIENT_ID,
+    AuthParameters: {
+      REFRESH_TOKEN: refresh_token
+    },
+  }));
 
-  const expires = new Date(Date.now() + 3600 * 1000).toUTCString();
+  const authResult = response.AuthenticationResult;
+  console.log("[auth]: Auth result.", authResult);
+  if (!authResult || !authResult.AccessToken || !authResult.ExpiresIn) {
+    return res.status(401).json({ message: 'Invalid refresh token' });
+  }
+
+  console.log("[auth]: Tokens refreshed successfully, updating access token.");
+
   res.setHeader(
     'Set-Cookie',
-    `refresh_token=${refresh_token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600; Expires=${expires}`
+    `refresh_token=${refresh_token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=31536000`
   );
 
+  res.status(200).json({ 
+    message: 'Refresh token set successfully', 
+    access_token: authResult.AccessToken, 
+    expires_in: authResult.ExpiresIn 
+  });
+}
+
+export const refreshTokens = async (req, res) => {
+  const { refresh_token } = req.body;
+  res.setHeader(
+    'Set-Cookie',
+    `refresh_token=${refresh_token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=31536000`
+  );
   res.status(200).json({ message: 'Refresh token set successfully' });
 }
 

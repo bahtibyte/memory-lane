@@ -93,7 +93,7 @@ export default function AuthPage() {
       if (response.AuthenticationResult) {
         const tokens = response.AuthenticationResult;
         console.log("tokens: ", tokens);
-        await setTokens(tokens.AccessToken!, tokens.RefreshToken!);
+        await setTokens(tokens.AccessToken!, tokens.RefreshToken!, tokens.ExpiresIn!);
         console.log("tokens set successfully");
 
         const user = await getUser();
@@ -110,11 +110,11 @@ export default function AuthPage() {
   }
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isLoading && isAuthenticated) {
       console.log("isAuthenticated is true, pushing to my groups");
       router.push(Routes.MY_GROUPS);
     }
-  }, [isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router]);
 
   if (isLoading || isAuthenticated) {
     return <LoadingScreen />

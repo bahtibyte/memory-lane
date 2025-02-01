@@ -79,7 +79,25 @@ function alias_url(alias) {
   return `${CLIENT_ADDRESS}/${alias}`;
 }
 
+async function get_user_id(req) {
+  const username = req.userAuth.username;
+  const user_result = await rds.query(
+    'SELECT * FROM ml_users WHERE username = $1',
+    [username]
+  );
+  if (user_result.rowCount === 0) {
+    return null;
+  }
+  return user_result.rows[0].user_id;
+}
+
 export const createGroup = async (req, res) => {
+  const user_id = await get_user_id(req);
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'User does not exist.' });
+  }
+
   const { group_name } = req.body;
   if (!group_name) {
     return res.status(400).json({ error: 'Group name is required' });
@@ -87,49 +105,73 @@ export const createGroup = async (req, res) => {
   const uuid = uuidv4();
   console.log(`Creating new ml_group_lookup entry with uuid: ${uuid}`);
 
-  try {
-    // Start transaction
-    await rds.query('BEGIN');
+  // Start transaction
+  await rds.query('BEGIN');
 
-    const group_lookup_result = await rds.query(
-      `INSERT INTO ml_group_lookup (uuid) VALUES ($1) RETURNING *`,
-      [uuid]
-    );
+  const group_lookup_result = await rds.query(
+    `INSERT INTO ml_group_lookup (uuid) VALUES ($1) RETURNING *`,
+    [uuid]
+  );
 
-    if (group_lookup_result.rowCount === 0) {
-      await rds.query('ROLLBACK');
-      return res.status(400).json({ error: 'Failed to create group' });
-    }
-
-    const group_info_result = await rds.query(
-      `INSERT INTO ml_group_info (group_id, group_name) VALUES ($1, $2) RETURNING *`,
-      [group_lookup_result.rows[0].group_id, group_name]
-    );
-
-    if (group_info_result.rowCount === 0) {
-      await rds.query('ROLLBACK');
-      return res.status(400).json({ error: 'Failed to create group' });
-    }
-    await rds.query('COMMIT');
-
-    const group_lookup = group_lookup_result.rows[0];
-    const group_data = group_info_result.rows[0];
-
-    return res.status(200).json({
-      'result': {
-        'uuid': group_lookup.uuid,
-        'group_name': group_data.group_name,
-        'group_url': group_url(group_lookup.uuid),
-      },
-    });
-  }
-  catch (error) {
-    // Rollback transaction on any error
+  if (group_lookup_result.rowCount === 0) {
     await rds.query('ROLLBACK');
-    console.error('Error creating group:', error);
-    return res.status(500).json({ error: 'Failed to create group' });
+    return res.status(400).json({ error: 'Failed to create group' });
   }
+
+  const group_info_result = await rds.query(
+    `INSERT INTO ml_group_info (group_id, owner_id, group_name) VALUES ($1, $2, $3) RETURNING *`,
+    [group_lookup_result.rows[0].group_id, user_id, group_name]
+  );
+
+  if (group_info_result.rowCount === 0) {
+    await rds.query('ROLLBACK');
+    return res.status(400).json({ error: 'Failed to create group' });
+  }
+  await rds.query('COMMIT');
+
+  const group_lookup = group_lookup_result.rows[0];
+  const group_data = group_info_result.rows[0];
+
+  return res.status(200).json({
+    'result': {
+      'uuid': group_lookup.uuid,
+      'group_name': group_data.group_name,
+      'group_url': group_url(group_lookup.uuid),
+    },
+  });
 };
+
+export const getOwnedGroups = async (req, res) => {
+  const user_id = await get_user_id(req);
+  if (!user_id) {
+    return res.status(400).json({ error: 'User does not exist.' });
+  }
+
+  const groups_result = await rds.query(
+    `SELECT * FROM ml_group_info 
+     JOIN ml_group_lookup ON ml_group_info.group_id = ml_group_lookup.group_id 
+     WHERE owner_id = $1`,
+    [user_id]
+  );
+
+  const formatted_groups = groups_result.rows.map(row => {
+    const group_lookup = {
+      group_id: row.group_id,
+      uuid: row.uuid,
+      alias: row.alias
+    };
+    const group_data = {
+      group_name: row.group_name,
+      is_public: row.is_public,
+      passcode: row.passcode
+    };
+    return build_group_data(group_lookup, group_data);
+  });
+
+  return res.status(200).json({
+    'groups': formatted_groups,
+  });
+}
 
 export const updateGroupName = async (req, res) => {
   const { memory_id, group_name } = req.body;
@@ -212,7 +254,7 @@ export const updateGroupAlias = async (req, res) => {
   );
 
   const updated_id_lookup = update_result.rows[0];
-  
+
   const group_info_result = await rds.query(
     `SELECT * FROM ml_group_info WHERE group_id = $1`,
     [group_lookup.group_id]

@@ -6,9 +6,15 @@ const COOKIE_OPTIONS = {
   sameSite: 'strict' as const,
 };
 
-export const setTokens = async (accessToken: string, refreshToken: string) => {
+export const setTokens = async (accessToken: string, refreshToken: string, expiresIn: number) => {
+  const expiresAt = Date.now() + expiresIn * 1000; // Convert expiresIn (seconds) to milliseconds
+
   // Set access token in regular cookie
   document.cookie = `access_token=${accessToken}; ${Object.entries(COOKIE_OPTIONS)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ')}`;
+
+  document.cookie = `expires_at=${expiresAt}; ${Object.entries(COOKIE_OPTIONS)
     .map(([key, value]) => `${key}=${value}`)
     .join('; ')}`;
 
@@ -26,6 +32,16 @@ export const setTokens = async (accessToken: string, refreshToken: string) => {
     console.error('Error setting refresh token:', error);
     throw error;
   }
+};
+
+export const getCookies = (): Record<string, string> => {
+  const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
+    const [key, value] = cookie.split('=');
+    acc[key] = value;
+    return acc;
+  }, {} as Record<string, string>);
+
+  return cookies;
 };
 
 export const getAccessToken = (): string | null => {

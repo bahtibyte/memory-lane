@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { StatsContainer } from '../../core/components/StatsContainer';
-import { ImageOverlay } from '../../core/components/photos/ImageOverlay';
-import { PhotoEntry } from '../../core/components/photos/PhotoEntry';
+import { StatsContainer } from '@/core/components/StatsContainer';
+import { ImageOverlay } from '@/core/components/photos/ImageOverlay';
+import { PhotoEntry } from '@/core/components/photos/PhotoEntry';
 import { useMemoryLane } from '@/core/context/memory-provider';
+import { useAuth } from '@/core/context/auth-provider';
+import LoadingScreen from '@/core/components/Loading';
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
@@ -37,6 +39,8 @@ export default function Timeline() {
     failedToLoad,
     fetchData
   } = useMemoryLane();
+
+  const { isAuthenticated } = useAuth();
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});
@@ -99,15 +103,7 @@ export default function Timeline() {
     };
   }, [selectedImage]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
-        <h1 className="text-white text-2xl">Loading...</h1>
-      </div>
-    );
-  }
-
-  if (!memory_id || failedToLoad || !memoryLane) {
+  if (!memory_id || failedToLoad) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Page not found</h1>
@@ -116,6 +112,10 @@ export default function Timeline() {
         </Link>
       </div>
     );
+  }
+
+  if (loading || !memoryLane) { 
+    return <LoadingScreen />
   }
 
   // Update the data source for sorted entries and stats
@@ -135,12 +135,21 @@ export default function Timeline() {
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">{memoryLane.group_data.group_name} timeline!</h1>
         <h1 className="text-white text-2xl mb-4">No group photos added yet</h1>
-        <Link
-          href={`/${memory_id}/upload-photo`}
-          className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors"
-        >
-          Upload first photo
-        </Link>
+        {isAuthenticated ? (
+          <Link
+            href={`/${memory_id}/upload-photo`}
+            className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors"
+          >
+            Upload first photo
+          </Link>
+        ) : (
+          <span className="px-4 py-2 bg-gray-500 text-gray-300 rounded cursor-not-allowed relative group">
+            Upload first photo
+            <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
+              Not signed in
+            </span>
+          </span>
+        )}
       </div>
     );
   }
@@ -154,18 +163,37 @@ export default function Timeline() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-[32px] md:text-[50px] font-bold">{memoryLane.group_data.group_name}</h1>
           <div className="flex gap-4">
-            <Link
-              href={`/${memory_id}/upload-photo`}
-              className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors text-sm md:text-base"
-            >
-              Upload Photo
-            </Link>
-            <Link
-              href={`/${memory_id}/edit-group`}
-              className="px-4 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors text-sm md:text-base"
-            >
-              Edit Group
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href={`/${memory_id}/upload-photo`}
+                  className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors text-sm md:text-base"
+                >
+                  Upload Photo
+                </Link>
+                <Link
+                  href={`/${memory_id}/edit-group`}
+                  className="px-4 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors text-sm md:text-base"
+                >
+                  Edit Group
+                </Link>
+              </>
+            ) : (
+              <>
+                <span className="px-4 py-2 bg-gray-500 text-gray-300 rounded cursor-not-allowed text-sm md:text-base relative group">
+                  Upload Photo
+                  <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
+                    Not signed in or part of this group
+                  </span>
+                </span>
+                <span className="px-4 py-2 border border-gray-500 text-gray-500 rounded cursor-not-allowed text-sm md:text-base relative group">
+                  Edit Group
+                  <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
+                    Not signed in or part of this group
+                  </span>
+                </span>
+              </>
+            )}
           </div>
         </div>
 

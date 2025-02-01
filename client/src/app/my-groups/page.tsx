@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import SignOutButton from "@/core/components/SignOutButton";
 import Image from "next/image";
 import LoadingScreen from "@/core/components/Loading";
-import { createGroup } from '@/core/utils/api';
+import { createGroup, getOwnedGroups } from '@/core/utils/api';
+import { GroupData } from "@/core/utils/types";
 
 export default function MyGroups() {
   const router = useRouter();
@@ -18,18 +19,30 @@ export default function MyGroups() {
   const [isCreating, setIsCreating] = useState(false);
   const [newGroup, setNewGroup] = useState<{ name: string; url: string } | null>(null);
 
+  const [groups, setGroups] = useState<GroupData[]>([]);
+
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       console.log("isAuthenticated is false, pushing to authentication");
       router.push(Routes.AUTHENTICATION);
     }
-  }, [isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      const response = await getOwnedGroups();
+      if (response && response.groups) {
+        setGroups(response.groups);
+      }
+    };
+    fetchGroups();
+  }, []);
 
   if (isLoading || !isAuthenticated) {
     return <LoadingScreen />
   }
 
-  console.log("user in my group: ", user);
+  console.log("groups: ", groups);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +70,15 @@ export default function MyGroups() {
     }
   };
 
+  function handleDeleteGroup(group: GroupData) {
+    console.log("deleting group: ", group);
+  }
+
+  function handleEditGroup(group: GroupData) {
+    console.log("editing group: ", group);
+    router.push(`/${group.uuid}/edit-group`);
+  }
+
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Header with sign out button */}
@@ -75,9 +97,9 @@ export default function MyGroups() {
             <div className="flex flex-col items-center gap-2">
               {user?.profile_url && (
                 <div className="relative w-20 h-20">
-                  <Image 
-                    src={user.profile_url} 
-                    alt="Profile" 
+                  <Image
+                    src={user.profile_url}
+                    alt="Profile"
                     fill
                     className="rounded-full object-cover"
                   />
@@ -163,6 +185,52 @@ export default function MyGroups() {
               </button>
             </div>
           )}
+
+          {/* Groups Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+            <div className="flex flex-wrap gap-4">
+              {groups.map((group) => (
+                <div key={group.uuid} className="border p-4 rounded-lg shadow-md bg-grey flex flex-col gap-2 w-50">
+                  <h2 className="text-lg font-semibold">{group.group_name}</h2>
+                  <div className="flex gap-2">
+                    <a
+                      href={`/${group.uuid}`}
+                      className="bg-blue-500 text-white px-3 py-1 rounded"
+                    >
+                      Open via UUID
+                    </a>
+                    {group.alias && (
+                      <a
+                        href={group.alias}
+                        className="bg-green-500 text-white px-3 py-1 rounded"
+                      >
+                        Open via Alias
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => { handleEditGroup(group) }}
+                      className="bg-yellow-500 text-white px-3 py-1 rounded"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => { handleDeleteGroup(group) }}
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {groups.length === 0 && (
+              <div className="col-span-full text-center text-gray-400 py-8">
+                No groups created yet. Create your first group to get started!
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

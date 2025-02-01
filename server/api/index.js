@@ -11,8 +11,9 @@ import {
   getMemoryLane,
   updateGroupPrivacy,
   updateGroupAlias,
+  getOwnedGroups,
 } from './api.js';
-import { verifyAuth, setRefreshToken, getUser, clearRefreshToken } from './auth.js';
+import { verifyAuth, setRefreshToken, getUser, clearRefreshToken, refreshTokens } from './auth.js';
 
 const app = express();
 
@@ -30,10 +31,13 @@ app.use(express.json()); // Adjust the limit as needed
 app.get("/", (req, res) => res.send("Express on Vercel"));
 
 app.post('/api/set-refresh-token', verifyAuth, setRefreshToken);
+app.post('/api/refresh-tokens', refreshTokens);
 app.post('/api/clear-refresh-token', verifyAuth, clearRefreshToken);
 app.get('/api/get-user', verifyAuth, getUser);
 
-app.post('/api/create-group', createGroup);
+app.post('/api/create-group', verifyAuth, createGroup);
+app.get('/api/get-owned-groups', verifyAuth, getOwnedGroups);
+
 app.post('/api/update-group-name', updateGroupName);
 app.post('/api/update-group-privacy', updateGroupPrivacy);
 app.post('/api/update-group-alias', updateGroupAlias);
