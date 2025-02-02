@@ -179,15 +179,11 @@ export default function MyGroups() {
                         e.stopPropagation();
                         toggleOptionsMenu(group.uuid);
                       }}
-                      className="p-1 hover:bg-[#242424] rounded-full transition-colors"
+                      className="p-1 hover:bg-[#242424] rounded-full transition-colors text-gray-400 hover:text-purple-300"
                     >
-                      <Image
-                        src="/elipsis.png"
-                        alt="Options"
-                        width={20}
-                        height={20}
-                        className="text-purple-300 sm:w-6 sm:h-6"
-                      />
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                      </svg>
                     </button>
 
                     {activeOptionsMenu === group.uuid && (
