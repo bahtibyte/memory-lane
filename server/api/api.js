@@ -141,6 +141,64 @@ export const createGroup = async (req, res) => {
   });
 };
 
+export const deleteGroup = async (req, res) => {
+  const user_id = await get_user_id(req);
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'User does not exist.' });
+  }
+
+  const { memory_id } = req.body;
+  console.log(`Deleting group with id: ${memory_id}`);
+
+  const lookup_result = await ml_group_lookup(memory_id);
+  if (lookup_result.rowCount === 0) {
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
+  }
+
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
+
+  try {
+    await rds.query('BEGIN');
+  
+    await rds.query(
+      `DELETE FROM ml_photos WHERE group_id = $1 RETURNING *`,
+      [group_id]
+    );
+  
+    const group_info_result = await rds.query(
+      `DELETE FROM ml_group_info WHERE group_id = $1 RETURNING *`,
+      [group_id]
+    );
+  
+    if (group_info_result.rowCount === 0) {
+      await rds.query('ROLLBACK');
+      return res.status(400).json({ error: 'Failed to delete group info.' });
+    }
+
+    const group_lookup_result = await rds.query(
+      `DELETE FROM ml_group_lookup WHERE group_id = $1 RETURNING *`,
+      [group_id]
+    );
+
+    if (group_lookup_result.rowCount === 0) {
+      await rds.query('ROLLBACK');
+      return res.status(400).json({ error: 'Failed to delete group info.' });
+    }
+  
+    await rds.query('COMMIT');
+    return res.status(200).json({
+      message: 'Group deleted successfully.',
+      group_data: build_group_data(group_info_result.rows[0], group_lookup_result.rows[0])
+    });
+  } catch (error) {
+    await rds.query('ROLLBACK');
+    console.error('Error deleting group:', error);
+    return res.status(500).json({ error: 'An error occurred while deleting the group.' });
+  }
+}
+
 export const getOwnedGroups = async (req, res) => {
   const user_id = await get_user_id(req);
   if (!user_id) {

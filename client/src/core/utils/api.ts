@@ -1,4 +1,4 @@
-import { getAccessToken, getCookies } from "./tokens";
+import { getAccessToken, getCookies, setAccessToken } from "./tokens";
 import { User } from "./types";
 
 const API = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
@@ -12,16 +12,24 @@ export const getAuthorization = async (): Promise<string | null> => {
   if (Date.now() >= expires_at - ACCESS_TOKEN_EXPIRE_BUFFER) {
     console.log("[api]: Refreshing tokens.");
     const response = await refreshTokens();
-    console.log("[api]: Refresh tokens response.", response);
-    return null;
+    if (!response.ok) {
+      console.log("[api]: Failed to refresh tokens.");
+      return null;
+    }
+    const data = await response.json();
+    if (data.access_token && data.expires_in) {
+      setAccessToken(data.access_token, data.expires_in);
+    }
+    console.log("[api]: Refresh tokens response.", data);
+    return `Bearer ${cookies["access_token"]}`;
   }
   console.log("[api]: Returning authorziation token.");
   return `Bearer ${cookies["access_token"]}`;
 }
 
-export const setRefreshToken = async (refresh_token: string) => {
+export const saveRefreshToken = async (refresh_token: string) => {
   try {
-    const response = await fetch(`${API}/set-refresh-token`, {
+    const response = await fetch(`${API}/save-refresh-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -41,8 +49,8 @@ export const setRefreshToken = async (refresh_token: string) => {
 }
 
 export const refreshTokens = async () => {
-  const response = await fetch(`${API}/refresh-tokens`, {
-    method: 'POST',
+  const response = await fetch(`${API}/get-access-token`, {
+    method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -107,11 +115,16 @@ export const getMemoryLane = async (memory_id: string) => {
 
 export const createGroup = async (formData: { group_name: string }) => {
   try {
+    const bearer = await getAuthorization();
+    if (!bearer) {
+      console.log("[api]: No bearer token found.");
+      return null;
+    }
     const response = await fetch(`${API}/create-group`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAccessToken()}`
+        'Authorization': bearer
       },
       body: JSON.stringify(formData)
     });
@@ -122,6 +135,32 @@ export const createGroup = async (formData: { group_name: string }) => {
     return data;
   } catch (error) {
     console.log('Error creating group:', error);
+    return null;
+  }
+}
+
+export const deleteGroup = async (memory_id: string) => {
+  try {
+    const bearer = await getAuthorization();
+    if (!bearer) {
+      console.log("[api]: No bearer token found.");
+      return null;
+    }
+    const response = await fetch(`${API}/delete-group`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': bearer
+      },
+      body: JSON.stringify({ memory_id })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to delete group');
+    }
+    return data;
+  } catch (error) {
+    console.log('Error deleting group:', error);
     return null;
   }
 }

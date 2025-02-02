@@ -30,43 +30,46 @@ export const verifyAuth = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error('Token verification failed:', err);
     return res.status(401).json({ message: 'Invalid authorization token' });
   }
 }
 
-export const setRefreshToken = async (req, res) => {
-  const { refresh_token } = req.body;
-  console.log("[auth]: Setting refresh token.", refresh_token);
-  const response = await cognitoClient.send(new InitiateAuthCommand({
-    AuthFlow: "REFRESH_TOKEN_AUTH",
-    ClientId: COGNITO_CLIENT_ID,
-    AuthParameters: {
-      REFRESH_TOKEN: refresh_token
-    },
-  }));
-
-  const authResult = response.AuthenticationResult;
-  console.log("[auth]: Auth result.", authResult);
-  if (!authResult || !authResult.AccessToken || !authResult.ExpiresIn) {
-    return res.status(401).json({ message: 'Invalid refresh token' });
+export const getAccessToken = async (req, res) => {
+  if (!req.cookies || !req.cookies.refresh_token) {
+    return res.status(401).json({ message: 'No refresh token found' });
   }
+  const refresh_token = req.cookies.refresh_token;
+  console.log("[auth]: Getting access token with refresh token.");
 
-  console.log("[auth]: Tokens refreshed successfully, updating access token.");
+  try {
+    const response = await cognitoClient.send(new InitiateAuthCommand({
+      AuthFlow: "REFRESH_TOKEN_AUTH",
+      ClientId: COGNITO_CLIENT_ID,
+      AuthParameters: {
+        REFRESH_TOKEN: refresh_token
+      },
+    }));
 
-  res.setHeader(
-    'Set-Cookie',
-    `refresh_token=${refresh_token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=31536000`
-  );
+    const authResult = response.AuthenticationResult;
+    console.log("[auth]: Auth result: ", authResult);
+    if (!authResult || !authResult.AccessToken || !authResult.ExpiresIn) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
 
-  res.status(200).json({ 
-    message: 'Refresh token set successfully', 
-    access_token: authResult.AccessToken, 
-    expires_in: authResult.ExpiresIn 
-  });
+    console.log("[auth]: Tokens refreshed successfully, updating access token.");
+
+    res.status(200).json({
+      message: 'Refresh token set successfully',
+      access_token: authResult.AccessToken,
+      expires_in: authResult.ExpiresIn
+    });
+  } catch (err) {
+    console.error('Error getting access token:', err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
-export const refreshTokens = async (req, res) => {
+export const saveRefreshToken = async (req, res) => {
   const { refresh_token } = req.body;
   res.setHeader(
     'Set-Cookie',

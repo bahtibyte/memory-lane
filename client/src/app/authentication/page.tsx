@@ -112,7 +112,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       console.log("isAuthenticated is true, pushing to my groups");
-      router.push(Routes.MY_GROUPS);
+      router.push(Routes.MY_GROUPS_PAGE);
     }
   }, [isLoading, isAuthenticated, router]);
 

@@ -19,6 +19,7 @@ export interface GroupData {
   passcode: string | null;
   alias: string | null;
   alias_url: string | null;
+  group_thumbnail: string | null;
 }
 
 export interface PhotoEntry {

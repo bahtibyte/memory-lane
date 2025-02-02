@@ -1,4 +1,5 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { initializeDB } from './rds.js';
 import {
@@ -12,8 +13,9 @@ import {
   updateGroupPrivacy,
   updateGroupAlias,
   getOwnedGroups,
+  deleteGroup,
 } from './api.js';
-import { verifyAuth, setRefreshToken, getUser, clearRefreshToken, refreshTokens } from './auth.js';
+import { verifyAuth, saveRefreshToken, getUser, clearRefreshToken, getAccessToken } from './auth.js';
 
 const app = express();
 
@@ -27,16 +29,20 @@ app.use(
   })
 );
 app.use(express.json()); // Adjust the limit as needed
+app.use(cookieParser()); // Enables reading cookies from requests
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
 
-app.post('/api/set-refresh-token', verifyAuth, setRefreshToken);
-app.post('/api/refresh-tokens', refreshTokens);
+app.post('/api/save-refresh-token', verifyAuth, saveRefreshToken);
+app.get('/api/get-access-token', getAccessToken);
+
 app.post('/api/clear-refresh-token', verifyAuth, clearRefreshToken);
 app.get('/api/get-user', verifyAuth, getUser);
 
 app.post('/api/create-group', verifyAuth, createGroup);
 app.get('/api/get-owned-groups', verifyAuth, getOwnedGroups);
+
+app.delete('/api/delete-group', verifyAuth, deleteGroup);
 
 app.post('/api/update-group-name', updateGroupName);
 app.post('/api/update-group-privacy', updateGroupPrivacy);

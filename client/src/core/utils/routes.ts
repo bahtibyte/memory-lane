@@ -1,6 +1,7 @@
 
 export const Routes = {
-  AUTHENTICATION: '/authentication',
-  MY_GROUPS: '/my-groups',
-  CREATE_GROUP: '/create-group',
+  LANDING_PAGE: '/',
+  AUTHENTICATION_PAGE: '/authentication',
+  MY_GROUPS_PAGE: '/my-groups',
+  CREATE_GROUP_PAGE: '/create-group',
 }

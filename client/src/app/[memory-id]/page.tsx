@@ -9,6 +9,7 @@ import { PhotoEntry } from '@/app/components/photos/PhotoEntry';
 import { useMemoryLane } from '@/core/context/memory-provider';
 import { useAuth } from '@/core/context/auth-provider';
 import LoadingScreen from '@/app/components/Loading';
+import { HomeIcon } from '@/app/components/icons/HomeIcon';
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
@@ -177,6 +178,12 @@ export default function Timeline() {
                 >
                   Edit Group
                 </Link>
+                <Link
+                  href={isAuthenticated ? "/my-groups" : "/"}
+                  className="px-3 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors"
+                >
+                  <HomeIcon className="w-5 h-5" />
+                </Link>
               </>
             ) : (
               <>
@@ -192,6 +199,12 @@ export default function Timeline() {
                     Not signed in or part of this group
                   </span>
                 </span>
+                <Link
+                  href="/"
+                  className="px-3 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors"
+                >
+                  <HomeIcon className="w-5 h-5" />
+                </Link>
               </>
             )}
           </div>

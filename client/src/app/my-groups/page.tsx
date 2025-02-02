@@ -7,29 +7,31 @@ import { useRouter } from "next/navigation";
 import SignOutButton from "@/app/components/SignOutButton";
 import Image from "next/image";
 import LoadingScreen from "@/app/components/Loading";
-import { createGroup, getOwnedGroups } from '@/core/utils/api';
+import { createGroup, deleteGroup, getOwnedGroups } from '@/core/utils/api';
 import { GroupData } from "@/core/utils/types";
-
-
+import { clearTokens } from "@/core/utils/tokens";
 
 export default function MyGroups() {
   const router = useRouter();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated, setUser } = useAuth();
+  const [isSignedOut, setIsSignedOut] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({ group_name: '' });
   const [error, setError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [newGroup, setNewGroup] = useState<{ name: string; url: string } | null>(null);
+  const [newGroup, setNewGroup] = useState<{ name: string; url: string; message?: string } | null>(null);
   const [groups, setGroups] = useState<GroupData[]>([]);
   const [activeOptionsMenu, setActiveOptionsMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isSignedOut) {
+      router.push(Routes.LANDING_PAGE);
+    } else if (!isLoading && !isAuthenticated) {
       console.log("isAuthenticated is false, pushing to authentication");
-      router.push(Routes.AUTHENTICATION);
+      router.push(Routes.AUTHENTICATION_PAGE);
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router, isSignedOut]);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -48,11 +50,13 @@ export default function MyGroups() {
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+    if (activeOptionsMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [activeOptionsMenu]);
 
   const toggleOptionsMenu = (groupId: string) => {
     setActiveOptionsMenu(activeOptionsMenu === groupId ? null : groupId);
@@ -62,7 +66,11 @@ export default function MyGroups() {
     return <LoadingScreen />;
   }
 
-  console.log("groups: ", groups);
+  const handleSignOut = async () => {
+    await clearTokens();
+    setIsSignedOut(true);
+    setUser(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +87,7 @@ export default function MyGroups() {
         });
         setShowCreateForm(false);
         setFormData({ group_name: '' });
+        setGroups([...groups, response.result]);
       } else {
         throw new Error('Failed to create group');
       }
@@ -90,12 +99,26 @@ export default function MyGroups() {
     }
   };
 
-  function handleDeleteGroup(group: GroupData) {
-    console.log("deleting group: ", group);
+  async function handleDeleteGroup(group: GroupData) {
+    if (!confirm(`Are you sure you want to delete "${group.group_name}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await deleteGroup(group.uuid);
+      if (response.group_data) {
+        setGroups(groups.filter(g => g.uuid !== group.uuid));
+        setNewGroup({ name: group.group_name, url: '', message: 'Group deleted successfully' });
+      } else {
+        throw new Error('Failed to delete group');
+      }
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      setError('Failed to delete group. Please try again.');
+    }
   }
 
   function handleEditGroup(group: GroupData) {
-    console.log("editing group: ", group);
     router.push(`/${group.uuid}/edit-group`);
   }
 
@@ -105,7 +128,7 @@ export default function MyGroups() {
       <div className="w-full border-b border-[#242424]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="text-purple-300 font-medium text-sm sm:text-base">{user?.profile_name.toUpperCase()}</div>
-          <SignOutButton />
+          <SignOutButton onSignOut={handleSignOut} />
         </div>
       </div>
 
@@ -124,19 +147,25 @@ export default function MyGroups() {
         {/* Groups Grid - Adjusted for better mobile layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {groups.map((group) => (
-            <div 
-              key={group.uuid} 
+            <div
+              key={group.uuid}
               className="bg-[#1A1A1A] border border-[#242424] rounded-lg overflow-hidden hover:border-purple-300/30 transition-colors"
             >
               {/* Thumbnail Image - Adjusted height for mobile */}
-              <div className="relative w-full h-36 sm:h-48">
-                <Image
-                  src={/*group.thumbnail_url ||*/ "/default-group.png"}
-                  alt={group.group_name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
+              <div className="relative w-full h-36 sm:h-48 bg-[#242424]">
+                {group.group_thumbnail ? (
+                  <Image
+                    src={group.group_thumbnail}
+                    alt={group.group_name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-purple-300 text-xl font-medium">Memory Lane</span>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] to-transparent opacity-60" />
               </div>
 
@@ -144,12 +173,15 @@ export default function MyGroups() {
               <div className="p-4 sm:p-6">
                 <div className="flex justify-between items-start">
                   <h2 className="text-lg sm:text-xl font-semibold text-white">{group.group_name}</h2>
-                  <div className="relative" ref={menuRef}>
+                  <div className="relative" ref={activeOptionsMenu === group.uuid ? menuRef : null}>
                     <button
-                      onClick={() => toggleOptionsMenu(group.uuid)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleOptionsMenu(group.uuid);
+                      }}
                       className="p-1 hover:bg-[#242424] rounded-full transition-colors"
                     >
-                       <Image 
+                      <Image
                         src="/elipsis.png"
                         alt="Options"
                         width={20}
@@ -157,31 +189,39 @@ export default function MyGroups() {
                         className="text-purple-300 sm:w-6 sm:h-6"
                       />
                     </button>
-                    
+
                     {activeOptionsMenu === group.uuid && (
-                      <div className="absolute right-0 bottom-full mb-2 w-40 sm:w-48 bg-[#242424] rounded-lg shadow-lg overflow-hidden">
+                      <div className="absolute right-0 bottom-full mb-2 w-40 sm:w-48 bg-[#242424] rounded-lg shadow-lg overflow-hidden z-50">
                         <button
-                          onClick={() => handleEditGroup(group)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditGroup(group);
+                            setActiveOptionsMenu(null);
+                          }}
                           className="w-full text-left px-3 sm:px-4 py-2 text-sm sm:text-base text-white hover:bg-[#1A1A1A] transition-colors"
                         >
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDeleteGroup(group)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteGroup(group);
+                            setActiveOptionsMenu(null);
+                          }}
                           className="w-full text-left px-3 sm:px-4 py-2 text-sm sm:text-base text-red-400 hover:bg-[#1A1A1A] transition-colors"
                         >
-                          Delete
+                          Delete {group.group_name}
                         </button>
                       </div>
                     )}
                   </div>
                 </div>
-                
+
                 <a
-                  href={`/${group.uuid}`}
+                  href={`/${group.alias ? group.alias : group.uuid}`}
                   className="inline-block w-full text-center bg-[#242424] text-purple-300 px-3 sm:px-4 py-2 rounded-lg hover:bg-[#2A2A2A] transition-colors mt-3 sm:mt-4 text-sm sm:text-base"
                 >
-                  View Timeline
+                  View Memory
                 </a>
               </div>
             </div>
@@ -242,7 +282,7 @@ export default function MyGroups() {
         {/* Success Message - Adjusted for mobile */}
         {newGroup && (
           <div className="fixed bottom-4 right-4 left-4 sm:left-auto bg-green-500/10 border border-green-500 text-green-500 p-4 rounded-lg shadow-lg text-sm sm:text-base">
-            <p className="font-medium">Group created successfully!</p>
+            <p className="font-medium">{newGroup.message}</p>
             <button
               onClick={() => setNewGroup(null)}
               className="text-sm text-green-400 hover:text-green-300 mt-2"

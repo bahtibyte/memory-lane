@@ -1,4 +1,4 @@
-import { setRefreshToken, clearRefreshToken } from "./api";
+import { saveRefreshToken, clearRefreshToken } from "./api";
 
 const COOKIE_OPTIONS = {
   path: '/',
@@ -7,20 +7,11 @@ const COOKIE_OPTIONS = {
 };
 
 export const setTokens = async (accessToken: string, refreshToken: string, expiresIn: number) => {
-  const expiresAt = Date.now() + expiresIn * 1000; // Convert expiresIn (seconds) to milliseconds
-
-  // Set access token in regular cookie
-  document.cookie = `access_token=${accessToken}; ${Object.entries(COOKIE_OPTIONS)
-    .map(([key, value]) => `${key}=${value}`)
-    .join('; ')}`;
-
-  document.cookie = `expires_at=${expiresAt}; ${Object.entries(COOKIE_OPTIONS)
-    .map(([key, value]) => `${key}=${value}`)
-    .join('; ')}`;
+  setAccessToken(accessToken, expiresIn);
 
   // Set refresh token using API endpoint that sets HTTP-only cookie
   try {
-    const response = await setRefreshToken(refreshToken);
+    const response = await saveRefreshToken(refreshToken);
     console.log("response from set refresh token: ", response);
 
     if (response) {
@@ -32,6 +23,16 @@ export const setTokens = async (accessToken: string, refreshToken: string, expir
     console.error('Error setting refresh token:', error);
     throw error;
   }
+};
+
+export const setAccessToken = (accessToken: string, expiresIn: number) => {
+  const expiresAt = Date.now() + expiresIn * 1000; // Convert expiresIn (seconds) to milliseconds
+  document.cookie = `access_token=${accessToken}; ${Object.entries(COOKIE_OPTIONS)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ')}`;
+  document.cookie = `expires_at=${expiresAt}; ${Object.entries(COOKIE_OPTIONS)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ')}`;
 };
 
 export const getCookies = (): Record<string, string> => {
