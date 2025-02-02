@@ -14,7 +14,6 @@ export default function GetStarted() {
     e.preventDefault();
 
     if (isLoading) {
-      // Capture mouse position
       setMousePos({ x: e.clientX, y: e.clientY });
       setShowLoadingMessage(true);
       setTimeout(() => setShowLoadingMessage(false), 1500);
@@ -31,9 +30,9 @@ export default function GetStarted() {
           className="fixed bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded-md text-sm shadow-lg z-50"
           style={{
             left: `${mousePos.x}px`,
-            top: `${mousePos.y - 60}px`, // Position above the cursor
-            transform: 'translateX(-50%)', // Center horizontally
-            pointerEvents: 'none', // Prevent the tooltip from interfering with clicks
+            top: `${mousePos.y - 60}px`,
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none',
           }}
         >
           Still loading, please wait and try again
@@ -41,10 +40,27 @@ export default function GetStarted() {
       )}
       <button
         onClick={handleClick}
-        className="px-6 py-3 text-lg bg-gradient-to-r from-pink-200 to-purple-400 text-black rounded-full hover:from-pink-100 hover:to-purple-300 transition-all border-none outline-none"
+        className="get-started-button px-6 py-4 text-lg text-black rounded-full"
       >
-        Get Started
+        GET STARTED
       </button>
+      <style jsx>{`
+        .get-started-button {
+          background: linear-gradient(to right, #F5C7EA, #D8B4FE, #D8B4FE, #F5C7EA);
+          background-size: 200% 100%;
+          background-position: 0 0;
+          transition: background-position 0.3s ease-in-out, transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+          font-weight: inherit;
+          text-transform: none;
+        }
+        .get-started-button:hover {
+          background-position: 100% 0;
+          transform: scale(1.03);
+          box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+          font-weight: inherit;
+          text-transform: none;
+        }
+      `}</style>
     </div>
   );
 }
