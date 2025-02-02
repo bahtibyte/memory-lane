@@ -114,26 +114,26 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
   };
 
   return (
-    <div className="mb-8 p-4 border rounded">
-      <h2 className="text-xl font-semibold mb-4">URL Settings</h2>
-      <p className="mb-4 text-gray-200">
+    <div className="bg-[#1A1A1A] border border-[#242424] rounded-lg p-6 mb-6">
+      <h2 className="text-white font-medium mb-4">URL Settings</h2>
+      <p className="text-gray-400 text-sm mb-6">
         Configure how users can access your timeline.
       </p>
 
       {memoryLane && (
-        <div className="mb-4">
+        <div className="mb-6">
           <p className="text-sm text-gray-300 mb-2">Current URL:</p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 mb-4">
             <code
               onClick={() => handleCopyUrl(memoryLane.group_data.group_url)}
-              className="bg-gray-800 p-2 rounded block flex-grow cursor-pointer hover:bg-gray-700"
+              className="flex-1 bg-[#0E0E0E] p-3 rounded-lg text-gray-300 cursor-pointer hover:bg-[#242424] hover:text-white hover:scale-[1.01] transition-all duration-200"
             >
               {memoryLane.group_data.group_url}
             </code>
             <Link
               href={memoryLane.group_data.group_url}
               target="_blank"
-              className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm whitespace-nowrap"
+              className="px-4 py-2 bg-[#242424] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/10 transition-all duration-200 whitespace-nowrap text-sm"
             >
               Open
             </Link>
@@ -141,18 +141,18 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
 
           {enableCustomUrl && memoryLane.group_data.alias_url && (
             <>
-              <p className="text-sm text-gray-300 mt-4 mb-2">Custom URL:</p>
-              <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-300 mb-2">Custom URL:</p>
+              <div className="flex items-center gap-3">
                 <code
                   onClick={() => handleCopyUrl(memoryLane.group_data.alias_url!)}
-                  className="bg-gray-800 p-2 rounded block flex-grow cursor-pointer hover:bg-gray-700"
+                  className="flex-1 bg-[#0E0E0E] p-3 rounded-lg text-gray-300 cursor-pointer hover:bg-[#242424] hover:text-white hover:scale-[1.01] transition-all duration-200"
                 >
                   {memoryLane.group_data.alias_url}
                 </code>
                 <Link
                   href={memoryLane.group_data.alias_url}
                   target="_blank"
-                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm whitespace-nowrap"
+                  className="px-4 py-2 bg-[#242424] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/10 transition-all duration-200 whitespace-nowrap text-sm"
                 >
                   Open
                 </Link>
@@ -162,36 +162,35 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
         </div>
       )}
 
-      <div className="flex items-center gap-4 mb-4">
-        <label className="flex items-center">
+      <div className="flex items-center gap-4 mb-6">
+        <label className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-all duration-200">
           <input
             type="checkbox"
             checked={enableCustomUrl}
             onChange={(e) => handleCustomUrlToggle(e.target.checked)}
-            className="mr-2"
+            className="text-purple-300 focus:ring-purple-300 focus:ring-2"
           />
-          Enable Custom URL
+          <span className="text-white">Enable Custom URL</span>
         </label>
       </div>
 
       {enableCustomUrl && (
-        <div className="mb-4">
-          <label className="block mb-2">Custom Alias:</label>
-          <div className="flex items-center gap-2">
+        <div className="mb-6">
+          <label className="block text-white font-medium mb-2">Custom Alias:</label>
+          <div className="flex items-center gap-3">
             <input
               type="text"
               value={alias}
               onChange={(e) => handleAliasChange(e.target.value)}
-              className="border p-2 rounded w-full max-w-md text-black"
+              className={`flex-1 bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200 ${!isEditingAlias ? 'bg-opacity-50' : ''}`}
               readOnly={!isEditingAlias}
-              style={{ backgroundColor: !isEditingAlias ? '#f3f4f6' : 'white' }}
               placeholder="Enter custom URL alias (lowercase letters and hyphens only)"
             />
             {!isEditingAlias && (
               <button
                 type="button"
                 onClick={handleEditAliasClick}
-                className="p-2 text-blue-500 hover:text-blue-600"
+                className="p-2 text-purple-300 hover:text-purple-400 hover:scale-110 transition-all duration-200"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -200,19 +199,25 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
             )}
           </div>
           {urlError && (
-            <div className="text-sm text-red-500 mt-2">
-              ⚠️ {urlError}
+            <div className="text-sm text-red-400 mt-2 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              {urlError}
             </div>
           )}
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-gray-400 mt-2">
             Only lowercase letters and hyphens between characters are allowed (e.g., &quot;my-custom-url&quot;)
           </p>
         </div>
       )}
 
       {showUrlSuccess && (
-        <div className="text-sm text-green-500 mb-4">
-          ✓ Custom URL has been updated successfully
+        <div className="text-sm text-green-400 mb-4 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          Custom URL has been updated successfully
         </div>
       )}
 
@@ -222,12 +227,11 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
             handleUrlAliasUpdate();
             setIsEditingAlias(false);
           }}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          className="px-6 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 whitespace-nowrap font-medium"
         >
           Save URL Settings
         </button>
       )}
     </div>
-
   );
 }
