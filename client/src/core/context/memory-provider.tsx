@@ -10,7 +10,8 @@ interface MemoryLaneContextType {
   setLoading: (loading: boolean) => void;
   failedToLoad: boolean;
   setFailedToLoad: (failed: boolean) => void;
-  fetchData: (group_id: string) => void;
+  fetchData: (memory_id: string | null, passcode?: string | null) => Promise<boolean | undefined>;
+  unauthorized: boolean;
 }
 
 const MemoryLaneContext = createContext<MemoryLaneContextType | undefined>(undefined);
@@ -20,9 +21,11 @@ export function MemoryLaneProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [failedToLoad, setFailedToLoad] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [unauthorized, setUnauthorized] = useState(false);
   const FETCH_COOLDOWN = 2000; // 2 seconds cooldown between fetches
 
-  const fetchData = async (memory_id: string | null) => {
+  const fetchData = async (memory_id: string | null, passcode: string | null = null) => {
+    console.log("memorylane is ", memoryLane);
     if (!memory_id) {
       console.log('no memory_id, not fetching');
       return;
@@ -41,16 +44,27 @@ export function MemoryLaneProvider({ children }: { children: ReactNode }) {
     const now = Date.now();
     if (now - lastFetchTime < FETCH_COOLDOWN) {
       console.log('fetching too frequently, skipping');
-      return;
+      return false;
     }
     setLastFetchTime(now);
     setLoading(true);
 
-    const data = await getMemoryLane(memory_id);
-    if (data) {
-      setMemoryLane(data);
-    } else {
-      setFailedToLoad(true);
+    try {
+      const response = await getMemoryLane(memory_id, passcode);
+      if (response.status === 403) {
+        console.log("unauthorized setting it to true");
+        setUnauthorized(true);
+      } else {
+        const data = await response.json();
+        if (response.ok && data) {
+          setMemoryLane(data);
+          setUnauthorized(false);
+        } else {
+          setFailedToLoad(true);
+        }
+      }
+    } catch (error) {
+      console.log("Error fetching memory lane:", error);
     }
 
     setLoading(false);
@@ -65,7 +79,8 @@ export function MemoryLaneProvider({ children }: { children: ReactNode }) {
         setLoading,
         failedToLoad,
         setFailedToLoad,
-        fetchData
+        fetchData,
+        unauthorized,
       }}
     >
       {children}

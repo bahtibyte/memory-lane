@@ -17,20 +17,27 @@ const verifier = CognitoJwtVerifier.create({
 });
 
 export const verifyAuth = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const payload = await extractUser(req);
 
-  if (!authHeader) {
-    return res.status(401).json({ message: 'No authorization header' });
+  if (!payload) {
+    return res.status(401).json({ message: 'No authorization header or invalid token' });
   }
 
+  req.userAuth = payload;
+  next();
+}
+
+export const extractUser = async (req) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return null;
+  }
   try {
     const token = authHeader.replace('Bearer ', '');
     const payload = await verifier.verify(token);
-    req.userAuth = payload;
-
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: 'Invalid authorization token' });
+    return payload;
+  } catch {
+    return null;
   }
 }
 

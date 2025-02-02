@@ -6,10 +6,12 @@ import { useMemoryLane } from '@/core/context/memory-provider';
 import PhotoUpload from '@/app/[memory-id]/upload-photo/PhotoUpload';
 import { useEffect, useState } from 'react';
 import { PhotoEntry } from '@/core/utils/types';
+import LoadingScreen from '@/app/components/Loading';
+import AccessDenied from '@/app/components/AccessDenied';
 
 export default function UploadPage() {
   const memory_id = useParams()['memory-id'] as string;
-  const { memoryLane, setMemoryLane, fetchData } = useMemoryLane();
+  const { memoryLane, loading, unauthorized, setMemoryLane, fetchData } = useMemoryLane();
   const [uploadComplete, setUploadComplete] = useState(false);
 
   const groupName = memoryLane?.group_data.group_name || 'Loading...';
@@ -29,6 +31,15 @@ export default function UploadPage() {
   };
 
   useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
+
+  if (unauthorized) {
+    return <AccessDenied />
+  }
+
+  if (loading || !memoryLane) {
+    return <LoadingScreen />;
+  }
+
   return (
     <div className="min-h-screen bg-[#0E0E0E] p-4 md:p-8">
       <div className="max-w-5xl mx-auto">

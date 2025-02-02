@@ -99,18 +99,17 @@ export const getUser = async (): Promise<User | null> => {
   }
 }
 
-export const getMemoryLane = async (memory_id: string) => {
-  try {
-    const response = await fetch(`${API}/get-memory-lane?memory_id=${memory_id}`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to retrieve memory lane');
+export const getMemoryLane = async (memory_id: string | null, passcode: string | null) => {
+  return await fetch(
+    `${API}/get-memory-lane?memory_id=${memory_id}&passcode=${passcode}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAccessToken()}`
+      },
     }
-    return data;
-  } catch (error) {
-    console.log('Error fetching memory lane:', error);
-    return null;
-  }
+  );
 }
 
 export const createGroup = async (formData: { group_name: string }) => {

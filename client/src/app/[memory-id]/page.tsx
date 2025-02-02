@@ -38,7 +38,8 @@ export default function Timeline() {
     memoryLane,
     loading,
     failedToLoad,
-    fetchData
+    fetchData,
+    unauthorized
   } = useMemoryLane();
 
   const { isAuthenticated } = useAuth();
@@ -46,10 +47,10 @@ export default function Timeline() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
+  const [passcode, setPasscode] = useState('');
+  const [passcodeError, setPasscodeError] = useState('');
 
-  useEffect(() => {
-    fetchData(memory_id);
-  }, [memory_id, fetchData]);
+  useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,6 +105,27 @@ export default function Timeline() {
     };
   }, [selectedImage]);
 
+  const handlePasscodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasscodeError('');
+
+    try {
+      console.log("attempting passwcode, ", passcode);
+
+
+      await fetchData(memory_id, passcode);
+      // if (response.ok) {
+      //   // Refetch the memory lane data
+      //   fetchData(memory_id);
+      // } else {
+      //   setPasscodeError('Invalid passcode');
+      // }
+    } catch (error) {
+      console.log("error verifying passcode", error);
+      setPasscodeError('Failed to verify passcode');
+    }
+  };
+
   if (!memory_id || failedToLoad) {
     return (
       <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
@@ -111,6 +133,43 @@ export default function Timeline() {
         <Link href="/" className="text-[#CCC7F8] hover:text-white underline">
           Go back to home page
         </Link>
+      </div>
+    );
+  }
+
+  if (unauthorized) {
+    return (
+      <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
+        <h1 className="text-white text-2xl mb-6">This memory lane is passcode protected</h1>
+        
+        <div className="w-full max-w-sm">
+          <form onSubmit={handlePasscodeSubmit} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                placeholder="Enter passcode"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                className="w-full px-4 py-2 rounded bg-[rgb(45,45,45)] text-white border border-[#CCC7F8] focus:outline-none focus:ring-2 focus:ring-[#CCC7F8]"
+              />
+              {passcodeError && (
+                <p className="mt-2 text-red-400 text-sm">{passcodeError}</p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors"
+            >
+              View memory lane
+            </button>
+          </form>
+          
+          <div className="mt-4 text-center">
+            <Link href="/" className="text-[#CCC7F8] hover:text-white text-sm">
+              Return to home page
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

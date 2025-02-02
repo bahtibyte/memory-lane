@@ -7,6 +7,7 @@ import { useMemoryLane } from '@/core/context/memory-provider';
 import Link from 'next/link';
 import { PhotoEntry } from '@/core/utils/types';
 import { editPhoto } from '@/core/utils/api';
+import AccessDenied from '@/app/components/AccessDenied';
 
 interface PhotoFormData {
   photo_date: string;
@@ -21,7 +22,7 @@ export default function EditPhotoPage() {
   const memory_id = params['memory-id'] as string;
   const photo_id = parseInt(params.slug?.[0] || '0');
 
-  const { memoryLane, loading, fetchData, setMemoryLane } = useMemoryLane();
+  const { memoryLane, loading, unauthorized, fetchData, setMemoryLane } = useMemoryLane();
   const [photoEntry, setPhotoEntry] = useState<PhotoEntry | null>(null);
 
   const [formData, setFormData] = useState<PhotoFormData>({
@@ -45,6 +46,10 @@ export default function EditPhotoPage() {
       }
     }
   }, [memoryLane, photo_id]);
+
+  if (unauthorized) {
+    return <AccessDenied />
+  }
 
   if (loading) {
     return (

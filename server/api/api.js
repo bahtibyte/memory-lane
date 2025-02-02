@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { rds } from './rds.js';
 import argon2 from 'argon2';
 
+import { extractUser } from './auth.js';
+
 // Setup S3 client access.
 const s3 = new AWS.S3({
   accessKeyId: process.env.NODE_AWS_S3_ACCESS_KEY,
@@ -81,6 +83,10 @@ function alias_url(alias) {
 
 async function get_user_id(req) {
   const username = req.userAuth.username;
+  return await get_user_id_from_username(username);
+}
+
+async function get_user_id_from_username(username) {
   const user_result = await rds.query(
     'SELECT * FROM ml_users WHERE username = $1',
     [username]
@@ -161,17 +167,17 @@ export const deleteGroup = async (req, res) => {
 
   try {
     await rds.query('BEGIN');
-  
+
     await rds.query(
       `DELETE FROM ml_photos WHERE group_id = $1 RETURNING *`,
       [group_id]
     );
-  
+
     const group_info_result = await rds.query(
       `DELETE FROM ml_group_info WHERE group_id = $1 RETURNING *`,
       [group_id]
     );
-  
+
     if (group_info_result.rowCount === 0) {
       await rds.query('ROLLBACK');
       return res.status(400).json({ error: 'Failed to delete group info.' });
@@ -186,7 +192,7 @@ export const deleteGroup = async (req, res) => {
       await rds.query('ROLLBACK');
       return res.status(400).json({ error: 'Failed to delete group info.' });
     }
-  
+
     await rds.query('COMMIT');
     return res.status(200).json({
       message: 'Group deleted successfully.',
@@ -362,7 +368,7 @@ export const deletePhoto = async (req, res) => {
 };
 
 export const getMemoryLane = async (req, res) => {
-  const { memory_id } = req.query;
+  const { memory_id, passcode } = req.query;
   console.log(`Getting memory lane for id: ${memory_id}`);
 
   const lookup_result = await ml_group_lookup(memory_id);
@@ -383,6 +389,15 @@ export const getMemoryLane = async (req, res) => {
   }
 
   const group = memoryLane.rows[0];
+
+  // Check if the group is password protected or if the user is the owner.
+  if (!group.is_public && (!passcode || passcode != group.passcode)) {
+    const payload = await extractUser(req);
+    const user_id = payload ? await get_user_id_from_username(payload.username) : null;
+    if (!user_id || user_id != group.owner_id) {
+      return res.status(403).json({ error: `Group ${group_id} is not public and requires a passcode.` });
+    }
+  }
 
   const photos_results = await rds.query(
     `SELECT photo_id, photo_url, photo_date, photo_title, photo_caption FROM ml_photos WHERE group_id = $1`,

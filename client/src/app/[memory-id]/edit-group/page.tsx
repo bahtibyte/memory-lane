@@ -11,6 +11,7 @@ import PageNotFound from '@/app/components/PageNotFound';
 import Link from 'next/link';
 import EditGroupName from '@/app/components/edit-group/EditGroupName';
 import EditGroupFriends from '@/app/components/edit-group/EditGroupFriends';
+import AccessDenied from '@/app/components/AccessDenied';
 
 export default function EditGroupPage() {
   const memory_id = useParams()['memory-id'] as string;
@@ -19,10 +20,15 @@ export default function EditGroupPage() {
     setMemoryLane,
     loading,
     failedToLoad,
-    fetchData
+    fetchData,
+    unauthorized
   } = useMemoryLane();
 
   useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
+
+  if (unauthorized) {
+    return <AccessDenied />
+  }
 
   if (loading) return <Loading />;
   if (!memory_id || failedToLoad || !memoryLane) return <PageNotFound />;
@@ -31,25 +37,25 @@ export default function EditGroupPage() {
     <div className="min-h-screen bg-[#0E0E0E] p-4 md:p-8">
       <div className="max-w-3xl mx-auto">
         <Link
-          href="/my-groups"
+          href={`/${memory_id}`}
           className="inline-flex items-center text-purple-300 hover:text-purple-400 hover:scale-105 transition-all duration-200 mb-6 md:mb-8 text-sm"
         >
-          <svg 
-            className="w-4 h-4 mr-2" 
-            fill="none" 
-            stroke="currentColor" 
+          <svg
+            className="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
               d="M10 19l-7-7m0 0l7-7m-7 7h18"
             />
           </svg>
-          Back to Homepage
+          Back to Memory
         </Link>
-        
+
         {/* Header with Admin Status */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-purple-300 text-sm font-medium tracking-wider mb-2">
@@ -76,7 +82,7 @@ export default function EditGroupPage() {
           isAdmin={true}//for testing purposes
         />
 
-        <EditGroupFriends/>
+        <EditGroupFriends />
 
         {/* Existing Components */}
         <EditGroupPrivacy
