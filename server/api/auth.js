@@ -127,12 +127,16 @@ export const createUser = async (req, res) => {
   const profile_name = response.UserAttributes.find(attr => attr.Name === 'name')?.Value;
   const username = response.Username;
 
-  const create_user = await rds.query(
-    'INSERT INTO ml_users (username, email, profile_name) VALUES ($1, $2, $3) RETURNING *',
-    [username, email, profile_name]
-  );
+  try {
+    const create_user = await rds.query(
+      'INSERT INTO ml_users (username, email, profile_name) VALUES ($1, $2, $3) RETURNING *',
+      [username, email, profile_name]
+    );
 
-  const user = create_user.rows[0];
+    const user = create_user.rows[0];
 
-  res.status(200).json({ user });
+    res.status(200).json({ user });
+  } catch {
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 }

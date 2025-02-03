@@ -13,7 +13,7 @@ const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.NEXT_PUBLIC_AWS_COGNITO_REGION
 });
 
-export const sendSignUpCommand = async (email: string, password: string, name: string): Promise<SignUpCommandOutput | null> => {
+export const sendSignUpCommand = async (name: string, email: string, password: string): Promise<SignUpCommandOutput | null> => {
   return await cognitoClient.send(new SignUpCommand({
     ClientId: CLIENT_ID,
     Username: email,
