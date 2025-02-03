@@ -34,35 +34,11 @@ function build_group_data(group_lookup, group_data) {
     'group_url': group_url(group_lookup.uuid),
     'is_public': group_data.is_public,
     'passcode': group_data.passcode,
+    'thumbnail_url': group_data.thumbnail_url,
     'alias': group_lookup.alias,
     'alias_url': alias_url(group_lookup.alias),
   }
 }
-
-async function verifyGroup(group_id, passcode) {
-  try {
-    // Check if the group exists
-    const groupQuery = await rds.query(`SELECT passcode FROM ml_group WHERE group_id = $1`, [group_id]);
-
-    if (groupQuery.rowCount === 0) {
-      return { success: false, message: 'Group does not exist.' };
-    }
-
-    const storedPasscode = groupQuery.rows[0].passcode;
-
-    // Verify the hashed passcode
-    const isValidPasscode = await argon2.verify(storedPasscode, passcode);
-
-    if (!isValidPasscode) {
-      return { success: false, message: 'Invalid passcode.' };
-    }
-
-    return { success: true, message: 'Group verified successfully.', group: groupQuery.rows[0] };
-  } catch (error) {
-    console.error('Error verifying group:', error);
-    return { success: false, message: 'An error occurred while verifying the group.' };
-  }
-};
 
 async function ml_group_lookup(memory_id) {
   const result = await rds.query(
@@ -227,7 +203,8 @@ export const getOwnedGroups = async (req, res) => {
     const group_data = {
       group_name: row.group_name,
       is_public: row.is_public,
-      passcode: row.passcode
+      passcode: row.passcode,
+      thumbnail_url: row.thumbnail_url
     };
     return build_group_data(group_lookup, group_data);
   });
@@ -436,62 +413,22 @@ export const editPhoto = async (req, res) => {
   });
 }
 
-export const getGroupInfo = async (req, res) => {
-  const { email, passcode } = req.body;
-
-  console.log(`Fetching group info for email: ${email}`);
-
-  if (!email || !passcode) {
-    return res.status(400).json({ error: 'Email and passcode are required.' });
-  }
-
-  try {
-    // Step 1: Check if the email exists in the database
-    const groupQuery = await rds.query(
-      `SELECT group_id, group_name, passcode FROM ml_group WHERE email = $1`,
-      [email]
-    );
-
-    if (groupQuery.rowCount === 0) {
-      return res.status(400).json({ error: 'Group with this email does not exist.' });
-    }
-
-    const group = groupQuery.rows[0];
-
-    // Step 2: Validate hashed passcode
-    const isValidPasscode = await argon2.verify(group.passcode, passcode);
-    if (!isValidPasscode) {
-      return res.status(400).json({ error: 'Invalid passcode.' });
-    }
-
-    // Step 3: Return the group info (excluding passcode for security)
-    res.status(200).json({
-      'status': 'success',
-      'group': {
-        'group_id': 'demo',
-        'group_name': 'Demo Group',
-        'group_url': '',
-      }
-    });
-
-  } catch (error) {
-    console.error('Error fetching group info:', error);
-    return res.status(500).json({ error: 'An error occurred while retrieving the group info.' });
-  }
-
-};
-
 export const presignedS3Url = async (req, res) => {
-  const { file_name } = req.query;
+  const { file_name, category } = req.query;
   if (!file_name) {
     res.status(400).json({ error: 'File name is required' });
+    return;
+  }
+
+  if (category !== 'memories' && category !== 'thumbnail') {
+    res.status(400).json({ error: 'Invalid category' });
     return;
   }
 
   console.log("Getting presigned S3 URL for group with file name: ", file_name);
 
   const fileExtension = file_name.split('.').pop() || '';
-  const upload_name = `uploads/${uuidv4()}.${fileExtension}`;
+  const upload_name = `${category}/${uuidv4()}.${fileExtension}`;
   const presignedUrl = await s3.getSignedUrlPromise('putObject', {
     Bucket: process.env.NODE_AWS_S3_BUCKET,
     Key: upload_name,
@@ -539,3 +476,39 @@ export const createPhotoEntry = async (req, res) => {
     },
   });
 };
+
+export const updateGroupThumbnail = async (req, res) => {
+  const { memory_id, thumbnail_url } = req.body;
+  console.log(`Updating group thumbnail for id: ${memory_id}, thumbnail_url: ${thumbnail_url}`);
+
+  if (!memory_id || !thumbnail_url) {
+    return res.status(400).json({ error: 'Memory lane and thumbnail URL are required.' });
+  }
+
+  const lookup_result = await ml_group_lookup(memory_id); 
+  if (lookup_result.rowCount === 0) {
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
+  }
+
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
+
+  try {
+    const update_result = await rds.query(
+      `UPDATE ml_group_info SET thumbnail_url = $1 WHERE group_id = $2 RETURNING *`,
+      [thumbnail_url, group_id]
+    );
+
+    if (update_result.rowCount === 0) {
+      return res.status(400).json({ error: 'Failed to update group thumbnail.' });
+    }
+
+    return res.status(200).json({
+      message: 'Group thumbnail updated successfully.',
+      group_data: build_group_data(group_lookup, update_result.rows[0])
+    });
+  } catch (error) {
+    console.error('Error updating group thumbnail:', error);
+    return res.status(500).json({ error: 'An error occurred while updating the group thumbnail.' });
+  }
+}

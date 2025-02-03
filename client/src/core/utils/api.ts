@@ -5,7 +5,7 @@ const API = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
 
 const ACCESS_TOKEN_EXPIRE_BUFFER = 0; // 1 day
 
-export const getAuthorization = async (): Promise<string | null> => {
+export const getAuthorization = async (): Promise<string> => {
   const cookies = getCookies();
   const expires_at = Number(cookies["expires_at"]);
   console.log("[api]: Expires at.", expires_at);
@@ -14,7 +14,7 @@ export const getAuthorization = async (): Promise<string | null> => {
     const response = await refreshTokens();
     if (!response.ok) {
       console.log("[api]: Failed to refresh tokens.");
-      return null;
+      return `Bearer null`
     }
     const data = await response.json();
     if (data.access_token && data.expires_in) {
@@ -33,7 +33,7 @@ export const saveRefreshToken = async (refresh_token: string) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAccessToken()}`
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify({ refresh_token }),
       credentials: 'include',
@@ -85,7 +85,7 @@ export const getUser = async (): Promise<User | null> => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAccessToken()}`
+        'Authorization': await getAuthorization()
       },
     });
     const data = await response.json();
@@ -106,7 +106,7 @@ export const getMemoryLane = async (memory_id: string | null, passcode: string |
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAccessToken()}`
+        'Authorization': await getAuthorization()
       },
     }
   );
@@ -114,16 +114,11 @@ export const getMemoryLane = async (memory_id: string | null, passcode: string |
 
 export const createGroup = async (formData: { group_name: string }) => {
   try {
-    const bearer = await getAuthorization();
-    if (!bearer) {
-      console.log("[api]: No bearer token found.");
-      return null;
-    }
     const response = await fetch(`${API}/create-group`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': bearer
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify(formData)
     });
@@ -140,16 +135,11 @@ export const createGroup = async (formData: { group_name: string }) => {
 
 export const deleteGroup = async (memory_id: string) => {
   try {
-    const bearer = await getAuthorization();
-    if (!bearer) {
-      console.log("[api]: No bearer token found.");
-      return null;
-    }
     const response = await fetch(`${API}/delete-group`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': bearer
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify({ memory_id })
     });
@@ -166,16 +156,11 @@ export const deleteGroup = async (memory_id: string) => {
 
 export const getOwnedGroups = async () => {
   try {
-    const bearer = await getAuthorization();
-    if (!bearer) {
-      console.log("[api]: No bearer token found.");
-      return null;
-    }
     const response = await fetch(`${API}/get-owned-groups`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': bearer
+        'Authorization': await getAuthorization()
       },
     });
     const data = await response.json();
@@ -189,9 +174,15 @@ export const getOwnedGroups = async () => {
   }
 }
 
-export const generateS3Url = async (file_name: string) => {
+export const generateS3Url = async (file_name: string, category: string) => {
   try {
-    const response = await fetch(`${API}/generate-s3-url?file_name=${file_name}`);
+    const response = await fetch(`${API}/generate-s3-url?file_name=${file_name}&category=${category}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': await getAuthorization()
+      },
+    });
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.error || 'Failed to create group');
@@ -215,6 +206,7 @@ export const createPhotoEntry = async (formData: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify({
         memory_id: formData.memory_id,
@@ -241,6 +233,7 @@ export const deletePhoto = async (memory_id: string, photo_id: number) => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify({ memory_id, photo_id })
     });
@@ -264,6 +257,7 @@ export const editPhoto = async (formData: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify(formData)
     });
@@ -287,6 +281,7 @@ export const updateGroupName = async (formData: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify(formData)
     });
@@ -311,6 +306,7 @@ export const updateGroupPrivacy = async (formData: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify(formData)
     });
@@ -334,6 +330,7 @@ export const updateGroupAlias = async (formData: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': await getAuthorization()
       },
       body: JSON.stringify(formData)
     });
@@ -342,4 +339,24 @@ export const updateGroupAlias = async (formData: {
     console.log('Error updating group alias:', error);
     return null;
   }
+}
+
+export async function updateGroupThumbnail(formData: {
+  memory_id: string,
+  thumbnail_url: string,
+}) {
+  const response = await fetch(`${API}/update-group-thumbnail`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': await getAuthorization()
+    },
+    body: JSON.stringify(formData)
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update group thumbnail');
+  }
+
+  return response.json();
 }

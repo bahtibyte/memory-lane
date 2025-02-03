@@ -153,9 +153,9 @@ export default function MyGroups() {
             >
               {/* Thumbnail Image - Adjusted height for mobile */}
               <div className="relative w-full h-36 sm:h-48 bg-[#242424]">
-                {group.group_thumbnail ? (
+                {group.thumbnail_url ? (
                   <Image
-                    src={group.group_thumbnail}
+                    src={group.thumbnail_url}
                     alt={group.group_name}
                     fill
                     className="object-cover"

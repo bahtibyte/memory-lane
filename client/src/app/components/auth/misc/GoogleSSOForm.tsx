@@ -30,6 +30,9 @@ export default function GoogleSSOForm() {
         </svg>
         Continue with Google
       </button>
+      <div className="mt-2 text-xs text-gray-400">
+        SSO coming soon. Please use email/password.
+      </div>
     </div>
 
   );

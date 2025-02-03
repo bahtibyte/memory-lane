@@ -44,7 +44,7 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
         }
 
         // Get S3 presigned URL
-        const s3UrlData = await generateS3Url(file.name);
+        const s3UrlData = await generateS3Url(file.name, 'memories');
 
         if (s3UrlData.presignedUrl) {
           // Upload file to S3

@@ -103,7 +103,7 @@ export default function LandingPage() {
         </div>
 
         {/* Main Section Content */}
-        <div className="relative flex flex-col w-[80%] max-w-7xl">
+        <div className="relative flex flex-col w-[80%] max-w-[80%]">
           {/* Left-Aligned Text */}
           <div className="text-left pr-6 pl-[5%] mb-12">
             <h1 className="text-6xl lg:text-7xl xl:text-8xl font-bold hover:cursor-default">
@@ -157,7 +157,7 @@ export default function LandingPage() {
           ? 'opacity-100 translate-y-0' 
           : 'opacity-0 translate-y-20'
       }`}>
-        <div className="max-w-7xl mx-auto">
+        <div className="w-[80%] max-w-[80%] mx-auto">
           {/* Headers */}
           <div className="text-left mb-20">
             <h2 className="text-6xl md:text-7xl font-bold text-white mb-4 hover:cursor-default">
@@ -241,7 +241,7 @@ export default function LandingPage() {
           ? 'opacity-100 translate-y-0' 
           : 'opacity-0 translate-y-20'
       }`}>
-        <div className="max-w-7xl mx-auto">
+        <div className="w-[80%] max-w-[80%] mx-auto">
           {/* Headers */}
           <div className="text-left mb-20">
             <h2 className="text-6xl md:text-7xl font-bold text-white mb-4 hover:cursor-default">

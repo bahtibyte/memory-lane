@@ -10,6 +10,9 @@ import { useMemoryLane } from '@/core/context/memory-provider';
 import { useAuth } from '@/core/context/auth-provider';
 import LoadingScreen from '@/app/components/Loading';
 import { HomeIcon } from '@/app/components/icons/HomeIcon';
+import PasswordProtected from '../components/memory/PasswordProtected';
+import UploadFirstPhoto from '../components/memory/UploadFirstPhoto';
+import PageNotFound from '../components/memory/PageNotFound';
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
@@ -47,8 +50,7 @@ export default function Timeline() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
-  const [passcode, setPasscode] = useState('');
-  const [passcodeError, setPasscodeError] = useState('');
+
 
   useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
 
@@ -105,79 +107,24 @@ export default function Timeline() {
     };
   }, [selectedImage]);
 
-  const handlePasscodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasscodeError('');
-
-    try {
-      console.log("attempting passwcode, ", passcode);
-
-
-      await fetchData(memory_id, passcode);
-      // if (response.ok) {
-      //   // Refetch the memory lane data
-      //   fetchData(memory_id);
-      // } else {
-      //   setPasscodeError('Invalid passcode');
-      // }
-    } catch (error) {
-      console.log("error verifying passcode", error);
-      setPasscodeError('Failed to verify passcode');
-    }
-  };
-
-  if (!memory_id || failedToLoad) {
-    return (
-      <div className="min-h-screen p-4 md:p-8 bg-[#0E0E0E] flex flex-col items-center justify-center">
-        <h1 className="text-white text-2xl mb-4">Page not found</h1>
-        <Link href="/" className="text-purple-300 hover:text-purple-400 underline">
-          Go back to home page
-        </Link>
-      </div>
-    );
+  if (unauthorized) {
+    return <PasswordProtected memory_id={memory_id} />
   }
 
-  if (unauthorized) {
-    return (
-      <div className="min-h-screen p-4 md:p-8 bg-[#0E0E0E] flex flex-col items-center justify-center">
-
-        <h1 className="text-white text-2xl mb-6">This memory lane is passcode protected</h1>
-
-        <div className="w-full max-w-sm">
-
-          <form onSubmit={handlePasscodeSubmit} className="space-y-4">
-            <div>
-              <input
-                type="password"
-                placeholder="Enter passcode"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                className="w-full px-4 py-2 rounded bg-[#1A1A1A] text-white border border-[#242424] focus:outline-none focus:ring-2 focus:ring-purple-300"
-              />
-              {passcodeError && (
-                <p className="mt-2 text-red-400 text-sm">{passcodeError}</p>
-              )}
-            </div>
-            <button
-              type="submit"
-              className="w-full px-4 text-center py-2 bg-purple-300 text-black rounded hover:bg-purple-400 transition-colors box-border"
-            >
-              View memory lane
-            </button>
-          </form>
-
-          <div className="mt-4 text-center">
-            <Link href="/" className="text-purple-300 hover:text-purple-400 text-sm">
-              Return to home page
-            </Link>
-          </ div>
-        </div>
-      </div>
-    );
+  if (failedToLoad) {
+    return <PageNotFound />
   }
 
   if (loading || !memoryLane) {
     return <LoadingScreen />
+  }
+
+  if (memoryLane.photo_entries.length === 0) {
+    return <UploadFirstPhoto
+      memoryLane={memoryLane}
+      isAuthenticated={isAuthenticated}
+      memory_id={memory_id}
+    />
   }
 
   // Update the data source for sorted entries and stats
@@ -186,63 +133,10 @@ export default function Timeline() {
   );
   const yearsSpan = getYearsSpan(sortedEntries.map(entry => entry.photo_date));
   const photoCount = sortedEntries.length;
-  const friendsCount = 0;
+  const friendsCount = 1;
 
   // Function to get year from date string
   const getYear = (dateString: string) => new Date(dateString).getFullYear();
-
-  // Add early return for empty photo state
-  if (photoCount === 0) {
-    return (
-      <div className="min-h-screen bg-[#0E0E0E] p-4 md:p-8 flex flex-col items-center justify-center">
-        <div className="max-w-md w-full">
-          <div className="bg-[#1A1A1A] border border-[#242424] rounded-lg p-8 text-center">
-            {/* Header Section */}
-            <div className="mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                {memoryLane.group_data.group_name}
-              </h1>
-              <p className="text-gray-400 text-sm md:text-base">
-                Start your timeline by uploading the first photo
-              </p>
-            </div>
-
-            {/* Upload Button Section */}
-            <div className="space-y-6">
-              {isAuthenticated ? (
-                <Link
-                  href={`/${memory_id}/upload-photo`}
-                  className="w-full inline-block bg-purple-300 text-black rounded-lg px-4 py-3 font-medium hover:bg-purple-400 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200"
-                >
-                  Upload First Photo
-                </Link>
-              ) : (
-                <div className="relative">
-                  <button
-                    disabled
-                    className="w-full px-4 py-3 bg-[#242424] text-gray-400 rounded-lg cursor-not-allowed transition-all duration-200"
-                  >
-                    Upload First Photo
-                  </button>
-                  <span className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-2 bg-black text-white text-sm rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    Not signed in
-                  </span>
-                </div>
-              )}
-
-              {/* Back Button */}
-              <Link
-                href={isAuthenticated ? "/my-groups" : "/"}
-                className="w-full inline-block border border-[#242424] text-gray-300 rounded-lg px-4 py-3 hover:bg-[#242424] transition-all duration-200"
-              >
-                Back to {isAuthenticated ? "My Groups" : "Home"}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen p-4 md:p-8 bg-[#0E0E0E]">

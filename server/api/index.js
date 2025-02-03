@@ -14,6 +14,7 @@ import {
   updateGroupAlias,
   getOwnedGroups,
   deleteGroup,
+  updateGroupThumbnail,
 } from './api.js';
 import { verifyAuth, saveRefreshToken, getUser, clearRefreshToken, getAccessToken } from './auth.js';
 
@@ -35,22 +36,21 @@ app.get("/", (req, res) => res.send("Express on Vercel"));
 
 app.post('/api/save-refresh-token', verifyAuth, saveRefreshToken);
 app.get('/api/get-access-token', getAccessToken);
-
 app.post('/api/clear-refresh-token', verifyAuth, clearRefreshToken);
 app.get('/api/get-user', verifyAuth, getUser);
-
 app.post('/api/create-group', verifyAuth, createGroup);
 app.get('/api/get-owned-groups', verifyAuth, getOwnedGroups);
-
 app.delete('/api/delete-group', verifyAuth, deleteGroup);
+app.get('/api/generate-s3-url', verifyAuth, presignedS3Url);
+app.post('/api/update-group-thumbnail', verifyAuth, updateGroupThumbnail);
+app.post('/api/update-group-name', verifyAuth,updateGroupName);
+app.post('/api/update-group-privacy',verifyAuth, updateGroupPrivacy);
+app.post('/api/update-group-alias',verifyAuth, updateGroupAlias);
+app.delete('/api/delete-photo', verifyAuth,deletePhoto);
+app.post('/api/edit-photo', verifyAuth,editPhoto);
+app.post('/api/create-photo-entry', verifyAuth,createPhotoEntry);
 
-app.post('/api/update-group-name', updateGroupName);
-app.post('/api/update-group-privacy', updateGroupPrivacy);
-app.post('/api/update-group-alias', updateGroupAlias);
-app.delete('/api/delete-photo', deletePhoto);
-app.post('/api/edit-photo', editPhoto);
-app.post('/api/create-photo-entry', createPhotoEntry);
-app.get('/api/generate-s3-url', presignedS3Url);
+// Does not require auth to access memories.
 app.get('/api/get-memory-lane', getMemoryLane);
 
 initializeDB();

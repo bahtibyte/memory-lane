@@ -18,7 +18,9 @@ export default function EditGroupFriends() {
   return (
     <div className="bg-[#1A1A1A] border border-[#242424] rounded-lg p-4 md:p-6 mb-6">
       <h2 className="text-white font-medium mb-4">Friends</h2>
-      
+      <div className="mb-4 p-3 bg-purple-300/10 text-purple-300 rounded-lg text-sm">
+        Feature work in progress. Friends does not work in this current release.
+      </div>
       {/* Add New Friend Row */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-[#242424] rounded-lg mb-4">
         <div className="flex items-center gap-3 w-full">
@@ -39,9 +41,9 @@ export default function EditGroupFriends() {
 
       {/* Friend List */}
       {[
-        { name: 'Bahti', email: 'bahti@gmail.com', isAdmin: true },
-        { name: 'John', email: 'john@gmail.com', isAdmin: false },
-        { name: 'Sarah', email: 'sarah@gmail.com', isAdmin: false }
+        { name: 'Bahti', email: 'bahti@google.com', isAdmin: true },
+        { name: 'Sigi', email: 'sigi@goldman.com', isAdmin: false },
+        { name: 'Afshana', email: 'afshana@steam.com', isAdmin: false }
       ].map((friend, index) => (
         <div key={index} className="flex items-center justify-between p-3 bg-[#242424] rounded-lg mb-2 group">
           <div className="flex items-center gap-3 min-w-0">

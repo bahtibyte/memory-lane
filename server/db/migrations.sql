@@ -23,6 +23,7 @@ CREATE TABLE ml_group_info (
     is_public BOOLEAN NOT NULL DEFAULT true,
     passcode VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    thumbnail_url VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (group_id) REFERENCES ml_group_lookup(group_id)
 );
 

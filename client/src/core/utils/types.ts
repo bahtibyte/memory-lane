@@ -17,9 +17,9 @@ export interface GroupData {
   group_url: string;
   is_public: boolean;
   passcode: string | null;
+  thumbnail_url: string | null;
   alias: string | null;
   alias_url: string | null;
-  group_thumbnail: string | null;
 }
 
 export interface PhotoEntry {
