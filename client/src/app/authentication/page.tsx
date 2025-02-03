@@ -18,7 +18,6 @@ enum Step {
   VERIFY_ACCOUNT,
   LOGIN_ACCOUNT,
   FORGOT_PASSWORD,
-  RESET_PASSWORD,
 }
 
 export default function AuthPage() {
@@ -48,10 +47,6 @@ export default function AuthPage() {
     setStep(Step.VERIFY_ACCOUNT);
   }
 
-  const handleForgotPasswordSuccess = () => {
-    console.log("handleForgotPasswordSuccess");
-  }
-
   const completeLogin = async (response: InitiateAuthCommandOutput) => {
     try {
       console.log("complete login response: ", response);
@@ -71,7 +66,7 @@ export default function AuthPage() {
           // setError('Failed to retrieve user');
         }
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.log("error from login: ", err);
     }
@@ -112,8 +107,8 @@ export default function AuthPage() {
 
           {step === Step.FORGOT_PASSWORD && (
             <ForgotPassword
-              onLogin={() => setStep(Step.LOGIN_ACCOUNT)}
-              onSuccess={handleForgotPasswordSuccess}
+              onBack={() => setStep(Step.LOGIN_ACCOUNT)}
+              onSuccess={completeLogin}
             />
           )}
 

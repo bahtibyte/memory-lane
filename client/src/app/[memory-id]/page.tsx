@@ -128,9 +128,9 @@ export default function Timeline() {
 
   if (!memory_id || failedToLoad) {
     return (
-      <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
+      <div className="min-h-screen p-4 md:p-8 bg-[#0E0E0E] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Page not found</h1>
-        <Link href="/" className="text-[#CCC7F8] hover:text-white underline">
+        <Link href="/" className="text-purple-300 hover:text-purple-400 underline">
           Go back to home page
         </Link>
       </div>
@@ -139,10 +139,12 @@ export default function Timeline() {
 
   if (unauthorized) {
     return (
-      <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)] flex flex-col items-center justify-center">
+      <div className="min-h-screen p-4 md:p-8 bg-[#0E0E0E] flex flex-col items-center justify-center">
+
         <h1 className="text-white text-2xl mb-6">This memory lane is passcode protected</h1>
-        
+
         <div className="w-full max-w-sm">
+
           <form onSubmit={handlePasscodeSubmit} className="space-y-4">
             <div>
               <input
@@ -150,7 +152,7 @@ export default function Timeline() {
                 placeholder="Enter passcode"
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
-                className="w-full px-4 py-2 rounded bg-[rgb(45,45,45)] text-white border border-[#CCC7F8] focus:outline-none focus:ring-2 focus:ring-[#CCC7F8]"
+                className="w-full px-4 py-2 rounded bg-[#1A1A1A] text-white border border-[#242424] focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
               {passcodeError && (
                 <p className="mt-2 text-red-400 text-sm">{passcodeError}</p>
@@ -158,23 +160,23 @@ export default function Timeline() {
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors"
+              className="w-full px-4 text-center py-2 bg-purple-300 text-black rounded hover:bg-purple-400 transition-colors box-border"
             >
               View memory lane
             </button>
           </form>
-          
+
           <div className="mt-4 text-center">
-            <Link href="/" className="text-[#CCC7F8] hover:text-white text-sm">
+            <Link href="/" className="text-purple-300 hover:text-purple-400 text-sm">
               Return to home page
             </Link>
-          </div>
+          </ div>
         </div>
       </div>
     );
   }
 
-  if (loading || !memoryLane) { 
+  if (loading || !memoryLane) {
     return <LoadingScreen />
   }
 
@@ -243,44 +245,44 @@ export default function Timeline() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-[rgb(30,30,30)]">
+    <div className="min-h-screen p-4 md:p-8 bg-[#0E0E0E]">
       {selectedImage && <ImageOverlay image={selectedImage} onClose={() => setSelectedImage(null)} />}
 
       <div className="max-w-[1000px] mx-auto">
         {/* Header with Group Name and Action Buttons */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-[32px] md:text-[50px] font-bold">{memoryLane.group_data.group_name}</h1>
-          <div className="flex gap-4">
+          <h1 className="text-[32px] md:text-[50px] font-bold text-white truncate flex-shrink">{memoryLane.group_data.group_name}</h1>
+          <div className="flex gap-2 md:gap-4 flex-shrink-0">
             {isAuthenticated ? (
               <>
                 <Link
                   href={`/${memory_id}/upload-photo`}
-                  className="px-4 py-2 bg-[#CCC7F8] text-black rounded hover:bg-white transition-colors text-sm md:text-base"
+                  className="px-2 md:px-4 py-2 bg-purple-300 text-black rounded hover:bg-purple-400 transition-colors text-sm md:text-base whitespace-nowrap"
                 >
                   Upload Photo
                 </Link>
                 <Link
                   href={`/${memory_id}/edit-group`}
-                  className="px-4 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors text-sm md:text-base"
+                  className="px-2 md:px-4 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors text-sm md:text-base whitespace-nowrap"
                 >
                   Edit Group
                 </Link>
                 <Link
                   href={isAuthenticated ? "/my-groups" : "/"}
-                  className="px-3 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors"
+                  className="px-2 md:px-3 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors"
                 >
-                  <HomeIcon className="w-5 h-5" />
+                  <HomeIcon className="w-4 h-4 md:w-5 md:h-5" />
                 </Link>
               </>
             ) : (
               <>
-                <span className="px-4 py-2 bg-gray-500 text-gray-300 rounded cursor-not-allowed text-sm md:text-base relative group">
+                <span className="px-2 md:px-4 py-2 bg-gray-500 text-gray-300 rounded cursor-not-allowed text-sm md:text-base relative group whitespace-nowrap">
                   Upload Photo
                   <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
                     Not signed in or part of this group
                   </span>
                 </span>
-                <span className="px-4 py-2 border border-gray-500 text-gray-500 rounded cursor-not-allowed text-sm md:text-base relative group">
+                <span className="px-2 md:px-4 py-2 border border-gray-500 text-gray-500 rounded cursor-not-allowed text-sm md:text-base relative group whitespace-nowrap">
                   Edit Group
                   <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
                     Not signed in or part of this group
@@ -288,9 +290,9 @@ export default function Timeline() {
                 </span>
                 <Link
                   href="/"
-                  className="px-3 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors"
+                  className="px-2 md:px-3 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors"
                 >
-                  <HomeIcon className="w-5 h-5" />
+                  <HomeIcon className="w-4 h-4 md:w-5 md:h-5" />
                 </Link>
               </>
             )}
@@ -302,14 +304,14 @@ export default function Timeline() {
         {/* Timeline */}
         <div className="space-y-4 md:space-y-8 relative">
           {/* Today text */}
-          <div className="absolute left-[80px] sm:left-[140px] md:left-[200px] -top-12 text-[12px] sm:text-[14px] md:text-[16px] text-[#CCC7F8] -translate-x-1/2">Today</div>
+          <div className="absolute left-[80px] sm:left-[140px] md:left-[200px] -top-12 text-[12px] sm:text-[14px] md:text-[16px] text-purple-300 -translate-x-1/2">Today</div>
 
           {/* Background line */}
-          <div className="absolute left-[80px] sm:left-[140px] md:left-[200px] w-[2px] -top-10 h-[calc(100%)] bg-white opacity-20"></div>
+          <div className="absolute left-[80px] sm:left-[140px] md:left-[200px] w-[2px] -top-10 h-[calc(100%)] bg-[#242424]"></div>
 
           {/* Progress line */}
           <div
-            className="absolute left-[80px] sm:left-[140px] md:left-[200px] w-[2px] bg-[#CCC7F8]"
+            className="absolute left-[80px] sm:left-[140px] md:left-[200px] w-[2px] bg-purple-300"
             style={{
               top: '-40px',
               height: '100%',

@@ -1,7 +1,18 @@
 "use client";
 
-import { sendSignUpCommand, sendVerifyCommand, sendLoginCommand, SIGNUP_HEADER, LOGIN_HEADER, VERIFY_HEADER } from "@/core/utils/auth";
 import { createContext, useContext, useEffect, useState } from "react";
+import {
+  sendSignUpCommand,
+  sendVerifyCommand,
+  sendLoginCommand,
+  sendForgotPasswordCommand,
+  confirmForgotPasswordCommand,
+  SIGNUP_HEADER,
+  LOGIN_HEADER,
+  VERIFY_HEADER,
+  FORGOT_PASSWORD_HEADER,
+  CONFIRM_FORGOT_PASSWORD_HEADER
+} from "@/core/utils/auth";
 import { User } from "@/core/utils/types";
 import { getUser } from "@/core/utils/api";
 
@@ -13,6 +24,8 @@ type AuthContextType = {
   signUp: SIGNUP_HEADER;
   verify: VERIFY_HEADER;
   login: LOGIN_HEADER;
+  forgotPassword: FORGOT_PASSWORD_HEADER;
+  confirmForgotPassword: CONFIRM_FORGOT_PASSWORD_HEADER;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -48,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signUp: sendSignUpCommand,
         verify: sendVerifyCommand,
         login: sendLoginCommand,
+        forgotPassword: sendForgotPasswordCommand,
+        confirmForgotPassword: confirmForgotPasswordCommand,
       }}
     >
       {children}

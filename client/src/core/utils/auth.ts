@@ -5,7 +5,11 @@ import {
   SignUpCommandOutput,
   ConfirmSignUpCommand,
   ConfirmSignUpCommandOutput,
-  InitiateAuthCommandOutput
+  InitiateAuthCommandOutput,
+  ForgotPasswordCommand,
+  ForgotPasswordCommandOutput,
+  ConfirmForgotPasswordCommand,
+  ConfirmForgotPasswordCommandOutput
 } from "@aws-sdk/client-cognito-identity-provider";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_AWS_COGNITO_CLIENT_ID;
@@ -49,3 +53,25 @@ export const sendLoginCommand = async (email: string, password: string): Promise
 }
 
 export type LOGIN_HEADER = (email: string, password: string) => Promise<InitiateAuthCommandOutput | null>;
+
+export const sendForgotPasswordCommand = async (email: string): Promise<ForgotPasswordCommandOutput | null> => {
+  return await cognitoClient.send(new ForgotPasswordCommand({
+    ClientId: CLIENT_ID,
+    Username: email,
+  }));
+}
+
+export type FORGOT_PASSWORD_HEADER = (email: string) => Promise<ForgotPasswordCommandOutput | null>;
+
+export const confirmForgotPasswordCommand = async (email: string, code: string, password: string): Promise<ConfirmForgotPasswordCommandOutput | null> => {
+  return await cognitoClient.send(
+    new ConfirmForgotPasswordCommand({
+      ClientId: CLIENT_ID,
+      Username: email,
+      ConfirmationCode: code,
+      Password: password,
+    })
+  );
+};
+
+export type CONFIRM_FORGOT_PASSWORD_HEADER = (email: string, code: string, password: string) => Promise<ConfirmForgotPasswordCommandOutput | null>;
