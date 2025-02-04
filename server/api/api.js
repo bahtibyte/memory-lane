@@ -420,7 +420,7 @@ export const presignedS3Url = async (req, res) => {
     return;
   }
 
-  if (category !== 'memories' && category !== 'thumbnail') {
+  if (category !== 'memories' && category !== 'thumbnail' && category !== 'profile') {
     res.status(400).json({ error: 'Invalid category' });
     return;
   }
@@ -511,4 +511,28 @@ export const updateGroupThumbnail = async (req, res) => {
     console.error('Error updating group thumbnail:', error);
     return res.status(500).json({ error: 'An error occurred while updating the group thumbnail.' });
   }
+}
+
+export const updateUserProfile = async (req, res) => {
+  const { profile_name, profile_url } = req.body;
+  console.log(`Updating user profile for name: ${profile_name}, profile_url: ${profile_url}`);
+
+  const user_id = await get_user_id(req);
+  if (!user_id) {
+    return res.status(400).json({ error: 'User does not exist.' });
+  }
+
+  const update_result = await rds.query(
+    `UPDATE ml_users SET profile_name = $1, profile_url = $2 WHERE user_id = $3 RETURNING *`,
+    [profile_name, profile_url, user_id]
+  );
+
+  if (update_result.rowCount === 0) {
+    return res.status(400).json({ error: 'Failed to update user profile.' });
+  }
+
+  return res.status(200).json({
+    message: 'User profile updated successfully.',
+    user: update_result.rows[0]
+  });
 }

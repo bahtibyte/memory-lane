@@ -15,6 +15,7 @@ import {
   getOwnedGroups,
   deleteGroup,
   updateGroupThumbnail,
+  updateUserProfile,
 } from './api.js';
 import { verifyAuth, saveRefreshToken, getUser, clearRefreshToken, getAccessToken } from './auth.js';
 
@@ -25,7 +26,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 app.use(
   cors({
     origin: !isDevelopment ? process.env.NODE_CLIENT_ADDRESS : true,
-    methods: ["GET", "POST", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // If you use cookies or HTTP authentication
   })
 );
@@ -49,6 +50,7 @@ app.post('/api/update-group-alias',verifyAuth, updateGroupAlias);
 app.delete('/api/delete-photo', verifyAuth,deletePhoto);
 app.post('/api/edit-photo', verifyAuth,editPhoto);
 app.post('/api/create-photo-entry', verifyAuth,createPhotoEntry);
+app.put('/api/update-user-profile', verifyAuth, updateUserProfile);
 
 // Does not require auth to access memories.
 app.get('/api/get-memory-lane', getMemoryLane);
@@ -57,7 +59,7 @@ initializeDB();
 
 // Add development server listening
 if (isDevelopment) {
-  const PORT = process.env.PORT || 3001;
+  const PORT = process.env.PORT || 3005;
   app.listen(PORT, () => {
     console.log(`Development server running on port ${PORT}`);
   });

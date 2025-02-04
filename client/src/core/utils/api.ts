@@ -360,3 +360,19 @@ export async function updateGroupThumbnail(formData: {
 
   return response.json();
 }
+
+
+export async function updateUserProfile(formData: {
+  profile_name: string,
+  profile_url: string,
+}) {
+  const response = await fetch(`${API}/update-user-profile`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': await getAuthorization()
+    },
+    body: JSON.stringify(formData),
+  });
+  return response.json();
+}

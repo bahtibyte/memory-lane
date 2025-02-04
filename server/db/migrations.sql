@@ -45,12 +45,15 @@ CREATE INDEX idx_ml_photos_group_id ON ml_photos(group_id);
 CREATE TABLE ml_friends (
     friend_id SERIAL PRIMARY KEY,
     group_id INTEGER NOT NULL,
-    friend_name VARCHAR(255) NOT NULL,
-    friend_url VARCHAR(255) NOT NULL,
-    FOREIGN KEY (group_id) REFERENCES ml_group_lookup(group_id)
+    user_id INTEGER NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT false,
+    confirmed BOOLEAN NOT NULL DEFAULT false,
+    FOREIGN KEY (group_id) REFERENCES ml_group_lookup(group_id),
+    FOREIGN KEY (user_id) REFERENCES ml_users(user_id)
 );
 
 CREATE INDEX idx_ml_friends_group_id ON ml_friends(group_id);
+CREATE INDEX idx_ml_friends_user_id ON ml_friends(user_id);
 
 CREATE TABLE ml_tagged (
     tagged_id SERIAL PRIMARY KEY,
