@@ -37,11 +37,10 @@ export default function EditGroupName({
   };
 
   const handleEditClick = () => {
+    if (!isAdmin) return;
     setIsEditingName(true);
-    // Use setTimeout to ensure the input is editable before focusing
     setTimeout(() => {
       inputRef.current?.focus();
-      // Optional: Select all text for easy replacement
       inputRef.current?.select();
     }, 0);
   };
@@ -53,7 +52,7 @@ export default function EditGroupName({
         memory_id: memoryId,
         group_name: groupName
       });
-
+      
       if (result.group_data) {
         setMemoryLane({
           group_data: result.group_data,
@@ -62,7 +61,7 @@ export default function EditGroupName({
         setShowNameSuccess(true);
         setIsEditingName(false);
       }
-
+      
       setTimeout(() => {
         setShowNameSuccess(false);
       }, 3000);
@@ -232,36 +231,41 @@ export default function EditGroupName({
           <label className="block text-white font-medium mb-2">Group Name</label>
           <form onSubmit={handleNameSave} className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={groupName}
-                onChange={handleNameChange}
-                className={`w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white transition-all duration-200 ${isAdmin
-                  ? 'focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300'
-                  : 'cursor-not-allowed'
+              <div 
+                className={`relative w-full ${isAdmin && !isEditingName ? 'cursor-pointer' : ''}`}
+                onClick={!isEditingName ? handleEditClick : undefined}
+              >
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={groupName}
+                  onChange={handleNameChange}
+                  className={`w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white transition-all duration-200 ${
+                    isAdmin 
+                      ? 'focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300' 
+                      : 'cursor-not-allowed'
                   }`}
-                placeholder="Enter group name"
-                readOnly={!isEditingName || !isAdmin}
-              />
-              {!isEditingName && isAdmin && (
-                <button
-                  type="button"
-                  onClick={handleEditClick}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-purple-300 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-              )}
-              {!isAdmin && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-              )}
+                  placeholder="Enter group name"
+                  readOnly={!isEditingName || !isAdmin}
+                />
+                {!isEditingName && isAdmin && (
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-purple-300 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                )}
+                {!isAdmin && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
             </div>
             {isEditingName && isAdmin && (
               <button
