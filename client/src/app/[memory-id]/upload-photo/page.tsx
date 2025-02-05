@@ -20,7 +20,8 @@ export default function UploadPage() {
     if (memoryLane) {
       setMemoryLane({
         group_data: memoryLane.group_data,
-        photo_entries: [...memoryLane.photo_entries, photoEntry]
+        photo_entries: [...memoryLane.photo_entries, photoEntry],
+        friends: memoryLane.friends
       });
       setUploadComplete(true);
     }

@@ -128,12 +128,23 @@ export const createUser = async (req, res) => {
   const username = response.Username;
 
   try {
+    await rds.query('BEGIN');
+
     const create_user = await rds.query(
       'INSERT INTO ml_users (username, email, profile_name) VALUES ($1, $2, $3) RETURNING *',
       [username, email, profile_name]
     );
 
     const user = create_user.rows[0];
+
+    await rds.query(
+      `UPDATE ml_friends 
+       SET user_id = $1, is_confirmed = true
+       WHERE email = $2;`,
+      [user.user_id, user.email]
+    )
+
+    await rds.query('COMMIT');
 
     res.status(200).json({ user });
   } catch {

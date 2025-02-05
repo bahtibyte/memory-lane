@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { StatsContainer } from '@/app/components/StatsContainer';
-import { ImageOverlay } from '@/app/components/photos/ImageOverlay';
-import { PhotoEntry } from '@/app/components/photos/PhotoEntry';
+import { StatsContainer } from '../components/StatsContainer';
+import { ImageOverlay } from '../components/photos/ImageOverlay';
+import { PhotoEntry } from '../components/photos/PhotoEntry';
 import { useMemoryLane } from '@/core/context/memory-provider';
 import { useAuth } from '@/core/context/auth-provider';
 import LoadingScreen from '@/app/components/Loading';
-import { HomeIcon } from '@/app/components/icons/HomeIcon';
+import { HomeIcon } from '../components/icons/HomeIcon';
 import PasswordProtected from '../components/memory/PasswordProtected';
 import UploadFirstPhoto from '../components/memory/UploadFirstPhoto';
 import PageNotFound from '../components/memory/PageNotFound';
@@ -50,7 +50,6 @@ export default function Timeline() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
-
 
   useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
 
@@ -133,7 +132,7 @@ export default function Timeline() {
   );
   const yearsSpan = getYearsSpan(sortedEntries.map(entry => entry.photo_date));
   const photoCount = sortedEntries.length;
-  const friendsCount = 1;
+  const friendsCount = memoryLane.friends.length;
 
   // Function to get year from date string
   const getYear = (dateString: string) => new Date(dateString).getFullYear();
@@ -173,13 +172,13 @@ export default function Timeline() {
                 <span className="px-2 md:px-4 py-2 bg-gray-500 text-gray-300 rounded cursor-not-allowed text-sm md:text-base relative group whitespace-nowrap">
                   Upload Photo
                   <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
-                    Not signed in or part of this group
+                    Not signed in or admin of this group
                   </span>
                 </span>
                 <span className="px-2 md:px-4 py-2 border border-gray-500 text-gray-500 rounded cursor-not-allowed text-sm md:text-base relative group whitespace-nowrap">
                   Edit Group
                   <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
-                    Not signed in or part of this group
+                    Not signed in or admin of this group
                   </span>
                 </span>
                 <Link

@@ -91,7 +91,8 @@ export default function EditPhotoPage() {
     if (result && memoryLane) {
       setMemoryLane({
         group_data: memoryLane.group_data,
-        photo_entries: memoryLane.photo_entries.map(entry => entry.photo_id === photo_id ? result.updated_photo : entry)
+        photo_entries: memoryLane.photo_entries.map(entry => entry.photo_id === photo_id ? result.updated_photo : entry),
+        friends: memoryLane.friends
       });
       router.push(`/${memory_id}`);
     }

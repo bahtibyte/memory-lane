@@ -3,15 +3,17 @@
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useMemoryLane } from '@/core/context/memory-provider';
-import EditGroupPrivacy from '@/app/components/edit-group/EditGroupPrivacy';
-import EditGroupAlias from '@/app/components/edit-group/EditGroupAlias';
-import EditGroupPhotos from '@/app/components/edit-group/EditGroupPhotos';
+import EditGroupPrivacy from '@/app/[memory-id]/edit-group/components/EditGroupPrivacy';
+import EditGroupAlias from '@/app/[memory-id]/edit-group/components/EditGroupAlias';
+import EditGroupPhotos from '@/app/[memory-id]/edit-group/components/EditGroupPhotos';
 import Loading from '@/app/components/Loading';
 import PageNotFound from '@/app/components/PageNotFound';
 import Link from 'next/link';
-import EditGroupName from '@/app/components/edit-group/EditGroupName';
-import EditGroupFriends from '@/app/components/edit-group/EditGroupFriends';
+import EditGroupName from '@/app/[memory-id]/edit-group/components/EditGroupName';
+import EditGroupFriends from '@/app/[memory-id]/edit-group/components/EditGroupFriends';
 import AccessDenied from '@/app/components/AccessDenied';
+import { useAuth } from '@/core/context/auth-provider';
+import { Friend } from '@/core/utils/types';
 
 export default function EditGroupPage() {
   const memory_id = useParams()['memory-id'] as string;
@@ -24,14 +26,40 @@ export default function EditGroupPage() {
     unauthorized
   } = useMemoryLane();
 
+  const { user } = useAuth();
+
   useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
+
+  const onFriendsAdded = (friends: Friend[]) => {
+    if (!memoryLane) return;
+    setMemoryLane({
+      ...memoryLane,
+      friends: [...memoryLane.friends, ...friends]
+    });
+  };
+
+  const onFriendRemoved = (friend: Friend) => {
+    if (!memoryLane) return;
+    setMemoryLane({
+      ...memoryLane,
+      friends: memoryLane.friends.filter(f => f.friend_id !== friend.friend_id)
+    });
+  };
+
+  const onAdminChange = (friend: Friend) => {
+    if (!memoryLane) return;
+    setMemoryLane({
+      ...memoryLane,
+      friends: memoryLane.friends.map(f => f.friend_id === friend.friend_id ? friend : f)
+    });
+  };
 
   if (unauthorized) {
     return <AccessDenied />
   }
 
   if (loading) return <Loading />;
-  if (!memory_id || failedToLoad || !memoryLane) return <PageNotFound />;
+  if (!memory_id || failedToLoad || !memoryLane || !user) return <PageNotFound />;
 
   return (
     <div className="min-h-screen bg-[#0E0E0E] p-4 md:p-8">
@@ -82,7 +110,14 @@ export default function EditGroupPage() {
           isAdmin={true}//for testing purposes
         />
 
-        <EditGroupFriends />
+        <EditGroupFriends
+          memoryId={memory_id}
+          user={user}
+          friends={memoryLane.friends}
+          onFriendsAdded={onFriendsAdded}
+          onFriendRemoved={onFriendRemoved}
+          onAdminChange={onAdminChange}
+        />
 
         {/* Existing Components */}
         <EditGroupPrivacy

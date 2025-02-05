@@ -24,6 +24,7 @@ export default function VerifyAccount({ email, password, onSuccess }: VerifyAcco
       if (!response) {
         setError('Verification failed. Please try again.');
       } else if (response.Session) {
+        console.log("verification was good, doing internal login");
         // Verifiction was good, do a internal login here.
         const response = await login(email, password);
         console.log("verify login response: ", response);

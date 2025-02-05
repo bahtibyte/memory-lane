@@ -1,5 +1,6 @@
 
 export interface User {
+  user_id: number;
   username: string;
   email: string;
   profile_name: string;
@@ -9,6 +10,7 @@ export interface User {
 export interface MemoryLane {
   group_data: GroupData;
   photo_entries: PhotoEntry[];
+  friends: Friend[];
 }
 
 export interface GroupData {
@@ -31,5 +33,12 @@ export interface PhotoEntry {
 }
 
 export interface Friend {
-  name: string;
+  friend_id: number;
+  user_id: number | null;
+  profile_name: string;
+  email: string;
+  is_owner: boolean;
+  is_admin: boolean;
+  is_confirmed: boolean;
+  profile_url: string | null;
 }

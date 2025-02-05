@@ -376,3 +376,52 @@ export async function updateUserProfile(formData: {
   });
   return response.json();
 }
+
+export const addFriendsToGroup = async (formData: {
+  memory_id: string,
+  friends: {
+    email: string,
+    name: string,
+  }[],
+}) => {
+  const response = await fetch(`${API}/add-friends-to-group`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': await getAuthorization()
+    },
+    body: JSON.stringify(formData),
+  });
+  return response.json();
+}
+
+export const removeFriendFromGroup = async (formData: {
+  memory_id: string,
+  friend_id: number,
+}) => {
+  const response = await fetch(`${API}/remove-friend-from-group`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': await getAuthorization()
+    },
+    body: JSON.stringify(formData),
+  });
+  return response.json();
+}
+
+export const updateFriendAdminStatus = async (formData: {
+  memory_id: string,
+  friend_id: number,
+  is_admin: boolean,
+}) => {
+  const response = await fetch(`${API}/update-friend-admin-status`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': await getAuthorization()
+    },
+    body: JSON.stringify(formData),
+  });
+  return response.json();
+} 

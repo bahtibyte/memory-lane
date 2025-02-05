@@ -44,25 +44,17 @@ CREATE INDEX idx_ml_photos_group_id ON ml_photos(group_id);
 
 CREATE TABLE ml_friends (
     friend_id SERIAL PRIMARY KEY,
-    group_id INTEGER NOT NULL,
-    user_id INTEGER NOT NULL,
+    group_id UUID NOT NULL,
+    user_id INTEGER NULL, -- NULL if unconfirmed
+    email VARCHAR(255) NULL, -- Can be NULL for unconfirmed friends
+    profile_name VARCHAR(255) NOT NULL, -- Updated from 'name' to 'profile_name'
+    is_owner BOOLEAN NOT NULL DEFAULT false,
     is_admin BOOLEAN NOT NULL DEFAULT false,
-    confirmed BOOLEAN NOT NULL DEFAULT false,
+    is_confirmed BOOLEAN NOT NULL DEFAULT false,
     FOREIGN KEY (group_id) REFERENCES ml_group_lookup(group_id),
-    FOREIGN KEY (user_id) REFERENCES ml_users(user_id)
+    FOREIGN KEY (user_id) REFERENCES ml_users(user_id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_ml_friends_group_id ON ml_friends(group_id);
-CREATE INDEX idx_ml_friends_user_id ON ml_friends(user_id);
-
-CREATE TABLE ml_tagged (
-    tagged_id SERIAL PRIMARY KEY,
-    group_id INTEGER NOT NULL,
-    photo_id INTEGER NOT NULL,
-    friend_id INTEGER NOT NULL,
-    FOREIGN KEY (group_id) REFERENCES ml_group_lookup(group_id),
-    FOREIGN KEY (photo_id) REFERENCES ml_photos(photo_id),
-    FOREIGN KEY (friend_id) REFERENCES ml_friends(friend_id)
-);
-
-CREATE INDEX idx_ml_tagged_group_id ON ml_tagged(group_id);
+CREATE UNIQUE INDEX unique_group_email 
+ON ml_friends(group_id, email) 
+WHERE user_id IS NULL AND email IS NOT NULL
