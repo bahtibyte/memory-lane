@@ -1,6 +1,7 @@
 import { deletePhoto } from "@/core/utils/api";
 import { MemoryLane } from "@/core/utils/types";
 import Link from "next/link";
+import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 
 interface EditGroupPhotosProps {
   memoryId: string;
@@ -16,10 +17,7 @@ export default function EditGroupPhotos({ memoryId, memoryLane, setMemoryLane }:
       const result = await deletePhoto(memoryId, photo_id);
       if (result.deleted_photo && memoryLane) {
         setMemoryLane({
-          group_data: memoryLane.group_data,
-          photo_entries: memoryLane.photo_entries.filter((photo_entry) => 
-            photo_entry.photo_id !== result.deleted_photo.photo_id
-          ),
+          ...memoryLane,
           friends: memoryLane.friends
         });
       }
@@ -35,10 +33,9 @@ export default function EditGroupPhotos({ memoryId, memoryLane, setMemoryLane }:
         <table className="w-full border-collapse">
           <thead className="bg-[#0E0E0E]">
             <tr className="text-center border-b border-[#242424]">
-              <th className="p-4 text-sm font-medium text-gray-400">Date</th>
-              <th className="p-4 text-sm font-medium text-gray-400">Title</th>
-              <th className="p-4 text-sm font-medium text-gray-400">Description</th>
-              <th className="p-4 text-sm font-medium text-gray-400">Photo</th>
+              <th className="p-4 text-sm font-medium text-gray-400 w-24">Date</th>
+              <th className="p-4 text-sm font-medium text-gray-400 w-32">Title</th>
+              <th className="p-4 text-sm font-medium text-gray-400 w-1/2">Caption</th>
               <th className="p-4 text-sm font-medium text-gray-400">Actions</th>
             </tr>
           </thead>
@@ -50,42 +47,51 @@ export default function EditGroupPhotos({ memoryId, memoryLane, setMemoryLane }:
                   key={index}
                   className="border-b border-[#242424] hover:bg-[#242424] transition-all duration-200 text-center"
                 >
-                  <td className="p-4 text-gray-300 whitespace-nowrap">
-                    {photo.photo_date ? new Date(photo.photo_date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    }) : 'N/A'}
+                  <td className="p-4 text-gray-300 whitespace-normal">
+                    {photo.photo_date ? (
+                      <>
+                        <div>
+                          {new Date(photo.photo_date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          {new Date(photo.photo_date).getFullYear()}
+                        </div>
+                      </>
+                    ) : 'N/A'}
                   </td>
                   <td className="p-4 text-gray-300">
-                    {photo.photo_title || 'Untitled'}
+                    {photo.photo_title || ''}
                   </td>
                   <td className="p-4 text-gray-300">
-                    {photo.photo_caption || 'No description'}
+                    {photo.photo_caption || ''}
                   </td>
                   <td className="p-4">
-                    <a
-                      href={photo.photo_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-purple-300 hover:text-purple-400 hover:scale-105 inline-block transition-all duration-200 text-sm"
-                    >
-                      View Photo
-                    </a>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-3">
+                      <a
+                        href={photo.photo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 bg-[#0E0E0E] text-blue-300 rounded-lg hover:bg-[#2A2A2A] hover:text-blue-400 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
+                        title="View photo"
+                      >
+                        <EyeIcon className="w-4 h-4" />
+                      </a>
                       <Link
                         href={`/${memoryId}/edit-photo/${photo.photo_id}`}
-                        className="px-3 py-1.5 bg-[#0E0E0E] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200 text-sm font-medium"
+                        className="p-2 bg-[#0E0E0E] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200"
+                        title="Edit photo"
                       >
-                        Edit
+                        <PencilIcon className="w-4 h-4" />
                       </Link>
                       <button
                         onClick={() => handleDeletePhoto(photo.photo_id)}
-                        className="px-3 py-1.5 bg-[#0E0E0E] text-red-400 rounded-lg hover:bg-red-500 hover:text-white hover:scale-105 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200 text-sm font-medium"
+                        className="p-2 bg-[#0E0E0E] text-red-400 rounded-lg hover:bg-red-500 hover:text-white hover:scale-105 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
+                        title="Delete photo"
                       >
-                        Delete
+                        <TrashIcon className="w-4 h-4" />
                       </button>
                     </div>
                   </td>

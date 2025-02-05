@@ -249,6 +249,7 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
                   id="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
                   className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-[#CECECE] focus:outline-none focus:border-purple-300 placeholder-[#707070] [color-scheme:dark]"
                   placeholder="mm/dd/yyyy"
                   required

@@ -295,6 +295,8 @@ export const updateGroupPrivacy = async (req, res) => {
   });
 }
 
+const system_alias = ['contributors', 'my-groups', 'demo', 'memory-lane']
+
 export const updateGroupAlias = async (req, res) => {
   const { memory_id, alias } = req.body;
   console.log(`Updating group alias for id: ${memory_id}, alias: ${alias}`);
@@ -308,6 +310,10 @@ export const updateGroupAlias = async (req, res) => {
   const conflicting_alias = await ml_group_lookup(alias);
   if (conflicting_alias.rowCount > 0) {
     return res.status(400).json({ error: `Alias ${alias} already exists.` });
+  }
+
+  if (system_alias.includes(alias)) {
+    return res.status(400).json({ error: `Alias ${alias} is reserved.` });
   }
 
   const update_result = await rds.query(
@@ -481,7 +487,7 @@ export const presignedS3Url = async (req, res) => {
 export const createPhotoEntry = async (req, res) => {
   console.log("received request to upload photo");
   const { memory_id, photo_title, photo_date, photo_caption, photo_url } = req.body;
-  if (!memory_id || !photo_url || !photo_title || !photo_date || !photo_caption) {
+  if (!memory_id || !photo_url || !photo_title || !photo_date) {
     console.log("missing required fields");
     return res.status(400).json({ error: 'missing required fields.' });
   }
@@ -493,10 +499,12 @@ export const createPhotoEntry = async (req, res) => {
   const group_lookup = lookup_result.rows[0];
   const group_id = group_lookup.group_id;
 
+  const caption = photo_caption ? photo_caption : null;
+
   // Insert the photo entry into the database.
   const result = await rds.query(
     `INSERT INTO ml_photos (group_id, photo_url, photo_title, photo_date, photo_caption) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [group_id, photo_url, photo_title, photo_date, photo_caption]
+    [group_id, photo_url, photo_title, photo_date, caption]
   );
   if (result.rowCount === 0) {
     console.log("failed to upload photo to database");

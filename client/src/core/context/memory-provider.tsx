@@ -25,25 +25,19 @@ export function MemoryLaneProvider({ children }: { children: ReactNode }) {
   const FETCH_COOLDOWN = 2000; // 2 seconds cooldown between fetches
 
   const fetchData = async (memory_id: string | null, passcode: string | null = null) => {
-    console.log("memorylane is ", memoryLane);
     if (!memory_id) {
-      console.log('no memory_id, not fetching');
       return;
     }
     if (failedToLoad) {
-      console.log('failed to load, not fetching');
       return;
     }
 
     if (memoryLane && (memoryLane.group_data.uuid === memory_id || memoryLane.group_data.alias === memory_id)) {
-      console.log('already have data, not fetching');
       return;
     }
 
-    console.log('requesting a fetch for', memory_id);
     const now = Date.now();
     if (now - lastFetchTime < FETCH_COOLDOWN) {
-      console.log('fetching too frequently, skipping');
       return false;
     }
     setLastFetchTime(now);
@@ -52,7 +46,6 @@ export function MemoryLaneProvider({ children }: { children: ReactNode }) {
     try {
       const response = await getMemoryLane(memory_id, passcode);
       if (response.status === 403) {
-        console.log("unauthorized setting it to true");
         setUnauthorized(true);
       } else {
         const data = await response.json();

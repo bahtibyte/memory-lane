@@ -1,0 +1,88 @@
+/* Disable text selection */
+* {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+html, body {
+  background-color: black;
+  scroll-behavior: smooth;
+}
+
+.nav-button {
+  border: 1px solid #4D4D4D;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.12);
+  transition: all 0.3s ease-in-out;
+}
+
+.nav-button:hover {
+  border-color: rgba(255, 255, 255, 0.39);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+.hover-letter {
+  color: #FFFFFF;
+  transition: color 0.5s ease-in-out;
+}
+
+.hover-letter:hover {
+  color: #EAD5FF;
+}
+
+/* Darker Scrollbar styles */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1A1A1A;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2A2A2A;
+}
+
+/* Timeline animation */
+.timeline-path {
+  animation: drawPath 2s ease-out forwards;
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+}
+
+.get-started-button {
+  background: linear-gradient(to right, #F5C7EA, #D8B4FE, #F5C7EA);
+  background-size: 200% 100%;
+  background-position: 0% 0;
+  transition: background-position 300ms ease-in-out, transform 300ms ease-in-out, box-shadow 300ms ease-in-out;
+}
+
+.get-started-button:hover {
+  background-position: 100% 0;
+  transform: scale(1.03);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.view-demo-button {
+  transition: all 0.3s ease-in-out;
+  display: inline-block;
+  border-color: #D8B4FE;
+}
+
+.view-demo-button:hover {
+  transform: scale(1.03);
+  border-color: #E4CAFF;
+  color: #E4CAFF;
+}
+
+@keyframes drawPath {
+  to {
+    stroke-dashoffset: 0;
+  }
+} 

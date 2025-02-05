@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import ErrorIcon from "@/app/shared/icons/ErrorIcon";
 import { useAuth } from "@/core/context/auth-provider";
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import { useState } from "react";
+import HomeLink from "./misc/HomeLink";
 
 interface ForgotPasswordProps {
   filledEmail: string | null;
@@ -25,8 +27,7 @@ export default function ForgotPassword({ filledEmail, onBack, onSuccess }: Forgo
     setIsLoading(true);
 
     try {
-      const response = await forgotPassword(email);
-      console.log("forgot password response: ", response);
+      await forgotPassword(email);
       setResetEmailSent(true);
     } catch (err: any) {
       setError(err.message || 'An error occurred while sending reset email');
@@ -57,6 +58,8 @@ export default function ForgotPassword({ filledEmail, onBack, onSuccess }: Forgo
 
   return (
     <div>
+      <HomeLink />
+
       <div className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-white">
           Reset Password
@@ -67,7 +70,8 @@ export default function ForgotPassword({ filledEmail, onBack, onSuccess }: Forgo
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400">
+        <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400 flex items-center gap-2">
+          <ErrorIcon />
           {error}
         </div>
       )}

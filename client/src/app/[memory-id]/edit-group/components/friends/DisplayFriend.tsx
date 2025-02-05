@@ -105,6 +105,7 @@ export default function DisplayFriend({ memoryId, user, friend, onRemove, onAdmi
                 src={friend.profile_url}
                 alt={friend.profile_name}
                 fill
+                sizes="40px"
                 className="object-cover rounded-full"
               />
             ) : (

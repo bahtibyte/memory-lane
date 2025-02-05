@@ -70,7 +70,9 @@ export function PhotoEntry({
   onImageLoad,
   onImageClick,
 }: PhotoEntryProps) {
-  const isPortrait = imageDimensions[entry.photo_url]?.height > imageDimensions[entry.photo_url]?.width;
+  const dimensions = imageDimensions[entry.photo_url];
+  const isPortrait = dimensions?.height > dimensions?.width;
+  const isSquare = dimensions?.height === dimensions?.width;
   const [imageLoaded, setImageLoaded] = React.useState(false);
   
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -106,7 +108,7 @@ export function PhotoEntry({
             <div className="flex-1">
               <div className="relative w-full">
                 <div className={`relative ${isPortrait ? 'h-[50vh]' : 'max-h-[600px]'} bg-black`}>
-                  {isPortrait && (
+                  {(isPortrait || isSquare) && (
                     <div className="absolute inset-0 overflow-hidden">
                       <Image
                         src={entry.photo_url}
@@ -114,21 +116,22 @@ export function PhotoEntry({
                         fill
                         className="opacity-30 blur-xl scale-110 object-cover"
                         sizes="100vw"
-                        priority={false}
+                        priority
                         quality={10}
                       />
                     </div>
                   )}
                   <div
-                    className={`relative ${isPortrait ? 'h-full' : ''} flex items-center justify-center cursor-pointer max-w-[1000px] mx-auto`}
+                    className={`relative ${isPortrait || isSquare ? 'h-[50vh]' : ''} flex items-center justify-center cursor-pointer max-w-[1000px] mx-auto`}
                     onClick={() => onImageClick(entry.photo_url, entry.photo_title)}
                   >
                     <Image
                       src={entry.photo_url}
                       alt={entry.photo_title}
-                      fill={isPortrait}
-                      width={!isPortrait ? 1000 : undefined}
-                      height={!isPortrait ? 600 : undefined}
+                      fill={isPortrait || isSquare}
+                      priority
+                      width={!isPortrait && !isSquare ? 1000 : undefined}
+                      height={!isPortrait && !isSquare ? 600 : undefined}
                       className={`rounded-md shadow-md object-contain hover:opacity-90 transition-opacity ${
                         imageLoaded ? 'opacity-100' : 'opacity-0'
                       }`}

@@ -7,7 +7,7 @@ import { setTokens } from '@/core/utils/tokens';
 import { getUser } from '@/core/utils/api';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/core/utils/routes';
-import LoadingScreen from '@/app/components/Loading';
+import LoadingScreen from '@/app/shared/Loading';
 import CreateAccount from '@/app/authentication/components/CreateAccount';
 import VerifyAccount from './components/VerifyAccount';
 import LoginAccount from './components/LoginAccount';
@@ -21,8 +21,8 @@ enum Step {
 }
 
 export default function AuthPage() {
-  const router = useRouter();
   const { isAuthenticated, isLoading, setUser } = useAuth();
+  const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,18 +31,11 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      console.log("isAuthenticated is true, pushing to my groups");
       router.push(Routes.MY_GROUPS_PAGE);
     }
   }, [isLoading, isAuthenticated, router]);
 
-  const handleCreateAccountSuccess = (email: string, password: string) => {
-    setEmail(email);
-    setPassword(password);
-    setStep(Step.VERIFY_ACCOUNT);
-  }
-
-  const handleLoginVerifyAccount = (email: string, password: string) => {
+  const goToVerifyAccount = (email: string, password: string) => {
     setEmail(email);
     setPassword(password);
     setStep(Step.VERIFY_ACCOUNT);
@@ -54,27 +47,19 @@ export default function AuthPage() {
   }
 
   const completeLogin = async (response: InitiateAuthCommandOutput) => {
-    try {
-      console.log("complete login response: ", response);
+    if (response.AuthenticationResult) {
+      const tokens = response.AuthenticationResult;
 
-      if (response.AuthenticationResult) {
-        const tokens = response.AuthenticationResult;
-        console.log("tokens: ", tokens);
+      try {
         await setTokens(tokens.AccessToken!, tokens.RefreshToken!, tokens.ExpiresIn!);
-        console.log("tokens set successfully");
-
-        const user = await getUser();
-        if (user) {
-          console.log("user from login is: ", user);
-          setUser(user);
-        } else {
-          console.log("user from login is null");
-          // setError('Failed to retrieve user');
-        }
+      } catch (error) {
+        console.error("Unable to set tokens: ", error);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.log("error from login: ", err);
+
+      const user = await getUser();
+      if (user) {
+        setUser(user);
+      }
     }
   }
 
@@ -90,7 +75,7 @@ export default function AuthPage() {
           {step === Step.CREATE_ACCOUNT && (
             <CreateAccount
               onLogin={() => setStep(Step.LOGIN_ACCOUNT)}
-              onSuccess={handleCreateAccountSuccess}
+              onSuccess={goToVerifyAccount}
               showPassword={showPassword}
               setShowPassword={setShowPassword}
             />
@@ -108,7 +93,7 @@ export default function AuthPage() {
             <LoginAccount
               onSignup={() => setStep(Step.CREATE_ACCOUNT)}
               onForgotPassword={() => setStep(Step.FORGOT_PASSWORD)}
-              onVerifyAccount={handleLoginVerifyAccount}
+              onVerifyAccount={goToVerifyAccount}
               onSuccess={completeLogin}
               showPassword={showPassword}
               setShowPassword={setShowPassword}

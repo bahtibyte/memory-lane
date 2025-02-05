@@ -4,15 +4,15 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/core/context/auth-provider";
 import { Routes } from "@/core/utils/routes";
 import { useRouter } from "next/navigation";
-import SignOutButton from "@/app/components/SignOutButton";
-import LoadingScreen from "@/app/components/Loading";
+import SignOutButton from "@/app/shared/SignOutButton";
+import LoadingScreen from "@/app/shared/Loading";
 import { getOwnedGroups } from '@/core/utils/api';
 import { GroupData } from "@/core/utils/types";
 import { clearTokens } from "@/core/utils/tokens";
-import UserProfileDisplay from "../components/my-groups/UserProfileDisplay";
-import EditUserProfile from "../components/my-groups/EditUserModal";
-import CreateGroupModal from "../components/my-groups/CreateGroupModal";
-import GroupCard from "../components/my-groups/GroupCard";
+import UserProfileDisplay from "./components/UserProfileDisplay";
+import EditUserProfile from "./components/EditUserModal";
+import CreateGroupModal from "./components/CreateGroupModal";
+import GroupCard from "./components/GroupCard";
 
 export default function MyGroups() {
   const router = useRouter();

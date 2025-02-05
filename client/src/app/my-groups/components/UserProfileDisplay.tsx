@@ -1,6 +1,6 @@
 import { User } from "@/core/utils/types";
 import Image from "next/image";
-import PencilIcon from "../icons/PencilIcon";
+import PencilIcon from "@/app/shared/icons/PencilIcon";
 
 interface UserProfileDisplayProps {
   user: User | null;
@@ -27,7 +27,7 @@ export default function UserProfileDisplay({ user, onEdit }: UserProfileDisplayP
       <div className="flex items-center gap-3">
         <div className="relative group">
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shrink-0"
+            className="relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shrink-0"
             style={{
               backgroundColor: getRandomPastelColor(user?.profile_name || ''),
               color: '#1A1A1A'
@@ -38,6 +38,7 @@ export default function UserProfileDisplay({ user, onEdit }: UserProfileDisplayP
                 src={user.profile_url}
                 alt={user.profile_name}
                 fill
+                sizes="32px"
                 className="object-cover rounded-full"
               />
             ) : (

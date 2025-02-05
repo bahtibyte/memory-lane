@@ -4,6 +4,8 @@ import GoogleSSOForm from "./misc/GoogleSSOForm";
 import OrDivider from "./misc/OrDivider";
 import { useAuth } from "@/core/context/auth-provider";
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
+import ErrorIcon from "@/app/shared/icons/ErrorIcon";
+import HomeLink from "./misc/HomeLink";
 
 interface LoginAccountProps {
   showPassword: boolean;
@@ -40,7 +42,6 @@ export default function LoginAccount({ showPassword, onSuccess, onSignup, onForg
       } else if (err.name === "PasswordResetRequiredException") {
         onResetPassword(email);
       } else {
-        console.log("error from login: ", err);
         setError(err.message || 'An error occurred during login');
       }
     } finally {
@@ -50,6 +51,8 @@ export default function LoginAccount({ showPassword, onSuccess, onSignup, onForg
 
   return (
     <div>
+      <HomeLink />
+
       <div className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-white">
           Login to your account
@@ -60,7 +63,8 @@ export default function LoginAccount({ showPassword, onSuccess, onSignup, onForg
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400">
+        <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400 flex items-center gap-2">
+          <ErrorIcon />
           {error}
         </div>
       )}

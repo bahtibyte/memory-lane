@@ -7,8 +7,8 @@ import { useMemoryLane } from '@/core/context/memory-provider';
 import Link from 'next/link';
 import { PhotoEntry } from '@/core/utils/types';
 import { editPhoto } from '@/core/utils/api';
-import AccessDenied from '@/app/components/AccessDenied';
-import Loading from '@/app/components/Loading';
+import AccessDenied from '@/app/shared/AccessDenied';
+import Loading from '@/app/shared/Loading';
 
 interface PhotoFormData {
   photo_date: string;
@@ -19,6 +19,7 @@ interface PhotoFormData {
 export default function EditPhotoPage() {
   const router = useRouter();
   const params = useParams();
+  const [isLoading, setIsLoading] = useState(false);
 
   const memory_id = params['memory-id'] as string;
   const photo_id = parseInt(params.slug?.[0] || '0');
@@ -77,24 +78,29 @@ export default function EditPhotoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement the API call to save the changes
-    console.log('Saving changes:', formData);
-
-    const result = await editPhoto({
-      memory_id: memory_id,
-      photo_id: photo_id,
-      photo_title: formData.photo_title,
-      photo_date: formData.photo_date,
-      photo_caption: formData.photo_caption
-    });
-
-    if (result && memoryLane) {
-      setMemoryLane({
-        group_data: memoryLane.group_data,
-        photo_entries: memoryLane.photo_entries.map(entry => entry.photo_id === photo_id ? result.updated_photo : entry),
-        friends: memoryLane.friends
+    setIsLoading(true);
+    
+    try {
+      const result = await editPhoto({
+        memory_id: memory_id,
+        photo_id: photo_id,
+        photo_title: formData.photo_title,
+        photo_date: formData.photo_date,
+        photo_caption: formData.photo_caption
       });
-      router.push(`/${memory_id}`);
+
+      if (result && memoryLane) {
+        setMemoryLane({
+          group_data: memoryLane.group_data,
+          photo_entries: memoryLane.photo_entries.map(entry => entry.photo_id === photo_id ? result.updated_photo : entry),
+          friends: memoryLane.friends
+        });
+        router.push(`/${memory_id}`);
+      }
+    } catch (error) {
+      console.error('Error saving photo:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -129,7 +135,7 @@ export default function EditPhotoPage() {
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-white">Photo Details</h1>
           <p className="text-gray-400 text-sm md:text-base mt-2">
-            Edit the photo&apos;s title, description, and date.
+            Edit the photo&apos;s title, date, and caption.
           </p>
         </div>
 
@@ -156,56 +162,70 @@ export default function EditPhotoPage() {
         </div>
 
         {/* Form */}
-        <div className="bg-[#1A1A1A] border border-[#242424] rounded-lg p-6">
+        <div className="bg-[#1A1A1A] border border-purple-300/20 rounded-3xl p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="photo_title" className="block text-white mb-2">Title</label>
+              <label htmlFor="photo_title" className="block text-white-300 text-sm font-medium mb-2">
+                Title <span className="text-white">*</span>
+              </label>
               <input
                 type="text"
                 id="photo_title"
                 name="photo_title"
                 value={formData.photo_title}
                 onChange={handleInputChange}
-                className="w-full p-2 rounded bg-[#242424] text-white border border-[#333333] focus:border-purple-300 focus:outline-none"
+                required
+                className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-[#CECECE] focus:outline-none focus:border-purple-300 placeholder-[#707070]"
+                placeholder="Untitled"
               />
             </div>
 
             <div>
-              <label htmlFor="photo_caption" className="block text-white mb-2">Description</label>
-              <textarea
-                id="photo_caption"
-                name="photo_caption"
-                value={formData.photo_caption}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full p-2 rounded bg-[#242424] text-white border border-[#333333] focus:border-purple-300 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="photo_date" className="block text-white mb-2">Date</label>
+              <label htmlFor="photo_date" className="block text-white-300 text-sm font-medium mb-2">
+                Date <span className="text-white">*</span>
+              </label>
               <input
                 type="date"
                 id="photo_date"
                 name="photo_date"
                 value={formData.photo_date.split('T')[0]}
                 onChange={handleInputChange}
-                className="w-full p-2 rounded bg-[#242424] text-white border border-[#333333] focus:border-purple-300 focus:outline-none"
+                max={new Date().toISOString().split('T')[0]}
+                required
+                className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-[#CECECE] focus:outline-none focus:border-purple-300 placeholder-[#707070] [color-scheme:dark]"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="photo_caption" className="block text-white-300 text-sm font-medium mb-2">Caption</label>
+              <textarea
+                id="photo_caption"
+                name="photo_caption"
+                value={formData.photo_caption}
+                onChange={handleInputChange}
+                rows={2}
+                className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-[#CECECE] focus:outline-none focus:border-purple-300 h-24 resize-none placeholder-[#707070]"
+                placeholder="Add a caption to your memory..."
               />
             </div>
 
             <div className="flex gap-4 pt-4">
               <Link
                 href={`/${memory_id}`}
-                className="flex-1 px-4 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors text-center"
+                className={`flex-1 px-4 py-2 border border-purple-300 text-purple-300 rounded-lg hover:bg-purple-300 hover:text-black transition-colors text-center ${
+                  isLoading ? 'opacity-50 pointer-events-none' : ''
+                }`}
               >
                 Cancel
               </Link>
               <button
                 type="submit"
-                className="flex-1 text-center px-4 py-2 bg-purple-300 text-black rounded hover:bg-purple-400 transition-colors"
+                disabled={isLoading}
+                className={`flex-1 text-center px-4 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 transition-colors ${
+                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Save Changes
+                {isLoading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>

@@ -107,7 +107,7 @@ export default function EditGroupName({
       const preview = URL.createObjectURL(file);
       setPreviewUrl(preview);
 
-      const s3UrlData = await generateS3Url(file.name, 'memories');
+      const s3UrlData = await generateS3Url(file.name, 'thumbnail');
 
       console.log("s3UrlData", s3UrlData);
       if (s3UrlData.presignedUrl) {
@@ -179,6 +179,8 @@ export default function EditGroupName({
                 src={thumbnail}
                 alt="Group thumbnail"
                 fill
+                priority
+                sizes="(max-width: 768px) 100vw, 256px"
                 className="object-cover"
               />
             ) : (

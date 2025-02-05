@@ -8,22 +8,17 @@ const ACCESS_TOKEN_EXPIRE_BUFFER = 0; // 1 day
 export const getAuthorization = async (): Promise<string> => {
   const cookies = getCookies();
   const expires_at = Number(cookies["expires_at"]);
-  console.log("[api]: Expires at.", expires_at);
   if (Date.now() >= expires_at - ACCESS_TOKEN_EXPIRE_BUFFER) {
-    console.log("[api]: Refreshing tokens.");
     const response = await refreshTokens();
     if (!response.ok) {
-      console.log("[api]: Failed to refresh tokens.");
       return `Bearer null`
     }
     const data = await response.json();
     if (data.access_token && data.expires_in) {
       setAccessToken(data.access_token, data.expires_in);
     }
-    console.log("[api]: Refresh tokens response.", data);
     return `Bearer ${cookies["access_token"]}`;
   }
-  console.log("[api]: Returning authorziation token.");
   return `Bearer ${cookies["access_token"]}`;
 }
 

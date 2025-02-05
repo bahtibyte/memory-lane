@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemoryLane } from '@/core/context/memory-provider';
-import PhotoUpload from '@/app/[memory-id]/upload-photo/PhotoUpload';
 import { useEffect, useState } from 'react';
 import { PhotoEntry } from '@/core/utils/types';
-import LoadingScreen from '@/app/components/Loading';
-import AccessDenied from '@/app/components/AccessDenied';
+import LoadingScreen from '@/app/shared/Loading';
+import AccessDenied from '@/app/shared/AccessDenied';
+import PhotoUpload from './components/PhotoUpload';
 
 export default function UploadPage() {
   const memory_id = useParams()['memory-id'] as string;

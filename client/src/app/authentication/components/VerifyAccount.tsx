@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import ErrorIcon from "@/app/shared/icons/ErrorIcon";
 import { useAuth } from "@/core/context/auth-provider";
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import { useState } from "react";
+import HomeLink from "./misc/HomeLink";
 
 interface VerifyAccountProps {
   email: string;
@@ -24,14 +26,10 @@ export default function VerifyAccount({ email, password, onSuccess }: VerifyAcco
 
     try {
       const response = await verify(email, code);
-      console.log("verification response: ", response);
       if (!response) {
         setError('Verification failed. Please try again.');
       } else if (response.Session) {
-        console.log("verification was good, doing internal login");
         const response = await login(email, password);
-        console.log("verify login response: ", response);
-
         if (response) {
           await onSuccess(response);
         }
@@ -47,6 +45,8 @@ export default function VerifyAccount({ email, password, onSuccess }: VerifyAcco
 
   return (
     <div>
+      <HomeLink />
+
       {/* Header */}
       <div className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-white">
@@ -58,7 +58,8 @@ export default function VerifyAccount({ email, password, onSuccess }: VerifyAcco
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400">
+        <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400 flex items-center gap-2">
+          <ErrorIcon />
           {error}
         </div>
       )}

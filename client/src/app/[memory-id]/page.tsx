@@ -3,16 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { StatsContainer } from '../components/StatsContainer';
-import { ImageOverlay } from '../components/photos/ImageOverlay';
-import { PhotoEntry } from '../components/photos/PhotoEntry';
+import { StatsContainer } from '../shared/StatsContainer';
+import { ImageOverlay } from '../shared/photos/ImageOverlay';
+import { PhotoEntry } from '../shared/photos/PhotoEntry';
 import { useMemoryLane } from '@/core/context/memory-provider';
 import { useAuth } from '@/core/context/auth-provider';
-import LoadingScreen from '@/app/components/Loading';
-import { HomeIcon } from '../components/icons/HomeIcon';
-import PasswordProtected from '../components/memory/PasswordProtected';
-import UploadFirstPhoto from '../components/memory/UploadFirstPhoto';
-import PageNotFound from '../components/memory/PageNotFound';
+import LoadingScreen from '@/app/shared/Loading';
+import { HomeIcon } from '../shared/icons/HomeIcon';
+import PasswordProtected from '../shared/memory/PasswordProtected';
+import UploadFirstPhoto from '../shared/memory/UploadFirstPhoto';
+import PageNotFound from '../shared/memory/PageNotFound';
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";

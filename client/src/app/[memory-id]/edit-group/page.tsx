@@ -6,12 +6,12 @@ import { useMemoryLane } from '@/core/context/memory-provider';
 import EditGroupPrivacy from '@/app/[memory-id]/edit-group/components/EditGroupPrivacy';
 import EditGroupAlias from '@/app/[memory-id]/edit-group/components/EditGroupAlias';
 import EditGroupPhotos from '@/app/[memory-id]/edit-group/components/EditGroupPhotos';
-import Loading from '@/app/components/Loading';
-import PageNotFound from '@/app/components/PageNotFound';
+import Loading from '@/app/shared/Loading';
+import PageNotFound from '@/app/shared/PageNotFound';
 import Link from 'next/link';
 import EditGroupName from '@/app/[memory-id]/edit-group/components/EditGroupName';
 import EditGroupFriends from '@/app/[memory-id]/edit-group/components/EditGroupFriends';
-import AccessDenied from '@/app/components/AccessDenied';
+import AccessDenied from '@/app/shared/AccessDenied';
 import { useAuth } from '@/core/context/auth-provider';
 import { Friend } from '@/core/utils/types';
 
@@ -23,10 +23,9 @@ export default function EditGroupPage() {
     loading,
     failedToLoad,
     fetchData,
-    unauthorized
   } = useMemoryLane();
 
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
 
@@ -62,11 +61,12 @@ export default function EditGroupPage() {
     });
   };
 
-  if (unauthorized) {
+  if (loading || isLoading) return <Loading />;
+  
+  if (!isAuthenticated) {
     return <AccessDenied />
   }
 
-  if (loading) return <Loading />;
   if (!memory_id || failedToLoad || !memoryLane || !user) return <PageNotFound />;
 
   return (

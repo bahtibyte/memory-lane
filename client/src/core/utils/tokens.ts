@@ -9,14 +9,10 @@ const COOKIE_OPTIONS = {
 export const setTokens = async (accessToken: string, refreshToken: string, expiresIn: number) => {
   setAccessToken(accessToken, expiresIn);
 
-  // Set refresh token using API endpoint that sets HTTP-only cookie
   try {
     const response = await saveRefreshToken(refreshToken);
-    console.log("response from set refresh token: ", response);
 
-    if (response) {
-      console.log("access and refresh token set successfully");
-    } else {
+    if (!response) {
       throw new Error('Failed to set refresh token');
     }
   } catch (error) {

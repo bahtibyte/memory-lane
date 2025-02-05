@@ -49,6 +49,7 @@ export default function GroupCard({ group, activeOptionsMenu, menuRef, toggleOpt
               src={group.thumbnail_url}
               alt={group.group_name}
               fill
+              priority
               className="object-cover"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />

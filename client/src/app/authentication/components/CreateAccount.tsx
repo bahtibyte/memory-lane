@@ -3,6 +3,8 @@ import { useState } from "react";
 import GoogleSSOForm from "./misc/GoogleSSOForm";
 import { useAuth } from "@/core/context/auth-provider";
 import OrDivider from "./misc/OrDivider";
+import ErrorIcon from "@/app/shared/icons/ErrorIcon";
+import HomeLink from "./misc/HomeLink";
 
 interface CreateAccountProps {
   onLogin: () => void;
@@ -41,6 +43,8 @@ export default function CreateAccount({ onLogin, onSuccess, showPassword, setSho
 
   return (
     <div>
+      <HomeLink />
+
       {/* Header */}
       <div className="text-center mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-white">
@@ -52,7 +56,8 @@ export default function CreateAccount({ onLogin, onSuccess, showPassword, setSho
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400">
+        <div className="mb-6 rounded-lg bg-red-500/10 p-4 text-sm text-red-400 flex items-center gap-2">
+          <ErrorIcon />
           {error}
         </div>
       )}

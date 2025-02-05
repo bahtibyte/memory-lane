@@ -17,10 +17,16 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
   const [alias, setAlias] = useState(memoryLane.group_data.alias || '');
   const [showUrlSuccess, setShowUrlSuccess] = useState(false);
   const [showUrlSaveButton, setShowUrlSaveButton] = useState(false);
+  const [showCancelButton, setShowCancelButton] = useState(false);
+  const [isTogglingUrl, setIsTogglingUrl] = useState(false);
   const [isEditingAlias, setIsEditingAlias] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [highlightEditButton, setHighlightEditButton] = useState(false);
 
   const handleUrlAliasUpdate = async () => {
+    console.log('handleUrlAliasUpdate', enableCustomUrl, alias);
     try {
       // Validate format before saving
       if (enableCustomUrl && alias) {
@@ -43,17 +49,21 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
       if (result.group_data) {
         if (window.location.origin + window.location.pathname === memoryLane?.group_data.alias_url + '/edit-group' &&
           memoryLane?.group_data.alias_url !== result.group_data.alias_url) {
-          console.log('pushing to new alias url');
           router.push(result.group_data.alias_url + '/edit-group');
           return;
         }
 
+        if (window.location.origin + window.location.pathname === memoryLane?.group_data.alias_url + '/edit-group' &&
+          !result.group_data.alias) {
+          router.push(result.group_data.group_url + '/edit-group');
+          return;
+        }
         setMemoryLane({
+          ...memoryLane,
           group_data: result.group_data,
-          photo_entries: memoryLane!.photo_entries,
-          friends: memoryLane!.friends
         });
         setShowUrlSaveButton(false);
+        setShowCancelButton(false);
         setShowUrlSuccess(true);
         setUrlError(null);
       } else if (result.error) {
@@ -64,6 +74,7 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
         setAlias(memoryLane.group_data.alias || '');
         setIsEditingAlias(false);
         setShowUrlSaveButton(false);
+        setShowCancelButton(false);
       }
 
       setTimeout(() => {
@@ -82,13 +93,20 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
     // Only convert to lowercase while typing
     const lowerCase = newAlias.toLowerCase();
     setAlias(lowerCase);
-    setShowUrlSaveButton(true);
+    console.log('lowerCase', lowerCase);
+    // Only show save button if the new alias is different from the current one
+    setShowUrlSaveButton(lowerCase !== memoryLane.group_data.alias);
+    setShowCancelButton(true);
     setUrlError(null);
   };
 
   const handleCustomUrlToggle = (enabled: boolean) => {
+    console.log('handleCustomUrlToggle', enabled);
     setEnableCustomUrl(enabled);
+    // Show save button if the new enabled state is different from the original alias existence
+    setIsTogglingUrl(enabled !== alias_exists);
     setShowUrlSaveButton(true);
+    setShowCancelButton(true);
     if (!enabled) {
       setIsEditingAlias(false);
     } else {
@@ -96,18 +114,31 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
     }
   };
 
-  const handleEditAliasClick = () => {
-    setIsEditingAlias(true);
-    setShowUrlSaveButton(true);
+  const handleCancel = () => {
+    setIsEditingAlias(false);
+    setIsTogglingUrl(false);
+    setShowUrlSaveButton(false);
+    setShowCancelButton(false);
+    setShowUrlSuccess(false);
     setUrlError(null);
+    setAlias(memoryLane.group_data.alias || '');
+    setEnableCustomUrl(alias_exists);
   };
 
-  // Add new function to handle copying text
-  const handleCopyUrl = (url: string) => {
+  const handleEditAliasClick = () => {
+    setIsEditingAlias(true);
+    setUrlError(null);
+    setShowCancelButton(true);
+  };
+
+  const handleCopyUrl = (url: string, e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    setTooltipPosition({ x: clientX, y: clientY });
+
     navigator.clipboard.writeText(url)
       .then(() => {
-        // Could add a toast notification here if desired
-        console.log('URL copied to clipboard');
+        setShowTooltip(true);
+        setTimeout(() => setShowTooltip(false), 1000);
       })
       .catch(err => {
         console.error('Failed to copy URL:', err);
@@ -121,13 +152,25 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
         Configure how users can access your timeline.
       </p>
 
+      {showTooltip && (
+        <div
+          className="fixed z-50 bg-[#242424] text-purple-300 px-2 py-0.5 rounded text-xs font-medium pointer-events-none transform -translate-x-1/2 -translate-y-full"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y - 8
+          }}
+        >
+          Copied URL!
+        </div>
+      )}
+
       {memoryLane && (
         <div className="mb-6">
           <p className="text-sm text-gray-300 mb-2">Current URL:</p>
           <div className="flex items-center gap-3 mb-4">
             <code
-              onClick={() => handleCopyUrl(memoryLane.group_data.group_url)}
-              className="flex-1 bg-[#0E0E0E] p-3 rounded-lg text-gray-300 cursor-pointer hover:bg-[#242424] hover:text-white hover:scale-[1.01] transition-all duration-200"
+              onClick={(e) => handleCopyUrl(memoryLane.group_data.group_url, e)}
+              className="flex-1 bg-[#0E0E0E] p-3 rounded-lg text-gray-300 cursor-pointer hover:bg-[#242424] hover:text-white hover:scale-[1.01] transition-all duration-200 overflow-hidden text-ellipsis whitespace-nowrap"
             >
               {memoryLane.group_data.group_url}
             </code>
@@ -145,8 +188,8 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
               <p className="text-sm text-gray-300 mb-2">Custom URL:</p>
               <div className="flex items-center gap-3">
                 <code
-                  onClick={() => handleCopyUrl(memoryLane.group_data.alias_url!)}
-                  className="flex-1 bg-[#0E0E0E] p-3 rounded-lg text-gray-300 cursor-pointer hover:bg-[#242424] hover:text-white hover:scale-[1.01] transition-all duration-200"
+                  onClick={(e) => handleCopyUrl(memoryLane.group_data.alias_url!, e)}
+                  className="flex-1 bg-[#0E0E0E] p-3 rounded-lg text-gray-300 cursor-pointer hover:bg-[#242424] hover:text-white hover:scale-[1.01] transition-all duration-200 overflow-hidden text-ellipsis whitespace-nowrap"
                 >
                   {memoryLane.group_data.alias_url}
                 </code>
@@ -164,13 +207,16 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
       )}
 
       <div className="flex items-center gap-4 mb-6">
-        <label className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-all duration-200">
-          <input
-            type="checkbox"
-            checked={enableCustomUrl}
-            onChange={(e) => handleCustomUrlToggle(e.target.checked)}
-            className="text-purple-300 focus:ring-purple-300 focus:ring-2"
-          />
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div className="relative inline-flex items-center">
+            <input
+              type="checkbox"
+              checked={enableCustomUrl}
+              onChange={(e) => handleCustomUrlToggle(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-[#242424] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+          </div>
           <span className="text-white">Enable Custom URL</span>
         </label>
       </div>
@@ -183,7 +229,12 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
               type="text"
               value={alias}
               onChange={(e) => handleAliasChange(e.target.value)}
-              className={`flex-1 bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200 ${!isEditingAlias ? 'bg-opacity-50' : ''}`}
+              onClick={() => !isEditingAlias && setHighlightEditButton(true)}
+              onMouseLeave={() => setHighlightEditButton(false)}
+              className={`flex-1 bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white focus:outline-none ${isEditingAlias
+                ? 'focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200'
+                : 'cursor-default'
+                } ${!isEditingAlias ? 'bg-opacity-50' : ''}`}
               readOnly={!isEditingAlias}
               placeholder="Enter custom URL alias (lowercase letters and hyphens only)"
             />
@@ -191,7 +242,10 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
               <button
                 type="button"
                 onClick={handleEditAliasClick}
-                className="p-2 text-purple-300 hover:text-purple-400 hover:scale-110 transition-all duration-200"
+                className={`p-2 text-purple-300 rounded-lg transition-all duration-200 ${highlightEditButton
+                  ? 'text-purple-400 scale-110 animate-pulse border-2 border-purple-400 bg-purple-400/10'
+                  : 'hover:text-purple-400 hover:scale-110'
+                  }`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -222,16 +276,28 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
         </div>
       )}
 
-      {showUrlSaveButton && (
-        <button
-          onClick={() => {
-            handleUrlAliasUpdate();
-            setIsEditingAlias(false);
-          }}
-          className="px-6 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 whitespace-nowrap font-medium"
-        >
-          Save URL Settings
-        </button>
+      {isEditingAlias || isTogglingUrl && (
+        <div className="flex gap-3">
+          {showUrlSaveButton && (
+            <button
+              onClick={() => {
+                handleUrlAliasUpdate();
+                setIsEditingAlias(false);
+              }}
+              className="px-6 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 whitespace-nowrap font-medium"
+            >
+              Save URL Settings
+            </button>
+          )}
+          {showCancelButton && (
+            <button
+              onClick={handleCancel}
+              className="px-6 py-2 bg-[#242424] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 transition-all duration-200 whitespace-nowrap"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

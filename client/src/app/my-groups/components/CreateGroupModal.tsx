@@ -58,7 +58,7 @@ export default function CreateGroupModal({ groups, setGroups, setShowCreateGroup
                 required
               />
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 text-center">
               <button
                 type="button"
                 onClick={() => setShowCreateGroup(false)}
