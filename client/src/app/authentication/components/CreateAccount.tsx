@@ -89,8 +89,23 @@ export default function CreateAccount({ onLogin, onSuccess, showPassword, setSho
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-200 mb-2">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-200 mb-2 flex items-center gap-2">
             Password
+            <div className="relative group">
+              <svg className="w-[17px] h-[17px] text-gray-400 hover:text-purple-300 transition-colors cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-3 bg-[#1A1A1A] border border-[#333333] rounded-lg text-xs text-gray-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <p className="mb-2">Password requirements:</p>
+                <ul className="space-y-1 list-disc pl-4">
+                  <li>Minimum 6 characters</li>
+                  <li>At least one number</li>
+                  <li>At least one uppercase letter</li>
+                  <li>At least one lowercase letter</li>
+                </ul>
+                <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-[#1A1A1A] border-r border-b border-[#333333] transform rotate-45"></div>
+              </div>
+            </div>
           </label>
           <div className="relative">
             <input

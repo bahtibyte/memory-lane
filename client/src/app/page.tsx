@@ -18,7 +18,7 @@ export default function LandingPage() {
       
       if (scrollPosition < windowHeight * 0.2) {
         setActiveSection('first');
-      } else if (scrollPosition < windowHeight * 0.9) {
+      } else if (scrollPosition < windowHeight * 1.1) {
         setActiveSection('second');
       } else {
         setActiveSection('third');
@@ -330,6 +330,20 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Breadcrumb Indicators */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4">
+        {['first', 'second', 'third'].map((section) => (
+          <div
+            key={section}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              activeSection === section 
+                ? 'bg-purple-300 scale-125' 
+                : 'bg-gray-600 scale-100'
+            }`}
+          />
+        ))}
+      </div>
 
       {/* Return to Top Button */}
       <button
