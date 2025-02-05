@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import GoogleSSOForm from "./misc/GoogleSSOForm";
 import { useAuth } from "@/core/context/auth-provider";
@@ -17,10 +18,12 @@ export default function CreateAccount({ onLogin, onSuccess, showPassword, setSho
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
       const response = await signUp(name, email, password);
@@ -29,9 +32,10 @@ export default function CreateAccount({ onLogin, onSuccess, showPassword, setSho
       } else if (response.UserConfirmed === false) {
         onSuccess(email, password);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || 'An error occurred during signup');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -136,16 +140,18 @@ export default function CreateAccount({ onLogin, onSuccess, showPassword, setSho
         <div className="w-full">
           <button
             type="submit"
-            className="w-full text-center bg-purple-300 text-black rounded-lg px-4 py-2 font-medium hover:bg-purple-400 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 box-border"
+            disabled={isLoading}
+            className="w-full text-center bg-purple-300 text-black rounded-lg px-4 py-2 font-medium hover:bg-purple-400 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 box-border disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
           >
-            Create Account
+            {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>
         </div>
       </form>
       <div className="mt-6 text-center">
         <button
           type="button"
-          className="text-purple-300 hover:text-purple-400 transition-colors text-sm"
+          disabled={isLoading}
+          className="text-purple-300 hover:text-purple-400 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={onLogin}
         >
           {'Already have an account? Login'}

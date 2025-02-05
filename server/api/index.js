@@ -18,7 +18,8 @@ import {
   updateUserProfile,
   addFriendsToGroup,
   removeFriendFromGroup,
-  updateFriendAdminStatus
+  updateFriendAdminStatus,
+  updateFriendInfo
 } from './api.js';
 import { verifyAuth, saveRefreshToken, getUser, clearRefreshToken, getAccessToken } from './auth.js';
 
@@ -57,7 +58,7 @@ app.put('/api/update-user-profile', verifyAuth, updateUserProfile);
 app.post('/api/add-friends-to-group', verifyAuth, addFriendsToGroup);
 app.delete('/api/remove-friend-from-group', verifyAuth, removeFriendFromGroup);
 app.put('/api/update-friend-admin-status', verifyAuth, updateFriendAdminStatus);
-
+app.put('/api/update-friend-info', verifyAuth, updateFriendInfo);
 // Does not require auth to access memories.
 app.get('/api/get-memory-lane', getMemoryLane);
 

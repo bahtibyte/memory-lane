@@ -57,4 +57,4 @@ CREATE TABLE ml_friends (
 
 CREATE UNIQUE INDEX unique_group_email 
 ON ml_friends(group_id, email) 
-WHERE user_id IS NULL AND email IS NOT NULL
+WHERE email IS NOT NULL

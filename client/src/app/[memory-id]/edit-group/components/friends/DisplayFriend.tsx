@@ -3,6 +3,9 @@ import Image from "next/image";
 import AdminAction from './AdminAction';
 import RemoveAction from './RemoveAction';
 import FriendFlair from './FriendFlair';
+import { useState } from 'react';
+import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { updateFriendInfo } from '@/core/utils/api';
 
 interface DisplayFriendProps {
   memoryId: string;
@@ -10,9 +13,15 @@ interface DisplayFriendProps {
   friend: Friend;
   onRemove: (friend: Friend) => void;
   onAdminChange: (friend: Friend) => void;
+  onEditFriend: (friend: Friend) => void;
 }
 
-export default function DisplayFriend({ memoryId, user, friend, onRemove, onAdminChange }: DisplayFriendProps) {
+export default function DisplayFriend({ memoryId, user, friend, onRemove, onAdminChange, onEditFriend }: DisplayFriendProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempName, setTempName] = useState(friend.profile_name);
+  const [tempEmail, setTempEmail] = useState(friend.email ?? '');
+  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+
   const getInitialLetter = (name: string) => {
     return name.charAt(0).toUpperCase();
   };
@@ -27,6 +36,57 @@ export default function DisplayFriend({ memoryId, user, friend, onRemove, onAdmi
   };
 
   const is_user_owner = friend.user_id === user.user_id;
+
+  const validateForm = () => {
+    const newErrors: { name?: string; email?: string } = {};
+    
+    // Name validation
+    if (!tempName.trim() || tempName.length < 2) {
+      newErrors.name = 'Name must be at least 2 characters long';
+    }
+
+    // Email validation (only if email is not empty)
+    if (tempEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(tempEmail)) {
+        newErrors.email = 'Please enter a valid email address';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    const response = await updateFriendInfo({
+      memory_id: memoryId,
+      friend_id: friend.friend_id,
+      profile_name: tempName,
+      email: tempEmail,
+    });
+
+    if (response.error) {
+      setErrors({ email: response.error });
+      return;
+    }
+
+    if (response.friend) {
+      onEditFriend(response.friend);
+      setIsEditing(false);
+      setErrors({});
+    }
+  };
+
+  const handleCancel = () => {
+    setTempName(friend.profile_name);
+    setTempEmail(friend.email ?? '');
+    setIsEditing(false);
+    setErrors({});
+  };
 
   return (
     <div>
@@ -54,33 +114,80 @@ export default function DisplayFriend({ memoryId, user, friend, onRemove, onAdmi
 
           {/* Profile Name */}
           <div className="min-w-0">
-            {!friend.email ? (
-              // When no email, show flair above name
-              <>
-                <div className="mb-1">
-                  <FriendFlair friend={friend} />
+            {isEditing ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <div className="flex flex-col">
+                    <input
+                      type="text"
+                      value={tempName}
+                      onChange={(e) => setTempName(e.target.value)}
+                      className={`bg-[#1A1A1A] text-white text-sm px-2 py-1 rounded w-32 ${
+                        errors.name ? 'border border-red-500' : ''
+                      }`}
+                      placeholder="Name"
+                    />
+                    {errors.name && (
+                      <span className="text-red-500 text-xs mt-1">{errors.name}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col flex-1">
+                    <input
+                      type="email"
+                      value={tempEmail}
+                      onChange={(e) => setTempEmail(e.target.value)}
+                      className={`bg-[#1A1A1A] text-gray-400 text-sm px-2 py-1 rounded w-full ${
+                        errors.email ? 'border border-red-500' : ''
+                      }`}
+                      placeholder="Email"
+                    />
+                    {errors.email && (
+                      <span className="text-red-500 text-xs mt-1">{errors.email}</span>
+                    )}
+                  </div>
                 </div>
-                <span className="text-white truncate">
-                  {friend.profile_name}
-                </span>
-              </>
+                <div className="flex gap-2 justify-start">
+                  <button
+                    onClick={handleSave}
+                    className="text-green-500 hover:text-green-400 bg-[#1A1A1A] rounded px-2 py-1 text-xs flex items-center gap-1"
+                  >
+                    <CheckIcon className="w-4 h-4" />
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="text-red-500 hover:text-red-400 bg-[#1A1A1A] rounded px-2 py-1 text-xs flex items-center gap-1"
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                    Cancel
+                  </button>
+                </div>
+              </div>
             ) : (
-              // When email exists, show flair next to name
-              <>
-                <div className="flex items-center gap-2">
-                  <span className="text-white truncate">
-                    {friend.profile_name}
-                  </span>
-                  <FriendFlair friend={friend} />
+              <div className="flex items-center gap-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white truncate">
+                      {friend.profile_name}
+                    </span>
+                    <FriendFlair friend={friend} />
+                    {!friend.is_confirmed && (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <PencilIcon className="w-4 h-4 text-gray-400 hover:text-white" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="text-gray-400 text-sm truncate">
+                    {friend.email}
+                  </div>
                 </div>
-                <div className="text-gray-400 text-sm truncate">
-                  {friend.email}
-                </div>
-              </>
+              </div>
             )}
           </div>
         </div>
-
 
         {!is_user_owner && (
           <div className="flex items-start gap-8">

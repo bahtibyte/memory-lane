@@ -4,22 +4,25 @@ import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-prov
 import { useState } from "react";
 
 interface ForgotPasswordProps {
+  filledEmail: string | null;
   onBack: () => void;
   onSuccess: (response: InitiateAuthCommandOutput) => void;
 }
 
-export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProps) {
+export default function ForgotPassword({ filledEmail, onBack, onSuccess }: ForgotPasswordProps) {
 
   const { forgotPassword, confirmForgotPassword, login } = useAuth();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(filledEmail ?? '');
   const [password, setPassword] = useState('');
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pinCode, setPinCode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(''); // Clear any previous errors
+    setError('');
+    setIsLoading(true);
 
     try {
       const response = await forgotPassword(email);
@@ -27,12 +30,15 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
       setResetEmailSent(true);
     } catch (err: any) {
       setError(err.message || 'An error occurred while sending reset email');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleNewPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
       const response = await confirmForgotPassword(email, pinCode, password);
@@ -44,6 +50,8 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
       }
     } catch (err: any) {
       setError(err.message || 'Invalid PIN code');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -79,8 +87,9 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
                   id="email-readonly"
                   type="email"
                   readOnly
+                  disabled={isLoading}
                   value={email}
-                  className="w-full bg-[#1A1A1A] border border-[#242424] rounded-lg px-4 py-2 text-gray-400 focus:outline-none transition-all duration-200"
+                  className="w-full bg-[#1A1A1A] border border-[#242424] rounded-lg px-4 py-2 text-gray-400 focus:outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -92,7 +101,8 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
                   name="pin"
                   type="text"
                   required
-                  className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200"
+                  disabled={isLoading}
+                  className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   value={pinCode}
                   onChange={(e) => setPinCode(e.target.value)}
                   placeholder="Enter 6-digit PIN"
@@ -108,7 +118,8 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
                   name="password"
                   type="password"
                   required
-                  className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200"
+                  disabled={isLoading}
+                  className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -117,9 +128,10 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
               <div className="space-y-4 w-full">
                 <button
                   type="submit"
-                  className="w-full text-center bg-purple-300 text-black rounded-lg px-4 py-2 font-medium hover:bg-purple-400 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 box-border"
+                  disabled={isLoading}
+                  className="w-full text-center bg-purple-300 text-black rounded-lg px-4 py-2 font-medium hover:bg-purple-400 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 box-border disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
                 >
-                  Reset Password
+                  {isLoading ? 'Resetting Password...' : 'Reset Password'}
                 </button>
               </div>
 
@@ -136,7 +148,8 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
                 name="email"
                 type="email"
                 required
-                className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200"
+                disabled={isLoading}
+                className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -145,9 +158,10 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
             <div className="space-y-4 w-full">
               <button
                 type="submit"
-                className="w-full text-center bg-purple-300 text-black rounded-lg px-4 py-2 font-medium hover:bg-purple-400 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 box-border"
+                disabled={isLoading}
+                className="w-full text-center bg-purple-300 text-black rounded-lg px-4 py-2 font-medium hover:bg-purple-400 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 box-border disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
               >
-                Send Reset Instructions
+                {isLoading ? 'Sending Instructions...' : 'Send Reset Instructions'}
               </button>
             </div>
           </form>
@@ -156,7 +170,8 @@ export default function ForgotPassword({ onBack, onSuccess }: ForgotPasswordProp
       <div className="mt-6 text-center">
         <button
           type="button"
-          className="text-purple-300 hover:text-purple-400 transition-colors text-sm"
+          disabled={isLoading}
+          className="text-purple-300 hover:text-purple-400 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={onBack}
         >
           Back to Login

@@ -54,6 +54,14 @@ export default function EditGroupPage() {
     });
   };
 
+  const onEditFriend = (friend: Friend) => {
+    if (!memoryLane) return;
+    setMemoryLane({
+      ...memoryLane,
+      friends: memoryLane.friends.map(f => f.friend_id === friend.friend_id ? friend : f)
+    });
+  };
+
   if (unauthorized) {
     return <AccessDenied />
   }
@@ -117,6 +125,7 @@ export default function EditGroupPage() {
           onFriendsAdded={onFriendsAdded}
           onFriendRemoved={onFriendRemoved}
           onAdminChange={onAdminChange}
+          onEditFriend={onEditFriend}
         />
 
         {/* Existing Components */}

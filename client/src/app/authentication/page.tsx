@@ -48,6 +48,11 @@ export default function AuthPage() {
     setStep(Step.VERIFY_ACCOUNT);
   }
 
+  const handleLoginResetPassword = (email: string) => {
+    setEmail(email);
+    setStep(Step.FORGOT_PASSWORD);
+  }
+
   const completeLogin = async (response: InitiateAuthCommandOutput) => {
     try {
       console.log("complete login response: ", response);
@@ -107,11 +112,13 @@ export default function AuthPage() {
               onSuccess={completeLogin}
               showPassword={showPassword}
               setShowPassword={setShowPassword}
+              onResetPassword={handleLoginResetPassword}
             />
           )}
 
           {step === Step.FORGOT_PASSWORD && (
             <ForgotPassword
+              filledEmail={email}
               onBack={() => setStep(Step.LOGIN_ACCOUNT)}
               onSuccess={completeLogin}
             />

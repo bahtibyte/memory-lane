@@ -111,21 +111,28 @@ export const getUser = async (req, res) => {
 }
 
 export const createUser = async (req, res) => {
+  console.log("Creating user...");
   const authHeader = req.headers.authorization;
   const accessToken = authHeader.replace('Bearer ', '');
+  console.log("Access token: ", accessToken);
 
   const response = await cognitoClient.send(new GetUserCommand({
     AccessToken: accessToken
   }));
-
+  console.log("Cognito response: ", response);
   if (!response.UserAttributes) {
+    console.log("Invalid authorization token");
     return res.status(401).json({ message: 'Invalid authorization token' });
   }
+
+  console.log("User attributes: ", response.UserAttributes);
 
   // Extract cognito user attributes to insert into our own users table.
   const email = response.UserAttributes.find(attr => attr.Name === 'email')?.Value;
   const profile_name = response.UserAttributes.find(attr => attr.Name === 'name')?.Value;
   const username = response.Username;
+
+  console.log("Email: ", email);
 
   try {
     await rds.query('BEGIN');
@@ -135,8 +142,11 @@ export const createUser = async (req, res) => {
       [username, email, profile_name]
     );
 
+    console.log("Create user result: ", create_user.rows);
     const user = create_user.rows[0];
+    console.log("user is user: ", create_user.rows[0]);
 
+    console.log("updating ml_friends for matching stuff.");
     await rds.query(
       `UPDATE ml_friends 
        SET user_id = $1, is_confirmed = true
@@ -144,7 +154,10 @@ export const createUser = async (req, res) => {
       [user.user_id, user.email]
     )
 
+    console.log("Update friends result: ");
     await rds.query('COMMIT');
+
+    console.log("User created successfully");
 
     res.status(200).json({ user });
   } catch {

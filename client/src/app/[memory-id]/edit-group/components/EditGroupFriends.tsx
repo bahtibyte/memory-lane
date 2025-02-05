@@ -11,9 +11,10 @@ interface EditGroupFriendsProps {
   onFriendsAdded: (friends: Friend[]) => void;
   onFriendRemoved: (friend: Friend) => void;
   onAdminChange: (friend: Friend) => void;
+  onEditFriend: (friend: Friend) => void;
 }
 
-export default function EditGroupFriends({ memoryId, user, friends, onFriendsAdded, onFriendRemoved, onAdminChange }: EditGroupFriendsProps) {
+export default function EditGroupFriends({ memoryId, user, friends, onFriendsAdded, onFriendRemoved, onAdminChange, onEditFriend }: EditGroupFriendsProps) {
 
   const sortedFriends = friends.sort((a, b) => {
     // Owner comes first
@@ -59,6 +60,7 @@ export default function EditGroupFriends({ memoryId, user, friends, onFriendsAdd
           key={index}
           onRemove={onFriendRemoved}
           onAdminChange={onAdminChange}
+          onEditFriend={onEditFriend}
         />
       ))}
     </div>

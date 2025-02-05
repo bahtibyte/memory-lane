@@ -424,4 +424,21 @@ export const updateFriendAdminStatus = async (formData: {
     body: JSON.stringify(formData),
   });
   return response.json();
+}
+
+export const updateFriendInfo = async (formData: {
+  memory_id: string,
+  friend_id: number,
+  profile_name: string,
+  email: string,
+}) => {
+  const response = await fetch(`${API}/update-friend-info`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': await getAuthorization()
+    },
+    body: JSON.stringify(formData),
+  });
+  return response.json();
 } 

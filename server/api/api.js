@@ -676,6 +676,38 @@ export const removeFriendFromGroup = async (req, res) => {
   });
 }
 
+export const updateFriendInfo = async (req, res) => {
+  const { memory_id, friend_id, profile_name, email } = req.body;
+  console.log(`Updating friend info for group with id: ${memory_id}, friend_id: ${friend_id}, profile_name: ${profile_name}, email: ${email}`);
+
+  const lookup_result = await ml_group_lookup(memory_id);
+  if (lookup_result.rowCount === 0) {
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
+  }
+
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
+
+  try {
+    const update_result = await rds.query(
+      `UPDATE ml_friends SET profile_name = $1, email = $2 WHERE friend_id = $3 AND group_id = $4 RETURNING *`,
+      [profile_name, email, friend_id, group_id]
+    );
+  
+    if (update_result.rowCount === 0) {
+      return res.status(400).json({ error: 'Failed to update friend info.' });
+    }
+  
+    return res.status(200).json({
+      message: 'Friend info updated successfully.',
+      friend: update_result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating friend info:', error);
+    return res.status(500).json({ error: 'Email already exists in group.' });
+  }
+}
+
 export const updateFriendAdminStatus = async (req, res) => {
   const { memory_id, friend_id, is_admin } = req.body;
   console.log(`Updating friend admin status for group with id: ${memory_id}, friend_id: ${friend_id}, is_admin: ${is_admin}`);

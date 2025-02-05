@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.738.0",
+    "@heroicons/react": "^2.2.0",
     "cors": "^2.8.5",
     "next": "15.1.6",
     "react": "^19.0.0",

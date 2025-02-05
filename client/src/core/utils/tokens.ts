@@ -64,4 +64,9 @@ export const clearTokens = async () => {
   document.cookie = `access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; ${Object.entries(COOKIE_OPTIONS)
     .map(([key, value]) => `${key}=${value}`)
     .join('; ')}`;
+
+  // Remove expires_at from regular cookie.
+  document.cookie = `expires_at=; expires=Thu, 01 Jan 1970 00:00:00 GMT; ${Object.entries(COOKIE_OPTIONS)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ')}`;
 };
