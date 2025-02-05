@@ -56,7 +56,8 @@ export default function EditGroupName({
       if (result.group_data) {
         setMemoryLane({
           group_data: result.group_data,
-          photo_entries: memoryLane.photo_entries
+          photo_entries: memoryLane.photo_entries,
+          friends: memoryLane.friends
         });
         setShowNameSuccess(true);
         setIsEditingName(false);
@@ -132,7 +133,8 @@ export default function EditGroupName({
         if (result.group_data) {
           setMemoryLane({
             group_data: result.group_data,
-            photo_entries: memoryLane.photo_entries
+            photo_entries: memoryLane.photo_entries,
+            friends: memoryLane.friends
           });
 
           setShowThumbnailSuccess(true);

@@ -8,10 +8,10 @@ import { getUser } from '@/core/utils/api';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/core/utils/routes';
 import LoadingScreen from '@/app/components/Loading';
-import CreateAccount from '@/app/components/auth/CreateAccount';
-import VerifyAccount from '../components/auth/VerifyAccount';
-import LoginAccount from '../components/auth/LoginAccount';
-import ForgotPassword from '../components/auth/ForgotPassword';
+import CreateAccount from '@/app/authentication/components/CreateAccount';
+import VerifyAccount from './components/VerifyAccount';
+import LoginAccount from './components/LoginAccount';
+import ForgotPassword from './components/ForgotPassword';
 
 enum Step {
   CREATE_ACCOUNT,

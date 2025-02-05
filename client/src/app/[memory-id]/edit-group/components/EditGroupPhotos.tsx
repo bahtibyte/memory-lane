@@ -19,7 +19,8 @@ export default function EditGroupPhotos({ memoryId, memoryLane, setMemoryLane }:
           group_data: memoryLane.group_data,
           photo_entries: memoryLane.photo_entries.filter((photo_entry) => 
             photo_entry.photo_id !== result.deleted_photo.photo_id
-          )
+          ),
+          friends: memoryLane.friends
         });
       }
     } catch (error) {

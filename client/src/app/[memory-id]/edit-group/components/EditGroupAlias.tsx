@@ -50,7 +50,8 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
 
         setMemoryLane({
           group_data: result.group_data,
-          photo_entries: memoryLane!.photo_entries
+          photo_entries: memoryLane!.photo_entries,
+          friends: memoryLane!.friends
         });
         setShowUrlSaveButton(false);
         setShowUrlSuccess(true);
