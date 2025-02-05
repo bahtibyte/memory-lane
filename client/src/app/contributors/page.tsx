@@ -45,15 +45,15 @@ export default function ContributorsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-black px-8 py-20">
+    <main className="min-h-screen bg-black px-2 xs:px-4 sm:px-8 py-12 sm:py-20">
       {/* Navigation Buttons */}
-      <div className="absolute top-4 right-4 flex gap-4">
+      <div className="absolute sm:fixed top-4 right-2 xs:right-4 flex gap-1 xs:gap-2 sm:gap-4 z-10">
         <Link
           href="/"
           className="nav-button px-4 py-2 text-sm text-white flex items-center gap-2"
         >
           HOME
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5.69L17 10.19V18H15V12H9V18H7V10.19L12 5.69ZM12 3L2 12H5V20H11V14H13V20H19V12H22L12 3Z" fill="currentColor"/>
           </svg>
         </Link>
@@ -62,16 +62,16 @@ export default function ContributorsPage() {
           target="_blank"
           className="nav-button px-4 py-2 text-sm text-white flex items-center gap-2"
         >
-          GITHUB REPO
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          GITHUB
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2C6.477 2 2 6.477 2 12C2 16.991 5.571 21.128 10.285 22V18.857C9.705 19.002 9.195 19.002 8.657 18.76C7.915 18.42 7.326 17.577 6.93 16.851C6.715 16.488 6.198 16.086 5.786 16.116L5.734 15.17C6.731 15.083 7.565 15.722 8.058 16.541C8.276 16.907 8.524 17.164 8.858 17.298C9.181 17.427 9.519 17.387 9.934 17.265C9.996 16.623 10.267 16.223 10.497 15.9V15.9C7.726 15.437 6.739 13.847 6.366 12.647C5.89 11.045 6.31 9.036 7.354 7.947C7.378 7.922 7.396 7.891 7.401 7.857C7.406 7.823 7.398 7.789 7.379 7.76C6.947 6.637 7.06 5.17 7.355 4.527C8.193 4.648 9.218 5.183 10.061 5.811C10.135 5.868 10.23 5.885 10.319 5.857C11.413 5.544 12.552 5.392 13.649 5.392C14.749 5.392 15.892 5.544 16.988 5.858C17.077 5.886 17.172 5.869 17.246 5.812C18.088 5.184 19.111 4.649 19.951 4.528C20.246 5.171 20.359 6.636 19.929 7.759C19.91 7.788 19.902 7.822 19.907 7.856C19.912 7.89 19.929 7.921 19.954 7.946C21.012 9.049 21.419 11.078 20.941 12.676C20.566 13.862 19.574 15.441 16.815 15.899V15.899C17.141 16.349 17.5 17.099 17.5 18.099V22C22.215 21.129 25.786 16.992 25.786 12C25.786 6.477 21.309 2 15.786 2H12Z" fill="currentColor"/>
           </svg>
         </Link>
       </div>
 
-      <div className="w-[80%] max-w-[80%] mx-auto flex flex-col items-center">
-        <div className="w-[60%]">
-          <h1 className="text-6xl md:text-7xl font-bold text-white mb-4 leading-tight">
+      <div className="w-full max-w-7xl mx-auto flex flex-col items-center px-2 xs:px-4">
+        <div className="w-full lg:w-[60%] md:w-[70%] sm:w-[80%]">
+          <h1 className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl font-bold text-white mb-4 leading-tight">
             <div className="hover-text">
               <span className="hover-letter">T</span>
               <span className="hover-letter">h</span>
@@ -93,16 +93,16 @@ export default function ContributorsPage() {
             </div>
           </h1>
           
-          <p className="text-[#DCDCDC] text-xl md:text-2xl max-w-2xl mb-12">
+          <p className="text-base xs:text-lg sm:text-xl md:text-2xl text-[#DCDCDC] max-w-2xl mb-6 sm:mb-8 md:mb-12">
             Meet the team behind Memory Lane.
           </p>
         </div>
 
-        <div className="space-y-8 flex flex-col items-center w-full">
+        <div className="space-y-4 xs:space-y-6 sm:space-y-8 flex flex-col items-center w-full">
           {contributors.map((contributor, index) => (
             <div 
               key={index} 
-              className={`rounded-lg p-12 flex items-center gap-8 border w-[60%] transition-all duration-500 ease-in-out ${
+              className={`rounded-lg p-4 xs:p-6 sm:p-8 md:p-12 flex flex-col sm:flex-row items-center gap-3 xs:gap-4 sm:gap-6 md:gap-8 border w-full lg:w-[60%] md:w-[70%] sm:w-[80%] transition-all duration-500 ease-in-out ${
                 lightMode[index] 
                   ? 'bg-[#111111] border-[#DFC6F7]/40 shadow-[0_0_30px_rgba(223,198,247,0.15)] shadow-[#DFC6F7]/20' 
                   : 'bg-[#111111] border-[#2D2D2D]'
@@ -111,19 +111,19 @@ export default function ContributorsPage() {
               <img 
                 src={contributor.image} 
                 alt={contributor.name}
-                className="w-40 h-40 rounded-full object-cover transition-all duration-500 ease-in-out"
+                className="w-24 h-24 xs:w-32 xs:h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full object-cover transition-all duration-500 ease-in-out"
               />
               <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-3xl font-semibold text-white transition-colors duration-500 ease-in-out">
+                <div className="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 xs:gap-4">
+                  <div className="text-center sm:text-left">
+                    <h2 className="text-xl xs:text-2xl sm:text-3xl font-semibold text-white transition-colors duration-500 ease-in-out">
                       {contributor.name}
                     </h2>
-                    <p className="text-base text-gray-400 transition-colors duration-500 ease-in-out">
+                    <p className="text-xs xs:text-sm sm:text-base text-gray-400 transition-colors duration-500 ease-in-out">
                       {contributor.title}
                     </p>
                   </div>
-                  <div className="flex gap-4 items-center">
+                  <div className="flex gap-3 xs:gap-4 items-center">
                     <button
                       onClick={() => toggleLight(index)}
                       className={`transition-all duration-500 ease-in-out hover:scale-105 ${
@@ -170,7 +170,7 @@ export default function ContributorsPage() {
                     )}
                   </div>
                 </div>
-                <p className="mt-4 text-lg text-gray-300 transition-all duration-500 ease-in-out">
+                <p className="mt-3 xs:mt-4 text-sm xs:text-base sm:text-lg text-gray-300 transition-all duration-500 ease-in-out text-center sm:text-left">
                   {lightMode[index] ? contributor.funFacts : contributor.description}
                 </p>
               </div>
@@ -180,17 +180,7 @@ export default function ContributorsPage() {
       </div>
 
       <style jsx global>{`
-        /* Disable text selection */
-        * {
-          -webkit-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-        }
-
-        html, body {
-          background-color: black;
-        }
-
+        /* Remove the media query that was changing button sizes */
         .nav-button {
           border: 1px solid #4D4D4D;
           border-radius: 10px;
