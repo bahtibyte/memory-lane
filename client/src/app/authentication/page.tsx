@@ -26,6 +26,7 @@ export default function AuthPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState<Step>(Step.CREATE_ACCOUNT);
 
   useEffect(() => {
@@ -85,6 +86,8 @@ export default function AuthPage() {
             <CreateAccount
               onLogin={() => setStep(Step.LOGIN_ACCOUNT)}
               onSuccess={handleCreateAccountSuccess}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
             />
           )}
 
@@ -102,6 +105,8 @@ export default function AuthPage() {
               onForgotPassword={() => setStep(Step.FORGOT_PASSWORD)}
               onVerifyAccount={handleLoginVerifyAccount}
               onSuccess={completeLogin}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
             />
           )}
 
