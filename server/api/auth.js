@@ -58,12 +58,9 @@ export const getAccessToken = async (req, res) => {
     }));
 
     const authResult = response.AuthenticationResult;
-    console.log("[auth]: Auth result: ", authResult);
     if (!authResult || !authResult.AccessToken || !authResult.ExpiresIn) {
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
-
-    console.log("[auth]: Tokens refreshed successfully, updating access token.");
 
     res.status(200).json({
       message: 'Refresh token set successfully',

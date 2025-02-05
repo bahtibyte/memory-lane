@@ -44,7 +44,7 @@ export default function Timeline() {
     fetchData,
     unauthorized
   } = useMemoryLane();
-
+  
   const { isAuthenticated } = useAuth();
 
   const [scrollProgress, setScrollProgress] = useState(0);

@@ -22,6 +22,7 @@ export default function EditGroupPage() {
     setMemoryLane,
     loading,
     failedToLoad,
+    unauthorized,
     fetchData,
   } = useMemoryLane();
 
@@ -63,7 +64,7 @@ export default function EditGroupPage() {
 
   if (loading || isLoading) return <Loading />;
   
-  if (!isAuthenticated) {
+  if (!isAuthenticated || unauthorized) {
     return <AccessDenied />
   }
 

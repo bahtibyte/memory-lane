@@ -10,13 +10,14 @@ import { updateFriendInfo } from '@/core/utils/api';
 interface DisplayFriendProps {
   memoryId: string;
   user: User;
+  self: Friend;
   friend: Friend;
   onRemove: (friend: Friend) => void;
   onAdminChange: (friend: Friend) => void;
   onEditFriend: (friend: Friend) => void;
 }
 
-export default function DisplayFriend({ memoryId, user, friend, onRemove, onAdminChange, onEditFriend }: DisplayFriendProps) {
+export default function DisplayFriend({ memoryId, user, self, friend, onRemove, onAdminChange, onEditFriend }: DisplayFriendProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(friend.profile_name);
   const [tempEmail, setTempEmail] = useState(friend.email ?? '');
@@ -194,11 +195,13 @@ export default function DisplayFriend({ memoryId, user, friend, onRemove, onAdmi
           <div className="flex items-start gap-8">
             <RemoveAction
               memoryId={memoryId}
+              self={self}
               friend={friend}
               onRemove={onRemove}
             />
             <AdminAction
               memory_id={memoryId}
+              self={self}
               friend={friend}
               onAdminChange={onAdminChange}
             />
