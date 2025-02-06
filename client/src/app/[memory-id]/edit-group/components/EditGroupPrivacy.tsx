@@ -1,5 +1,5 @@
 import { MemoryLane } from "@/core/utils/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { updateGroupPrivacy } from "@/core/utils/api";
 import { useRouter } from "next/navigation";
 
@@ -16,13 +16,19 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
   const [password, setPassword] = useState(memoryLane.group_data.passcode ?? '');
   const [showPassword, setShowPassword] = useState(false);
   const [showSavePrivacy, setShowSavePrivacy] = useState(false);
-  const [showCancelButton, setShowCancelButton] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [highlightEditButton, setHighlightEditButton] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
+  useEffect(() => {
+    setIsPublic(memoryLane.group_data.is_public);
+    setPassword(memoryLane.group_data.passcode ?? '');
+  }, [memoryLane]);
 
   const handlePrivacyUpdate = async () => {
     try {
+      setPasswordError('');
       console.log('updating privacy', isPublic, password);
       const result = await updateGroupPrivacy({
         memory_id: memoryId,
@@ -37,7 +43,6 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
           friends: memoryLane.friends
         });
         setShowSavePrivacy(false);
-        setShowCancelButton(false);
         setShowSuccessMessage(true);
       }
 
@@ -52,28 +57,41 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
     }
   };
 
+  const handleSavePrivacy = () => {
+    if (!isPublic && password.length < 4) {
+      setPasswordError('Password must be at least 4 characters long');
+      return;
+    }
+    handlePrivacyUpdate();
+    setIsEditingPassword(false);
+    setShowPassword(false);
+  };
+
   const handlePrivacyChange = (isPublic: boolean) => {
     setIsPublic(isPublic);
-    setShowSavePrivacy(true);
-    setShowCancelButton(true);
+    if (!isPublic) {
+      setIsEditingPassword(true);
+      setShowPassword(true);
+    }
+    setShowSavePrivacy(isPublic !== memoryLane.group_data.is_public);
   };
 
   const handlePasswordChange = (newPassword: string) => {
     setPassword(newPassword);
     setShowSavePrivacy(newPassword !== memoryLane.group_data.passcode);
-    setShowCancelButton(true);
+    setPasswordError('');
   };
 
   const handleEditPasswordClick = () => {
     setIsEditingPassword(true);
     setShowSavePrivacy(password !== memoryLane.group_data.passcode);
-    setShowCancelButton(true);
   };
 
   const handleCancel = () => {
     setIsEditingPassword(false);
     setShowPassword(false);
     setShowSavePrivacy(false);
+    setPasswordError('');
     // Reset password to original value
     setPassword(memoryLane.group_data.passcode ?? '');
     // Reset privacy to original value
@@ -126,9 +144,10 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
               onClick={() => !isEditingPassword && setHighlightEditButton(true)}
               onMouseLeave={() => setHighlightEditButton(false)}
               className={`flex-1 bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white focus:outline-none ${isEditingPassword
-                ? 'focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200'
-                : 'cursor-default'
-                } ${!isEditingPassword ? 'bg-opacity-50' : ''}`}
+                  ? 'focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200'
+                  : 'cursor-default'
+                } ${!isEditingPassword ? 'bg-opacity-50' : ''} ${passwordError ? 'border-red-500' : ''
+                }`}
               readOnly={!isEditingPassword}
               placeholder="Enter password"
             />
@@ -168,6 +187,9 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
               </button>
             ) : null}
           </div>
+          {passwordError && (
+            <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+          )}
         </div>
       )}
 
@@ -180,28 +202,20 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
         </div>
       )}
 
-      {isEditingPassword && (
+      {(showSavePrivacy || isPublic !== memoryLane.group_data.is_public) && (
         <div className="flex gap-3">
-          {showSavePrivacy &&
-            <button
-              onClick={() => {
-                handlePrivacyUpdate();
-                setIsEditingPassword(false);
-                setShowPassword(false);
-              }}
-              className="px-6 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 whitespace-nowrap font-medium"
-            >
-              Save Privacy
-            </button>
-          }
-          {showCancelButton &&
-            <button
-              onClick={handleCancel}
-              className="px-6 py-2 bg-[#242424] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 transition-all duration-200 whitespace-nowrap"
-            >
-              Cancel
-            </button>
-          }
+          <button
+            onClick={handleSavePrivacy}
+            className="px-6 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 whitespace-nowrap font-medium"
+          >
+            Save Privacy
+          </button>
+          <button
+            onClick={handleCancel}
+            className="px-6 py-2 bg-[#242424] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 transition-all duration-200 whitespace-nowrap"
+          >
+            Cancel
+          </button>
         </div>
       )}
     </div>

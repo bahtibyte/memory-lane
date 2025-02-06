@@ -3,13 +3,25 @@ import { Friend } from '@/core/utils/types';
 
 interface AdminActionProps {
   memory_id: string;
+  self: Friend;
   friend: Friend;
   onAdminChange: (friend: Friend) => void;
 }
 
-export default function AdminAction({ memory_id, friend, onAdminChange }: AdminActionProps) {
+export default function AdminAction({ memory_id, self, friend, onAdminChange }: AdminActionProps) {
 
-  if (!friend.is_confirmed) return null;
+  // I am owner.
+  if (self.is_owner) {
+    if (!friend.is_confirmed) return null;
+  }
+  // I am admin.
+  else if (self.is_admin) {
+    return null;
+  }
+  // I am friend.
+  else {
+    return null;
+  }
 
   const handleAdminClick = async (admin: boolean) => {
     const response = await updateFriendAdminStatus({

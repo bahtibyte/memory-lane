@@ -30,6 +30,7 @@ async function hash(passcode) {
 function build_group_data(group_lookup, group_data) {
   return {
     'uuid': group_lookup.uuid,
+    'owner_id': group_data.owner_id,
     'group_name': group_data.group_name,
     'group_url': group_url(group_lookup.uuid),
     'is_public': group_data.is_public,
@@ -202,6 +203,43 @@ export const deleteGroup = async (req, res) => {
   }
 }
 
+export const leaveGroup = async (req, res) => {
+  const { memory_id } = req.body;
+  console.log(`Leaving group with id: ${memory_id}`);
+
+  const lookup_result = await ml_group_lookup(memory_id);
+  if (lookup_result.rowCount === 0) {
+    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
+  }
+
+  const user_id = await get_user_id(req);
+  if (!user_id) {
+    return res.status(400).json({ error: 'User does not exist.' });
+  }
+
+  const group_lookup = lookup_result.rows[0];
+  const group_id = group_lookup.group_id;
+
+  const group_info_result = await rds.query(
+    `SELECT * FROM ml_group_info WHERE group_id = $1`,
+    [group_id]
+  );
+
+  const friends_result = await rds.query(
+    `DELETE FROM ml_friends WHERE group_id = $1 AND user_id = $2 RETURNING *`,
+    [group_id, user_id]
+  );
+
+  if (friends_result.rowCount === 0) {
+    return res.status(400).json({ error: 'Failed to leave group.' });
+  }
+
+  return res.status(200).json({
+    message: 'User left group successfully.',
+    group_data: build_group_data(group_lookup, group_info_result.rows[0])
+  });
+}
+
 export const getOwnedGroups = async (req, res) => {
   const user_id = await get_user_id(req);
   if (!user_id) {
@@ -209,9 +247,11 @@ export const getOwnedGroups = async (req, res) => {
   }
 
   const groups_result = await rds.query(
-    `SELECT * FROM ml_group_info 
-     JOIN ml_group_lookup ON ml_group_info.group_id = ml_group_lookup.group_id 
-     WHERE owner_id = $1`,
+    `SELECT DISTINCT gi.*, gl.*, mf.is_owner, mf.is_admin
+    FROM ml_group_info gi
+    JOIN ml_group_lookup gl ON gi.group_id = gl.group_id
+    LEFT JOIN ml_friends mf ON gi.group_id = mf.group_id
+    WHERE mf.user_id = $1 AND mf.is_confirmed = true`,
     [user_id]
   );
 
@@ -221,13 +261,19 @@ export const getOwnedGroups = async (req, res) => {
       uuid: row.uuid,
       alias: row.alias
     };
-    const group_data = {
+    const group_info = {
+      owner_id: row.owner_id,
       group_name: row.group_name,
       is_public: row.is_public,
-      passcode: row.passcode,
       thumbnail_url: row.thumbnail_url
     };
-    return build_group_data(group_lookup, group_data);
+    const group_data = build_group_data(group_lookup, group_info);
+    return {
+      ...group_data,
+      is_owner: row.is_owner,
+      is_admin: row.is_admin,
+      is_friend: !row.is_owner && !row.is_admin
+    }
   });
 
   return res.status(200).json({
@@ -280,9 +326,11 @@ export const updateGroupPrivacy = async (req, res) => {
   const group_lookup = lookup_result.rows[0];
   const group_id = group_lookup.group_id;
 
+  const insert_passcode = is_public ? null : passcode;
+
   const update_result = await rds.query(
     `UPDATE ml_group_info SET is_public = $1, passcode = $2 WHERE group_id = $3 RETURNING *`,
-    [is_public, passcode, group_id]
+    [is_public, insert_passcode, group_id]
   );
 
   if (update_result.rowCount === 0) {
@@ -394,13 +442,10 @@ export const getMemoryLane = async (req, res) => {
 
   const group = memoryLane.rows[0];
 
-  // Check if the group is password protected or if the user is the owner.
-  if (!group.is_public && (!passcode || passcode != group.passcode)) {
-    const payload = await extractUser(req);
-    const user_id = payload ? await get_user_id_from_username(payload.username) : null;
-    if (!user_id || user_id != group.owner_id) {
-      return res.status(403).json({ error: `Group ${group_id} is not public and requires a passcode.` });
-    }
+  const should_reject = await reject_group_access(req, group, passcode);
+
+  if (should_reject) {
+    return res.status(403).json({ error: `Memory lane is private and requires a passcode or added as a friend to group.` });
   }
 
   const photos_results = await rds.query(
@@ -430,6 +475,38 @@ export const getMemoryLane = async (req, res) => {
     'friends': friends_results.rows,
   });
 };
+
+const reject_group_access = async (req, group, passcode) => {
+  // Group is public or passcode is correct.
+  if (group.is_public || passcode === group.passcode) {
+    return false;
+  }
+
+  const payload = await extractUser(req);
+  const user_id = payload ? await get_user_id_from_username(payload.username) : null;
+
+  // There is no proper authorization in the request.
+  if (!user_id) {
+    return true;
+  }
+
+  const friends_result = await rds.query(
+    `SELECT * FROM ml_friends WHERE group_id = $1 AND user_id = $2`,
+    [group.group_id, user_id]
+  );
+
+  if (friends_result.rowCount === 0) {
+    return true;
+  }
+
+  const result = friends_result.rows[0];
+
+  if (result.is_owner || result.is_admin || result.is_confirmed) {
+    return false;
+  }
+
+  return true;
+}
 
 export const editPhoto = async (req, res) => {
   const { memory_id, photo_id, photo_title, photo_date, photo_caption } = req.body;
@@ -559,9 +636,9 @@ export const updateGroupThumbnail = async (req, res) => {
   }
 }
 
-export const updateUserProfile = async (req, res) => {
-  const { profile_name, profile_url } = req.body;
-  console.log(`Updating user profile for name: ${profile_name}, profile_url: ${profile_url}`);
+export const updateProfileUrl = async (req, res) => {
+  const { profile_url } = req.body;
+  console.log(`Updating user profile url: ${profile_url}`);
 
   const user_id = await get_user_id(req);
   if (!user_id) {
@@ -569,8 +646,37 @@ export const updateUserProfile = async (req, res) => {
   }
 
   const update_result = await rds.query(
-    `UPDATE ml_users SET profile_name = $1, profile_url = $2 WHERE user_id = $3 RETURNING *`,
-    [profile_name, profile_url, user_id]
+    `UPDATE ml_users SET profile_url = $1 WHERE user_id = $2 RETURNING *`,
+    [profile_url, user_id]
+  );
+
+  if (update_result.rowCount === 0) {
+    return res.status(400).json({ error: 'Failed to update user profile.' });
+  }
+
+  return res.status(200).json({
+    message: 'User profile updated successfully.',
+    user: update_result.rows[0]
+  });
+}
+
+
+export const updateProfileName = async (req, res) => {
+  const { profile_name } = req.body;
+  console.log(`Updating user profile name: ${profile_name}`);
+
+  if (!profile_name) {
+    return res.status(400).json({ error: 'Profile name is required.' });
+  }
+
+  const user_id = await get_user_id(req);
+  if (!user_id) {
+    return res.status(400).json({ error: 'User does not exist.' });
+  }
+
+  const update_result = await rds.query(
+    `UPDATE ml_users SET profile_name = $1 WHERE user_id = $2 RETURNING *`,
+    [profile_name, user_id]
   );
 
   if (update_result.rowCount === 0) {
@@ -609,7 +715,7 @@ export const addFriendsToGroup = async (req, res) => {
     const insertedFriends = [];
     for (const friend of friends) {
       const { name, email } = friend;
-      
+
       const nullable_email = email === '' ? null : email;
 
       const user_result = await rds.query(
@@ -637,7 +743,7 @@ export const addFriendsToGroup = async (req, res) => {
             profile_url: user.profile_url,
             profile_name: user.profile_name,
           });
-        }else{
+        } else {
           insertedFriends.push(friend_result.rows[0]);
         }
       }
@@ -701,11 +807,11 @@ export const updateFriendInfo = async (req, res) => {
       `UPDATE ml_friends SET profile_name = $1, email = $2 WHERE friend_id = $3 AND group_id = $4 RETURNING *`,
       [profile_name, email, friend_id, group_id]
     );
-  
+
     if (update_result.rowCount === 0) {
       return res.status(400).json({ error: 'Failed to update friend info.' });
     }
-  
+
     return res.status(200).json({
       message: 'Friend info updated successfully.',
       friend: update_result.rows[0]

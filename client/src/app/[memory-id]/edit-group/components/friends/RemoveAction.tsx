@@ -4,11 +4,12 @@ import { useState } from 'react';
 
 interface RemoveActionProps {
   memoryId: string;
+  self: Friend;
   friend: Friend;
   onRemove: (friend: Friend) => void;
 }
 
-export default function RemoveAction({ memoryId, friend, onRemove }: RemoveActionProps) {
+export default function RemoveAction({ memoryId, self, friend, onRemove }: RemoveActionProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showRemoveButton, setShowRemoveButton] = useState(true);
 
@@ -35,7 +36,16 @@ export default function RemoveAction({ memoryId, friend, onRemove }: RemoveActio
     setShowRemoveButton(true);
   }
 
-  if (friend.is_admin) {
+  // I am owner.
+  if (self.is_owner) {
+    if (friend.is_admin) return null;
+  }
+  // I am admin.
+  else if (self.is_admin) {
+    if (friend.is_admin || friend.is_owner) return null;
+  }
+  // I am friend.
+  else {
     return null;
   }
 

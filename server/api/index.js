@@ -15,11 +15,13 @@ import {
   getOwnedGroups,
   deleteGroup,
   updateGroupThumbnail,
-  updateUserProfile,
   addFriendsToGroup,
   removeFriendFromGroup,
   updateFriendAdminStatus,
-  updateFriendInfo
+  updateFriendInfo,
+  updateProfileName,
+  updateProfileUrl,
+  leaveGroup
 } from './api.js';
 import { verifyAuth, saveRefreshToken, getUser, clearRefreshToken, getAccessToken } from './auth.js';
 
@@ -54,11 +56,13 @@ app.post('/api/update-group-alias',verifyAuth, updateGroupAlias);
 app.delete('/api/delete-photo', verifyAuth,deletePhoto);
 app.post('/api/edit-photo', verifyAuth,editPhoto);
 app.post('/api/create-photo-entry', verifyAuth,createPhotoEntry);
-app.put('/api/update-user-profile', verifyAuth, updateUserProfile);
+app.put('/api/update-profile-name', verifyAuth, updateProfileName);
+app.put('/api/update-profile-url', verifyAuth, updateProfileUrl);
 app.post('/api/add-friends-to-group', verifyAuth, addFriendsToGroup);
 app.delete('/api/remove-friend-from-group', verifyAuth, removeFriendFromGroup);
 app.put('/api/update-friend-admin-status', verifyAuth, updateFriendAdminStatus);
 app.put('/api/update-friend-info', verifyAuth, updateFriendInfo);
+app.delete('/api/leave-group', verifyAuth, leaveGroup);
 // Does not require auth to access memories.
 app.get('/api/get-memory-lane', getMemoryLane);
 

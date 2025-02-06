@@ -15,6 +15,7 @@ export interface MemoryLane {
 
 export interface GroupData {
   uuid: string;
+  owner_id: number;
   group_name: string;
   group_url: string;
   is_public: boolean;
@@ -22,6 +23,9 @@ export interface GroupData {
   thumbnail_url: string | null;
   alias: string | null;
   alias_url: string | null;
+  is_owner: boolean;
+  is_admin: boolean;
+  is_friend: boolean;
 }
 
 export interface PhotoEntry {

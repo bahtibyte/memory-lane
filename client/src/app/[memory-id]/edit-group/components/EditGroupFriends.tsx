@@ -16,6 +16,12 @@ interface EditGroupFriendsProps {
 
 export default function EditGroupFriends({ memoryId, user, friends, onFriendsAdded, onFriendRemoved, onAdminChange, onEditFriend }: EditGroupFriendsProps) {
 
+  const self = friends.find(friend => friend.user_id === user.user_id);
+
+  if (!self) {
+    return null;
+  }
+
   const sortedFriends = friends.sort((a, b) => {
     // Owner comes first
     if (a.is_owner) return -1;
@@ -56,6 +62,7 @@ export default function EditGroupFriends({ memoryId, user, friends, onFriendsAdd
         <DisplayFriend
           memoryId={memoryId}
           user={user}
+          self={self}
           friend={friend}
           key={index}
           onRemove={onFriendRemoved}

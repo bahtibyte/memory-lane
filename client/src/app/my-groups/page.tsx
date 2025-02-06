@@ -26,6 +26,17 @@ export default function MyGroups() {
   const [activeOptionsMenu, setActiveOptionsMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Sort groups by role priority: owner -> admin -> friend
+  const sortedGroups = [...groups].sort((a, b) => {
+    if (a.is_owner && !b.is_owner) return -1;
+    if (!a.is_owner && b.is_owner) return 1;
+    if (a.is_admin && !b.is_admin) return -1; 
+    if (!a.is_admin && b.is_admin) return 1;
+    if (a.is_friend && !b.is_friend) return -1;
+    if (!a.is_friend && b.is_friend) return 1;
+    return 0;
+  });
+
   useEffect(() => {
     if (isSignedOut) {
       router.push(Routes.LANDING_PAGE);
@@ -74,7 +85,7 @@ export default function MyGroups() {
     setGroups(groups.filter(g => g.uuid !== group.uuid));
   };
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || !isAuthenticated || !user) {
     return <LoadingScreen />;
   }
 
@@ -102,10 +113,11 @@ export default function MyGroups() {
 
         {/* Groups Grid - Adjusted for better mobile layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {groups.map((group) => (
+          {sortedGroups.map((group) => (
             <GroupCard
               key={group.uuid}
               group={group}
+              user={user}
               activeOptionsMenu={activeOptionsMenu}
               menuRef={menuRef}
               toggleOptionsMenu={toggleOptionsMenu}

@@ -3,22 +3,27 @@ import { User } from "./types";
 
 const API = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
 
-const ACCESS_TOKEN_EXPIRE_BUFFER = 0; // 1 day
+const ACCESS_TOKEN_EXPIRE_BUFFER = 50000; // 1 day
 
 export const getAuthorization = async (): Promise<string> => {
   const cookies = getCookies();
   const expires_at = Number(cookies["expires_at"]);
+
+  // Access token expired. Refresh tokens using backend.
   if (Date.now() >= expires_at - ACCESS_TOKEN_EXPIRE_BUFFER) {
     const response = await refreshTokens();
     if (!response.ok) {
       return `Bearer null`
     }
+    // Extract new access token and save to cookies.
     const data = await response.json();
     if (data.access_token && data.expires_in) {
       setAccessToken(data.access_token, data.expires_in);
+      return `Bearer ${data.access_token}`;
     }
-    return `Bearer ${cookies["access_token"]}`;
+    return `Bearer null`;
   }
+
   return `Bearer ${cookies["access_token"]}`;
 }
 
@@ -357,11 +362,24 @@ export async function updateGroupThumbnail(formData: {
 }
 
 
-export async function updateUserProfile(formData: {
+export async function updateProfileName(formData: {
   profile_name: string,
+}) {
+  const response = await fetch(`${API}/update-profile-name`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': await getAuthorization()
+    },
+    body: JSON.stringify(formData),
+  });
+  return response.json();
+}
+
+export async function updateProfileUrl(formData: {
   profile_url: string,
 }) {
-  const response = await fetch(`${API}/update-user-profile`, {
+  const response = await fetch(`${API}/update-profile-url`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -437,3 +455,15 @@ export const updateFriendInfo = async (formData: {
   });
   return response.json();
 } 
+
+export const leaveGroup = async (memory_id: string) => {
+  const response = await fetch(`${API}/leave-group`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': await getAuthorization()
+    },
+    body: JSON.stringify({ memory_id }),
+  });
+  return response.json();
+}

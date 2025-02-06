@@ -2,7 +2,7 @@ import { updateGroupAlias } from "@/core/utils/api";
 import { MemoryLane } from "@/core/utils/types";
 import { useRouter } from "next/dist/client/components/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 interface EditGroupAliasProps {
   memoryId: string;
   memoryLane: MemoryLane;
@@ -24,6 +24,10 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [showTooltip, setShowTooltip] = useState(false);
   const [highlightEditButton, setHighlightEditButton] = useState(false);
+
+  useEffect(() => {
+    setAlias(memoryLane.group_data.alias || '');
+  }, [memoryLane]);
 
   const handleUrlAliasUpdate = async () => {
     console.log('handleUrlAliasUpdate', enableCustomUrl, alias);
@@ -69,7 +73,6 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
       } else if (result.error) {
         setUrlError(result.error);
         // Reset form state to original values
-        const alias_exists = memoryLane.group_data.alias_url !== null && memoryLane.group_data.alias_url !== undefined;
         setEnableCustomUrl(alias_exists);
         setAlias(memoryLane.group_data.alias || '');
         setIsEditingAlias(false);
@@ -93,7 +96,6 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
     // Only convert to lowercase while typing
     const lowerCase = newAlias.toLowerCase();
     setAlias(lowerCase);
-    console.log('lowerCase', lowerCase);
     // Only show save button if the new alias is different from the current one
     setShowUrlSaveButton(lowerCase !== memoryLane.group_data.alias);
     setShowCancelButton(true);
@@ -103,9 +105,9 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
   const handleCustomUrlToggle = (enabled: boolean) => {
     console.log('handleCustomUrlToggle', enabled);
     setEnableCustomUrl(enabled);
-    // Show save button if the new enabled state is different from the original alias existence
+
+    setShowUrlSaveButton(enabled !== alias_exists);
     setIsTogglingUrl(enabled !== alias_exists);
-    setShowUrlSaveButton(true);
     setShowCancelButton(true);
     if (!enabled) {
       setIsEditingAlias(false);
@@ -113,6 +115,16 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
       setIsEditingAlias(true);
     }
   };
+
+  const handleSaveAlias = () => {
+    // Check the length of new alias. show error if less than 4 characters
+    if (enableCustomUrl && alias.length < 4) {
+      setUrlError('Alias must be at least 4 characters long');
+      return;
+    }
+    handleUrlAliasUpdate();
+    setIsEditingAlias(false);
+  }
 
   const handleCancel = () => {
     setIsEditingAlias(false);
@@ -276,14 +288,11 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
         </div>
       )}
 
-      {isEditingAlias || isTogglingUrl && (
+      {(isEditingAlias || isTogglingUrl) && (
         <div className="flex gap-3">
           {showUrlSaveButton && (
             <button
-              onClick={() => {
-                handleUrlAliasUpdate();
-                setIsEditingAlias(false);
-              }}
+              onClick={handleSaveAlias}
               className="px-6 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200 whitespace-nowrap font-medium"
             >
               Save URL Settings

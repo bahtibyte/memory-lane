@@ -1,10 +1,12 @@
 import Image from "next/image";
-import { GroupData } from "@/core/utils/types";
+import { GroupData, User } from "@/core/utils/types";
 import { useRouter } from "next/navigation";
-import { deleteGroup } from "@/core/utils/api";
+import { deleteGroup, leaveGroup } from "@/core/utils/api";
+import GroupFlair from "./GroupFlair";
 
 interface GroupCardProps {
   group: GroupData;
+  user: User;
   activeOptionsMenu: string | null;
   menuRef: React.RefObject<HTMLDivElement | null>;
   toggleOptionsMenu: (groupUuid: string) => void;
@@ -12,20 +14,26 @@ interface GroupCardProps {
   handleDeletedGroup: (group: GroupData) => void;
 }
 
-export default function GroupCard({ group, activeOptionsMenu, menuRef, toggleOptionsMenu, setActiveOptionsMenu, handleDeletedGroup }: GroupCardProps) {
+export default function GroupCard({ group, user, activeOptionsMenu, menuRef, toggleOptionsMenu, setActiveOptionsMenu, handleDeletedGroup }: GroupCardProps) {
   const router = useRouter();
+
+  const removeAction = group.owner_id === user.user_id ? "Delete" : "Leave";
 
   function handleEditGroup(group: GroupData) {
     router.push(`/${group.uuid}/edit-group`);
   }
 
-  async function handleDeleteGroup(group: GroupData) {
-    if (!confirm(`Are you sure you want to delete "${group.group_name}"?`)) {
+  async function handleRemoveAction(group: GroupData) {
+    if (!confirm(`Are you sure you want to ${removeAction} "${group.group_name}"?`)) {
       return;
     }
 
     try {
-      const response = await deleteGroup(group.uuid);
+      const response =
+        group.owner_id === user.user_id ?
+          await deleteGroup(group.uuid) :
+          await leaveGroup(group.uuid);
+
       if (response.group_data) {
         handleDeletedGroup(group);
       } else {
@@ -64,7 +72,10 @@ export default function GroupCard({ group, activeOptionsMenu, menuRef, toggleOpt
         {/* Group Info - Adjusted padding and text sizes */}
         <div className="p-4 sm:p-6">
           <div className="flex justify-between items-start">
-            <h2 className="text-lg sm:text-xl font-semibold text-white">{group.group_name}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold text-white">{group.group_name}</h2>
+              <GroupFlair group={group} />
+            </div>
             <div className="relative" ref={activeOptionsMenu === group.uuid ? menuRef : null}>
               <button
                 onClick={(e) => {
@@ -93,12 +104,12 @@ export default function GroupCard({ group, activeOptionsMenu, menuRef, toggleOpt
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteGroup(group);
+                      handleRemoveAction(group);
                       setActiveOptionsMenu(null);
                     }}
                     className="w-full text-left px-3 sm:px-4 py-2 text-sm sm:text-base text-red-400 hover:bg-[#1A1A1A] transition-colors"
                   >
-                    Delete
+                    {removeAction}
                   </button>
                 </div>
               )}
