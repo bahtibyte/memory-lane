@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const contributors = [
   {
@@ -9,7 +10,7 @@ const contributors = [
     title: "Ex Google Engineer",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     funFacts: "Secretly wishes he was a professional chess player. Once debugged code in his sleep. Has a collection of rubber ducks for rubber duck debugging.",
-    image: "https://cdn.discordapp.com/attachments/1012109024226975764/1336546425403605053/image.png?ex=67a4335b&is=67a2e1db&hm=e509c94e877541b62d858d95b2974da1459534565586fd2f7ef524143ad0ba5d&",
+    image: "https://memory-lane-photos.s3.us-east-2.amazonaws.com/contributors/bahti.png",
     linkedin: "https://www.linkedin.com/in/bakhti-rasulov/",
     github: "https://github.com/bahtibyte",
     resume: "https://www.google.com/search?q=cat&oq=cat&gs_lcrp=EgZjaHJvbWUqBwgAEAAYjwIyBwgAEAAYjwIyCggBEC4YsQMYgAQyDAgCECMYJxiABBiKBTITCAMQLhiDARjHARixAxjRAxiABDIHCAQQABiABDIQCAUQLhiDARixAxiABBiKBTIGCAYQRRg8MgYIBxBFGDzSAQgxMDc2ajBqN6gCALACAA&sourceid=chrome&ie=UTF-8#vhid=oc0yOiQ9sK4GZM&vssid=l",
@@ -19,7 +20,7 @@ const contributors = [
     title: "Goldman Sachs Engineer",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     funFacts: "Can recite the entire binary search algorithm backwards. Has named all her plants after sorting algorithms. Dreams in JavaScript.",
-    image: "https://cdn.discordapp.com/attachments/1274116404282654732/1336510440221446194/IMG_0595.jpg?ex=67a411d8&is=67a2c058&hm=1687246c1ea118269f517378b1301643eed2df1401064eef26d6ffb82b904add&",
+    image: "https://memory-lane-photos.s3.us-east-2.amazonaws.com/contributors/sigi.png",
     linkedin: "https://www.linkedin.com/in/sigalita-yakubova-11875a223/",
     github: "https://github.com/Sigalitay",
   },
@@ -28,7 +29,7 @@ const contributors = [
     title: "Moving in silence",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     funFacts: "Types faster than she speaks. Has a secret collection of programming memes. Once fixed a bug by staring at it intensely.",
-    image: "https://cdn.discordapp.com/attachments/1012109024226975764/1336546308093120512/image.png?ex=67a4333f&is=67a2e1bf&hm=72c189e0f234f4e6daf5474c506c2c57776d58cd1f222d3cca9b13d496df3070&",
+    image: "https://memory-lane-photos.s3.us-east-2.amazonaws.com/contributors/afshana.png",
     linkedin: "https://www.linkedin.com/in/afshanafalza/",
     github: "https://github.com/afshanafalza",
   },
@@ -108,9 +109,11 @@ export default function ContributorsPage() {
                   : 'bg-[#111111] border-[#2D2D2D]'
               }`}
             >
-              <img 
+              <Image 
                 src={contributor.image} 
                 alt={contributor.name}
+                width={160}
+                height={160}
                 className="w-24 h-24 xs:w-32 xs:h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full object-cover transition-all duration-500 ease-in-out"
               />
               <div className="flex-1">
