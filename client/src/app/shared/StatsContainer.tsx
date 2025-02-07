@@ -9,7 +9,7 @@ interface StatsContainerProps {
 
 export function StatsContainer({ photoCount, friendsCount, yearsSpan, groupName }: StatsContainerProps) {
   return (
-    <div className="mb-16">
+    <div className="mb-16 mt-5 md:mb-20 md:mt-8">
       <div className="bg-[#1A1A1A] rounded-xl p-6 border border-[#242424]">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="lg:border-l lg:border-[#242424] lg:pl-6 lg:w-fit">

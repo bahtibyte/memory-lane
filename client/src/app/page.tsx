@@ -81,7 +81,7 @@ export default function LandingPage() {
           ${activeSection === 'first' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-20'}`}
       >
         {/* Top-right navigation - Back to original position */}
-        <ExternalNavigation />
+        <ExternalNavigation links={{ home: false, contributors: true, github: true }} />
 
         <LandingSection />
       </main>

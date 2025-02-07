@@ -1,28 +1,29 @@
 import { deletePhoto } from "@/core/utils/api";
-import { MemoryLane } from "@/core/utils/types";
+import { PhotoEntry } from "@/core/utils/types";
 import Link from "next/link";
 import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
+import { toast } from "react-hot-toast";
 
 interface EditGroupPhotosProps {
   memoryId: string;
-  memoryLane: MemoryLane;
-  setMemoryLane: (data: MemoryLane) => void;
+  photoEntries: PhotoEntry[];
+  onDeletePhoto: (photo_id: number) => void;
 }
 
-export default function EditGroupPhotos({ memoryId, memoryLane, setMemoryLane }: EditGroupPhotosProps) {
+export default function EditGroupPhotos({ memoryId, photoEntries, onDeletePhoto }: EditGroupPhotosProps) {
   const handleDeletePhoto = async (photo_id: number) => {
     if (!confirm('Are you sure you want to delete this photo?')) return;
 
     try {
       const result = await deletePhoto(memoryId, photo_id);
-      if (result.deleted_photo && memoryLane) {
-        setMemoryLane({
-          ...memoryLane,
-          friends: memoryLane.friends
-        });
+      console.log('Result:', result);
+      if (result.deleted_photo) {
+        onDeletePhoto(result.deleted_photo.photo_id);
+        toast.success('Photo deleted successfully');
       }
     } catch (error) {
       console.error('Error deleting photo:', error);
+      toast.error('Failed to delete photo');
     }
   };
 
@@ -40,10 +41,10 @@ export default function EditGroupPhotos({ memoryId, memoryLane, setMemoryLane }:
             </tr>
           </thead>
           <tbody>
-            {memoryLane?.photo_entries
+            {photoEntries
               .sort((a, b) => new Date(b.photo_date).getTime() - new Date(a.photo_date).getTime())
               .map((photo, index) => (
-                <tr 
+                <tr
                   key={index}
                   className="border-b border-[#242424] hover:bg-[#242424] transition-all duration-200 text-center"
                 >
@@ -100,7 +101,7 @@ export default function EditGroupPhotos({ memoryId, memoryLane, setMemoryLane }:
           </tbody>
         </table>
 
-        {(!memoryLane?.photo_entries || memoryLane.photo_entries.length === 0) && (
+        {photoEntries.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-400 text-sm">No photos have been added yet.</p>
           </div>

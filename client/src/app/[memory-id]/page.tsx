@@ -18,16 +18,16 @@ import { PhotoIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
   try {
-    // Find oldest and newest dates
+    // Find oldest date
     const timestamps = dates.map(date => new Date(date).getTime());
     const oldestDate = new Date(Math.min(...timestamps));
-    const newestDate = new Date(Math.max(...timestamps));
+    const today = new Date();
 
-    // Check if dates are valid
-    if (isNaN(oldestDate.getTime()) || isNaN(newestDate.getTime())) return "0";
+    // Check if date is valid
+    if (isNaN(oldestDate.getTime())) return "0";
 
-    // Calculate difference in years
-    const diffYears = (newestDate.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    // Calculate difference in years from oldest date to today
+    const diffYears = (today.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
     const fixedYears = Math.max(0, diffYears).toFixed(1);
     return fixedYears == "1.0" ? "1" : fixedYears;
   } catch (error) {

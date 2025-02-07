@@ -136,7 +136,7 @@ export function PhotoEntry({
                         imageLoaded ? 'opacity-100' : 'opacity-0'
                       }`}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 1000px"
-                      quality={90}
+                      quality={85}
                       onLoad={handleImageLoad}
                     />
                   </div>

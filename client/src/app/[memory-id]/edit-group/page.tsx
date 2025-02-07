@@ -62,12 +62,16 @@ export default function EditGroupPage() {
     });
   };
 
-  console.log("isAuthenticated", isAuthenticated);
-  console.log("unauthorized", unauthorized);
-  console.log("user", user);
+  const onDeletePhoto = (photo_id: number) => {
+    if (!memoryLane) return;
+    setMemoryLane({
+      ...memoryLane,
+      photo_entries: memoryLane.photo_entries.filter(p => p.photo_id !== photo_id)
+    });
+  };
 
   if (loading || isLoading) return <Loading />;
-  
+
   if (!isAuthenticated || unauthorized) {
     return <AccessDenied />
   }
@@ -146,8 +150,8 @@ export default function EditGroupPage() {
         />
         <EditGroupPhotos
           memoryId={memory_id}
-          memoryLane={memoryLane}
-          setMemoryLane={setMemoryLane}
+          photoEntries={memoryLane.photo_entries}
+          onDeletePhoto={onDeletePhoto}
         />
       </div>
     </div>

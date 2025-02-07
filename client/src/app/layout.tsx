@@ -3,6 +3,8 @@ import "../styles/globals.css";
 import { Roboto } from 'next/font/google';
 import { MemoryLaneProvider } from '@/core/context/memory-provider';
 import { AuthProvider } from "@/core/context/auth-provider";
+import { Toaster } from 'react-hot-toast';
+import { toastConfig } from '@/core/config/toast';
 
 const roboto = Roboto({
   weight: '500',
@@ -11,7 +13,7 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Photo Timeline",
+  title: "Memory Lane",
   description: "A visual journey through time - view your photos and memories in a beautiful timeline format",
   icons: {
     icon: '/favicon.ico',
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
   keywords: ["photos", "timeline", "memories", "gallery", "photo journal"],
   authors: [{ name: "Photo Timeline Team" }],
   openGraph: {
-    title: "Photo Timeline",
+    title: "Memory Lane",
     description: "A visual journey through time - view your photos and memories in a beautiful timeline format",
     type: "website",
   },
@@ -36,6 +38,7 @@ export default function RootLayout({
         <AuthProvider>
           <MemoryLaneProvider>
             {children}
+            <Toaster {...toastConfig} />
           </MemoryLaneProvider>
         </AuthProvider>
       </body>
