@@ -7,7 +7,7 @@ export default function ExternalNavigation() {
       <div className="absolute top-4 right-4 flex gap-4">
         <Link
           href="/contributors"
-          className="nav-button px-4 py-2 text-sm text-white flex items-center gap-2"
+          className="nav-button px-4 py-2 text-xs md:text-sm text-white flex items-center gap-2"
         >
           OUR CONTRIBUTORS
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -17,7 +17,7 @@ export default function ExternalNavigation() {
         <Link
           href="https://github.com/bahtibyte/memory-lane"
           target="_blank"
-          className="nav-button px-4 py-2 text-sm text-white flex items-center gap-2"
+          className="nav-button px-4 py-2 text-xs md:text-sm text-white flex items-center gap-2"
         >
           GITHUB REPO
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

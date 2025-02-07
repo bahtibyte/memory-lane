@@ -170,7 +170,7 @@ export default function EditGroupName({
         <div className="w-full md:w-64">
           <label className="block text-white font-medium mb-2">Group Thumbnail</label>
           <div
-            className={`relative w-full aspect-[16/9] rounded-lg overflow-hidden border-2 border-dashed ${isAdmin ? 'border-purple-300/50 hover:border-purple-300 cursor-pointer' : 'border-gray-600 cursor-not-allowed'
+            className={`relative w-full aspect-[16/9] rounded-lg overflow-hidden border-2 border-dashed ${isAdmin ? 'border-gray-300/50 hover:border-gray-300 cursor-pointer' : 'border-gray-600 cursor-not-allowed'
               } transition-colors`}
             onClick={handleThumbnailClick}
           >

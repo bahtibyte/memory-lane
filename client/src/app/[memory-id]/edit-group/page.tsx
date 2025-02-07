@@ -62,6 +62,10 @@ export default function EditGroupPage() {
     });
   };
 
+  console.log("isAuthenticated", isAuthenticated);
+  console.log("unauthorized", unauthorized);
+  console.log("user", user);
+
   if (loading || isLoading) return <Loading />;
   
   if (!isAuthenticated || unauthorized) {

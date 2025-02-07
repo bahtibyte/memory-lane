@@ -13,6 +13,7 @@ import { HomeIcon } from '../shared/icons/HomeIcon';
 import PasswordProtected from '../shared/memory/PasswordProtected';
 import UploadFirstPhoto from '../shared/memory/UploadFirstPhoto';
 import PageNotFound from '../shared/memory/PageNotFound';
+import { PhotoIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 function getYearsSpan(dates: string[]) {
   if (dates.length === 0) return "0";
@@ -143,56 +144,65 @@ export default function Timeline() {
 
       <div className="max-w-[1000px] mx-auto">
         {/* Header with Group Name and Action Buttons */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-[32px] md:text-[50px] font-bold text-white truncate flex-shrink">{memoryLane.group_data.group_name}</h1>
-          <div className="flex gap-2 md:gap-4 flex-shrink-0">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href={isAuthenticated ? "/my-groups" : "/"}
+              className="px-2 md:px-3 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors flex items-center gap-2"
+            >
+              <HomeIcon className="w-4 h-4 md:w-5 md:h-5" />
+              <span>Home</span>
+            </Link>
+          </div>
+          <div className="flex justify-end gap-2 md:gap-4 flex-shrink-0">
             {isAuthenticated ? (
               <>
                 <Link
                   href={`/${memory_id}/upload-photo`}
-                  className="px-2 md:px-4 py-2 bg-purple-300 text-black rounded hover:bg-purple-400 transition-colors text-sm md:text-base whitespace-nowrap"
+                  className="px-2 md:px-4 py-2 bg-purple-300 text-black rounded hover:bg-purple-400 transition-colors text-sm md:text-base whitespace-nowrap flex items-center gap-2"
                 >
-                  Upload Photo
+                  <PhotoIcon className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="sm:hidden">Upload</span>
+                  <span className="hidden sm:inline">Upload Photo</span>
                 </Link>
                 <Link
                   href={`/${memory_id}/edit-group`}
-                  className="px-2 md:px-4 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors text-sm md:text-base whitespace-nowrap"
+                  className="px-2 md:px-4 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors text-sm md:text-base whitespace-nowrap flex items-center gap-2"
                 >
-                  Edit Group
-                </Link>
-                <Link
-                  href={isAuthenticated ? "/my-groups" : "/"}
-                  className="px-2 md:px-3 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors"
-                >
-                  <HomeIcon className="w-4 h-4 md:w-5 md:h-5" />
+                  <PencilSquareIcon className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="sm:hidden">Edit</span>
+                  <span className="hidden sm:inline">Edit Group</span>
                 </Link>
               </>
             ) : (
               <>
-                <span className="px-2 md:px-4 py-2 bg-gray-500 text-gray-300 rounded cursor-not-allowed text-sm md:text-base relative group whitespace-nowrap">
-                  Upload Photo
+                <span className="px-2 md:px-4 py-2 bg-gray-500 text-gray-300 rounded cursor-not-allowed text-sm md:text-base relative group whitespace-nowrap flex items-center gap-2">
+                  <PhotoIcon className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="sm:hidden">Upload</span>
+                  <span className="hidden sm:inline">Upload Photo</span>
                   <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
                     Not signed in or admin of this group
                   </span>
                 </span>
-                <span className="px-2 md:px-4 py-2 border border-gray-500 text-gray-500 rounded cursor-not-allowed text-sm md:text-base relative group whitespace-nowrap">
-                  Edit Group
+                <span className="px-2 md:px-4 py-2 border border-gray-500 text-gray-500 rounded cursor-not-allowed text-sm md:text-base relative group whitespace-nowrap flex items-center gap-2">
+                  <PencilSquareIcon className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="sm:hidden">Edit</span>
+                  <span className="hidden sm:inline">Edit Group</span>
                   <span className="invisible group-hover:visible absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-sm rounded whitespace-nowrap">
                     Not signed in or admin of this group
                   </span>
                 </span>
-                <Link
-                  href="/"
-                  className="px-2 md:px-3 py-2 border border-[#CCC7F8] text-[#CCC7F8] rounded hover:bg-[#CCC7F8] hover:text-black transition-colors"
-                >
-                  <HomeIcon className="w-4 h-4 md:w-5 md:h-5" />
-                </Link>
               </>
             )}
           </div>
         </div>
 
-        <StatsContainer photoCount={photoCount} friendsCount={friendsCount} yearsSpan={yearsSpan} />
+        <StatsContainer 
+          photoCount={photoCount} 
+          friendsCount={friendsCount} 
+          yearsSpan={yearsSpan} 
+          groupName={memoryLane.group_data.group_name}
+        />
 
         {/* Timeline */}
         <div className="space-y-4 md:space-y-8 relative">

@@ -41,7 +41,7 @@ export default function GetStarted() {
       )}
       <button
         onClick={handleClick}
-        className="get-started-button px-6 py-4 text-lg text-black rounded-full"
+        className="get-started-button px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-black rounded-full whitespace-nowrap"
       >
         GET STARTED
       </button>
