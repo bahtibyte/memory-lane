@@ -43,6 +43,9 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
           throw new Error('HEIC files are not supported. Please convert to JPEG or PNG before uploading.');
         }
 
+        // Set the date from file's last modified date
+        setDate(new Date(file.lastModified).toISOString().split('T')[0]);
+
         // Get S3 presigned URL
         const s3UrlData = await generateS3Url(file.name, 'memories');
 

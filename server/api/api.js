@@ -803,9 +803,29 @@ export const updateFriendInfo = async (req, res) => {
   const group_id = group_lookup.group_id;
 
   try {
+
+    const original_friend = await rds.query(
+      `SELECT * FROM ml_friends WHERE friend_id = $1 AND group_id = $2`,
+      [friend_id, group_id]
+    );
+
+    if (original_friend.rowCount === 0) {
+      return res.status(400).json({ error: 'Friend does not exist.' });
+    }
+
+    const nullable_email = email === '' ? null : email;
+    const user_result = await rds.query(
+      `SELECT * FROM ml_users WHERE email = $1`,
+      [nullable_email]
+    );
+
+    const user = user_result.rowCount > 0 ? user_result.rows[0] : null;
+    const user_id = user ? user.user_id : null;
+    const is_confirmed = user ? true : false;
+
     const update_result = await rds.query(
-      `UPDATE ml_friends SET profile_name = $1, email = $2 WHERE friend_id = $3 AND group_id = $4 RETURNING *`,
-      [profile_name, email, friend_id, group_id]
+      `UPDATE ml_friends SET profile_name = $1, email = $2, user_id = $3, is_confirmed = $4 WHERE friend_id = $5 AND group_id = $6 RETURNING *`,
+      [profile_name, email, user_id, is_confirmed, friend_id, group_id]
     );
 
     if (update_result.rowCount === 0) {
