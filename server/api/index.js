@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -40,6 +43,7 @@ app.use(express.json()); // Adjust the limit as needed
 app.use(cookieParser()); // Enables reading cookies from requests
 
 app.get("/", (req, res) => res.send("Express on Vercel"));
+app.get("/ping", (req, res) => res.send("pong"));
 
 app.post('/api/save-refresh-token', verifyAuth, saveRefreshToken);
 app.get('/api/get-access-token', getAccessToken);
@@ -69,12 +73,10 @@ app.get('/api/get-memory-lane', getMemoryLane);
 initializeDB();
 
 // Add development server listening
-if (isDevelopment) {
-  const PORT = process.env.PORT || 3005;
-  app.listen(PORT, () => {
-    console.log(`Development server running on port ${PORT}`);
-  });
-}
+const PORT = process.env.NODE_PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // Export default to make Vercel work with serverless functions
 export default app;
