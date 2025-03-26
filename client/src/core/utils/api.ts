@@ -229,7 +229,7 @@ export const createPhotoEntry = async (formData: {
 
 export const deletePhoto = async (memory_id: string, photo_id: number) => {
   try {
-    const response = await fetch(`${API}/delete-photo`, {
+    const response = await fetch(`${API}/delete-photo-entry`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -253,7 +253,7 @@ export const editPhoto = async (formData: {
   photo_caption: string,
 }) => {
   try {
-    const response = await fetch(`${API}/edit-photo`, {
+    const response = await fetch(`${API}/edit-photo-entry`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

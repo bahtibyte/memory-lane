@@ -1,8 +1,6 @@
-import { CognitoIdentityProviderClient, GetUserCommand, InitiateAuthCommand } from "@aws-sdk/client-cognito-identity-provider";
-import { CognitoJwtVerifier } from "aws-jwt-verify";
-import { rds } from './rds.js';
+import { CognitoIdentityProviderClient, GetUserCommand, InitiateAuthCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { rds } from '../utils/rds.js';
 
-const COGNITO_USER_POOL_ID = process.env.NODE_AWS_COGNITO_USER_POOL_ID;
 const COGNITO_CLIENT_ID = process.env.NODE_AWS_COGNITO_CLIENT_ID;
 const COGNITO_REGION = process.env.NEXT_PUBLIC_AWS_COGNITO_REGION;
 
@@ -10,47 +8,18 @@ const cognitoClient = new CognitoIdentityProviderClient({
   region: COGNITO_REGION
 });
 
-const verifier = CognitoJwtVerifier.create({
-  userPoolId: COGNITO_USER_POOL_ID,
-  clientId: COGNITO_CLIENT_ID,
-  tokenUse: "access",
-});
-
-export const verifyAuth = async (req, res, next) => {
-  const payload = await extractUser(req);
-
-  if (!payload) {
-    return res.status(401).json({ message: 'No authorization header or invalid token' });
-  }
-
-  req.userAuth = payload;
-  next();
-}
-
-export const extractUser = async (req) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return null;
-  }
-  try {
-    const token = authHeader.replace('Bearer ', '');
-    const payload = await verifier.verify(token);
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
+/**
+ * Gets a new Cognito access token using the refresh token.
+ */
 export const getAccessToken = async (req, res) => {
   if (!req.cookies || !req.cookies.refresh_token) {
-    return res.status(401).json({ message: 'No refresh token found' });
+    return res.status(401).json({ message: 'Refresh token not found in cookies.' });
   }
   const refresh_token = req.cookies.refresh_token;
-  console.log("[auth]: Getting access token with refresh token.");
 
   try {
     const response = await cognitoClient.send(new InitiateAuthCommand({
-      AuthFlow: "REFRESH_TOKEN_AUTH",
+      AuthFlow: 'REFRESH_TOKEN_AUTH',
       ClientId: COGNITO_CLIENT_ID,
       AuthParameters: {
         REFRESH_TOKEN: refresh_token
@@ -73,6 +42,9 @@ export const getAccessToken = async (req, res) => {
   }
 }
 
+/**
+ * Saves the refresh token in the http-only cookie.
+ */
 export const saveRefreshToken = async (req, res) => {
   const { refresh_token } = req.body;
   res.setHeader(
@@ -82,6 +54,9 @@ export const saveRefreshToken = async (req, res) => {
   res.status(200).json({ message: 'Refresh token set successfully' });
 }
 
+/**
+ * Clears the refresh token from the http-only cookie.
+ */
 export const clearRefreshToken = async (req, res) => {
   res.setHeader(
     'Set-Cookie',
@@ -90,7 +65,31 @@ export const clearRefreshToken = async (req, res) => {
   res.status(200).json({ message: 'Refresh token cleared successfully' });
 }
 
+export const get_user_id = async (req) => {
+  const username = req.userAuth.username;
+  return await get_user_id_from_username(username);
+}
+
+export const get_user_id_from_username = async (username) => {
+  const user_result = await rds.query(
+    'SELECT * FROM ml_users WHERE username = $1',
+    [username]
+  );
+  if (user_result.rowCount === 0) {
+    return null;
+  }
+  return user_result.rows[0].user_id;
+}
+
+
+/**
+ * Gets the user from the database using the Cognito username. The cognito sub
+ * needs to be mapped to memory lane user.
+ */
 export const getUser = async (req, res) => {
+  if (!req.userAuth) {
+    return res.status(401).json({ message: 'User data not found in request.' });
+  }
   const username = req.userAuth.username;
 
   const user_result = await rds.query(
@@ -99,37 +98,36 @@ export const getUser = async (req, res) => {
   );
 
   if (user_result.rows.length === 0) {
-    console.log("User does not exist in our database. Creating user...", username);
-    return await createUser(req, res);
+    console.log('[user] User does not exist in our database.', username);
+    return await createInitialUser(req, res);
   }
 
   const user = user_result.rows[0];
   res.status(200).json({ user });
 }
 
-export const createUser = async (req, res) => {
-  console.log("Creating user...");
+/**
+ * Creates a new user in our database if they are not already in the database.
+ */
+export const createInitialUser = async (req, res) => {
+  console.log('[user] Creating user...');
   const authHeader = req.headers.authorization;
   const accessToken = authHeader.replace('Bearer ', '');
-  console.log("Access token: ", accessToken);
 
   const response = await cognitoClient.send(new GetUserCommand({
     AccessToken: accessToken
   }));
-  console.log("Cognito response: ", response);
+
   if (!response.UserAttributes) {
-    console.log("Invalid authorization token");
+    console.log('[user] Invalid authorization token');
     return res.status(401).json({ message: 'Invalid authorization token' });
   }
-
-  console.log("User attributes: ", response.UserAttributes);
+  console.log('[user] User attributes: ', response.UserAttributes);
 
   // Extract cognito user attributes to insert into our own users table.
   const email = response.UserAttributes.find(attr => attr.Name === 'email')?.Value;
   const profile_name = response.UserAttributes.find(attr => attr.Name === 'name')?.Value;
   const username = response.Username;
-
-  console.log("Email: ", email);
 
   try {
     await rds.query('BEGIN');
@@ -138,26 +136,20 @@ export const createUser = async (req, res) => {
       'INSERT INTO ml_users (username, email, profile_name) VALUES ($1, $2, $3) RETURNING *',
       [username, email, profile_name]
     );
-
-    console.log("Create user result: ", create_user.rows);
     const user = create_user.rows[0];
-    console.log("user is user: ", create_user.rows[0]);
 
-    console.log("updating ml_friends for matching stuff.");
+    console.log('[user] updating ml_friends for matching emails.');
     await rds.query(
       `UPDATE ml_friends 
        SET user_id = $1, is_confirmed = true
        WHERE email = $2;`,
       [user.user_id, user.email]
     )
-
-    console.log("Update friends result: ");
     await rds.query('COMMIT');
-
-    console.log("User created successfully");
+    console.log('[user] User created successfully:', username);
 
     res.status(200).json({ user });
   } catch {
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error: unable to create user.' });
   }
 }
