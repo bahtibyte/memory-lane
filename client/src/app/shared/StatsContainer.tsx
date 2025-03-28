@@ -1,13 +1,38 @@
+import { Photo } from '@/core/utils/types';
 import { PhotoIcon, UserGroupIcon, ClockIcon } from '@heroicons/react/24/outline';
 
+
+function getYearsSpan(dates: string[]) {
+  if (dates.length === 0) return "0";
+  try {
+    // Find oldest date
+    const timestamps = dates.map(date => new Date(date).getTime());
+    const oldestDate = new Date(Math.min(...timestamps));
+    const today = new Date();
+
+    // Check if date is valid
+    if (isNaN(oldestDate.getTime())) return "0";
+
+    // Calculate difference in years from oldest date to today
+    const diffYears = (today.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    const fixedYears = Math.max(0, diffYears).toFixed(1);
+    return fixedYears == "1.0" ? "1" : fixedYears;
+  } catch (error) {
+    console.error('Error calculating years span:', error);
+    return "0";
+  }
+}
+
 interface StatsContainerProps {
-  photoCount: number;
+  photos: Photo[];
   friendsCount: number;
-  yearsSpan: string;
   groupName: string;
 }
 
-export function StatsContainer({ photoCount, friendsCount, yearsSpan, groupName }: StatsContainerProps) {
+export function StatsContainer({ photos, friendsCount, groupName }: StatsContainerProps) {
+  const yearsSpan = getYearsSpan(photos.map(photo => photo.photo_date));
+  const photoCount = photos.length;
+
   return (
     <div className="mb-16 mt-5 md:mb-20 md:mt-8">
       <div className="bg-[#1A1A1A] rounded-xl p-6 border border-[#242424]">

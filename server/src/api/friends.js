@@ -1,5 +1,5 @@
 import { rds } from '../utils/rds.js';
-import { ml_group_lookup } from './groups.js';
+import { mlGroupLookup } from './groups.js';
 
 export const addFriendsToGroup = async (req, res) => {
   const { memory_id, friends } = req.body;
@@ -13,7 +13,7 @@ export const addFriendsToGroup = async (req, res) => {
     return res.status(400).json({ error: 'Friends must be an array with at least one entry.' });
   }
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -79,7 +79,7 @@ export const removeFriendFromGroup = async (req, res) => {
   const { memory_id, friend_id } = req.body;
   console.log(`Removing friend from group with id: ${memory_id}, friend_id: ${friend_id}`);
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -106,7 +106,7 @@ export const updateFriendInfo = async (req, res) => {
   const { memory_id, friend_id, profile_name, email } = req.body;
   console.log(`Updating friend info for group with id: ${memory_id}, friend_id: ${friend_id}, profile_name: ${profile_name}, email: ${email}`);
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -158,7 +158,7 @@ export const updateFriendAdminStatus = async (req, res) => {
   const { memory_id, friend_id, is_admin } = req.body;
   console.log(`Updating friend admin status for group with id: ${memory_id}, friend_id: ${friend_id}, is_admin: ${is_admin}`);
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }

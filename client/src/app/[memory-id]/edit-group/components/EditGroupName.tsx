@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { generateS3Url, updateGroupName, updateGroupThumbnail } from '@/core/utils/api';
+import { generateS3Url, updateGroupName, updateGroupThumbnail } from '@/core/wrappers/fetch';
 import { MemoryLane } from '@/core/utils/types';
 import Image from 'next/image';
 

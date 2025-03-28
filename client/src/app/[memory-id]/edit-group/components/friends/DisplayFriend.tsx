@@ -5,7 +5,7 @@ import RemoveAction from './RemoveAction';
 import FriendFlair from './FriendFlair';
 import { useState } from 'react';
 import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { updateFriendInfo } from '@/core/utils/api';
+import { updateFriendInfo } from '@/core/wrappers/fetch';
 
 interface DisplayFriendProps {
   memoryId: string;

@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { GroupData, User } from "@/core/utils/types";
 import { useRouter } from "next/navigation";
-import { deleteGroup, leaveGroup } from "@/core/utils/api";
+import { leaveGroup } from "@/core/wrappers/fetch";
+import { deleteGroup } from "@/core/wrappers/api";
 import GroupFlair from "./GroupFlair";
 
 interface GroupCardProps {

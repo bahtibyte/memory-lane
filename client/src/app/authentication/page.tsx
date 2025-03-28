@@ -3,10 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/core/context/auth-provider';
 import { InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
-import { setTokens } from '@/core/utils/tokens';
-import { getUser } from '@/core/utils/api';
+import { saveAuthenticationTokens } from '@/core/wrappers/tokens';
+import { getUser } from '@/core/wrappers/fetch';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/core/utils/routes';
+
 import LoadingScreen from '@/app/shared/Loading';
 import CreateAccount from '@/app/authentication/components/CreateAccount';
 import VerifyAccount from './components/VerifyAccount';
@@ -51,7 +52,7 @@ export default function AuthPage() {
       const tokens = response.AuthenticationResult;
 
       try {
-        await setTokens(tokens.AccessToken!, tokens.RefreshToken!, tokens.ExpiresIn!);
+        await saveAuthenticationTokens(tokens.AccessToken!, tokens.RefreshToken!, tokens.ExpiresIn!);
       } catch (error) {
         console.error("Unable to set tokens: ", error);
       }

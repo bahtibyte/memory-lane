@@ -1,4 +1,4 @@
-import { addFriendsToGroup } from '@/core/utils/api';
+import { addFriendsToGroup } from '@/core/wrappers/fetch';
 import { Friend } from '@/core/utils/types';
 import { useState } from 'react';
 

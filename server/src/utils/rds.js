@@ -2,31 +2,16 @@ import dotenv from 'dotenv'; dotenv.config();
 import pg from 'pg';
 
 /**
- * AWS RDS Postgres database client.
+ * Maintains a pool of connections to the database.
  */
-export const rds = new pg.Client({
+export const rds = new pg.Pool({
   user: process.env.NODE_DB_USER,
   password: process.env.NODE_DB_PASSWORD,
   database: process.env.NODE_DB_DATABASE,
   host: process.env.NODE_DB_HOST,
   port: parseInt(process.env.NODE_DB_PORT),
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 });
-
-/**
- * Must be called before any database operations are performed.
- */
-export async function initializeDB() {
-  try {
-    console.log("Initializing database connection to AWS RDS Postgres.");
-    await rds.connect();
-    console.log("Database connection successful.");
-    return rds;
-  }
-  catch (err) {
-    console.error('Error connecting to the database:', err);
-    return null;
-  }
-}

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { User } from "@/core/utils/types";
-import { generateS3Url, updateProfileName, updateProfileUrl } from "@/core/utils/api";
+import { generateS3Url, updateProfileName, updateProfileUrl } from "@/core/wrappers/fetch";
 import { TrashIcon } from "@heroicons/react/16/solid";
 import Cropper, { Area } from 'react-easy-crop';
 

@@ -5,7 +5,6 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import morgan from "morgan";
 
-import { initializeDB } from './utils/rds.js';
 import router from './routes.js';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -27,12 +26,6 @@ app.use(morgan("short"));
 app.use('/api', router);
 
 async function startServer() {
-  const db = await initializeDB();
-  if (!db) {
-    console.error("Failed to connect to database.");
-    process.exit(1);
-  }
-  
   app.listen(APP_PORT, () => {
     console.log(`Memory Lane server running on port ${APP_PORT}`);
   });

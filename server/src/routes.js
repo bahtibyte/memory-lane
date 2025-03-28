@@ -31,9 +31,9 @@ import {
 } from './api/friends.js';
 
 import {
-    saveRefreshToken,
+    storeRefreshToken,
     clearRefreshToken,
-    getAccessToken,
+    refreshAccessToken,
     getUser
 } from './api/user.js';
 
@@ -43,9 +43,16 @@ import {
 
 import {
     getMemoryLane,
-} from './api/lane.js';
+} from './api/app.js';
+
+import {
+    getMainApp
+} from './api/app.js';
 
 const router = express.Router();
+
+// Gets the main app data.
+router.get('/main-app', attachUser, getMainApp);
 
 // Does not require auth to access memories.
 router.get('/get-memory-lane', attachUser, getMemoryLane);
@@ -76,9 +83,9 @@ router.put('/update-friend-admin-status', requireAuth, updateFriendAdminStatus);
 router.put('/update-friend-info', requireAuth, updateFriendInfo);
 
 // Cognito Authentication API.
-router.post('/save-refresh-token', requireAuth, saveRefreshToken);
+router.post('/store-refresh-token', requireAuth, storeRefreshToken);
 router.post('/clear-refresh-token', requireAuth, clearRefreshToken);
-router.get('/get-access-token', getAccessToken);
+router.get('/refresh-access-token', refreshAccessToken);
 router.get('/get-user', requireAuth, getUser);
 
 // S3 API.

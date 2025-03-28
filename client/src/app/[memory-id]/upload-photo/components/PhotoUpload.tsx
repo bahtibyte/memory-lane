@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, DragEvent } from 'react';
 import Image from 'next/image';
-import { generateS3Url, createPhotoEntry } from '@/core/utils/api';
+import { generateS3Url, createPhotoEntry } from '@/core/wrappers/fetch';
 import { PhotoEntry } from '@/core/utils/types';
 
 interface PhotoUploadProps {

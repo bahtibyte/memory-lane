@@ -30,7 +30,7 @@ function alias_url(alias) {
   return `${CLIENT_ADDRESS}/${alias}`;
 }
 
-export const ml_group_lookup = async (memory_id) => {
+export const mlGroupLookup = async (memory_id) => {
   const result = await rds.query(
     `SELECT * FROM ml_group_lookup WHERE uuid = $1 OR alias = $1`,
     [memory_id]
@@ -110,7 +110,7 @@ export const deleteGroup = async (req, res) => {
   const { memory_id } = req.body;
   console.log(`Deleting group with id: ${memory_id}`);
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -173,7 +173,7 @@ export const leaveGroup = async (req, res) => {
   const { memory_id } = req.body;
   console.log(`Leaving group with id: ${memory_id}`);
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -257,7 +257,7 @@ export const updateGroupName = async (req, res) => {
     return res.status(400).json({ error: 'Memory lane and name are required' });
   }
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -287,7 +287,7 @@ export const updateGroupPrivacy = async (req, res) => {
   const { memory_id, is_public, passcode } = req.body;
   console.log(`Updating group privacy for id: ${memory_id}, is_public: ${is_public}, and passcode: ${passcode}`);
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -316,13 +316,13 @@ export const updateGroupAlias = async (req, res) => {
   const { memory_id, alias } = req.body;
   console.log(`Updating group alias for id: ${memory_id}, alias: ${alias}`);
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
   const group_lookup = lookup_result.rows[0];
 
-  const conflicting_alias = await ml_group_lookup(alias);
+  const conflicting_alias = await mlGroupLookup(alias);
   if (conflicting_alias.rowCount > 0) {
     return res.status(400).json({ error: `Alias ${alias} already exists.` });
   }
@@ -363,7 +363,7 @@ export const updateGroupThumbnail = async (req, res) => {
     return res.status(400).json({ error: 'Memory lane and thumbnail URL are required.' });
   }
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }

@@ -3,10 +3,10 @@ import Link from "next/link";
 import { useState } from "react";
 
 interface PasswordProtectedProps {
-  memory_id: string;
+  memoryId: string;
 }
 
-export default function PasswordProtected({ memory_id }: PasswordProtectedProps) {
+export default function PasswordProtected({ memoryId }: PasswordProtectedProps) {
   const { fetchData } = useMemoryLane();
 
   const [passcode, setPasscode] = useState('');
@@ -19,7 +19,7 @@ export default function PasswordProtected({ memory_id }: PasswordProtectedProps)
     try {
       console.log("attempting passwcode, ", passcode);
 
-      await fetchData(memory_id, passcode);
+      await fetchData(memoryId, passcode);
 
     } catch (error) {
       console.log("error verifying passcode", error);

@@ -1,87 +1,150 @@
-import { getAccessToken, getCookies, setAccessToken } from "./tokens";
-import { User } from "./types";
+import {
+  getCookies,
+  saveAccessToken,
+  ACCESS_TOKEN_KEY,
+  EXPIRES_AT_KEY
+} from './tokens';
+import { User } from '../utils/types';
 
-const API = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
+const API_ENDPOINT = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
 
 const ACCESS_TOKEN_EXPIRE_BUFFER = 50000; // 1 day
+const nullAuthorization = 'Bearer null';
 
-export const getAuthorization = async (): Promise<string> => {
+/**
+ * Sends a POST request to the API, with credentials.
+ * 
+ * @param path - The path to the API endpoint.
+ * @param options - Any additional options for the request.
+ * @returns The response from the API.
+ */
+export const post = async (path: string, options?: any) => {
+  return await call(path, 'POST', options);
+}
+
+/**
+ * Sends a GET request to the API, with credentials.
+ * 
+ * @param path - The path to the API endpoint.
+ * @param options - Any additional options for the request.
+ * @returns The response from the API.
+ */
+export const get = async (path: string, options?: any) => {
+  return await call(path, 'GET', options);
+}
+
+/**
+ * Sends a PUT request to the API, with credentials.
+ * 
+ * @param path - The path to the API endpoint.
+ * @param options - Any additional options for the request.
+ * @returns The response from the API.
+ */
+export const put = async (path: string, options?: any) => {
+  return await call(path, 'PUT', options);
+}
+
+/**
+ * Sends a DELETE request to the API, with credentials.
+ * 
+ * @param path - The path to the API endpoint.
+ * @param options - Any additional options for the request.
+ * @returns The response from the API.
+ */
+export const del = async (path: string, options?: any) => {
+  return await call(path, 'DELETE', options);
+}
+
+/**
+ * Wrapper for the fetch API. Sends a request to the given API endpoint.
+ * 
+ * @param path - The path to the API endpoint.
+ * @param method - The method to use for the request.
+ * @param options - Any additional options for the request.
+ * @returns The response from the API.
+ */
+async function call(path: string, method: string, options?: any) {
+  try {
+    const response = await fetch(`${API_ENDPOINT}/${path}`, {
+      method: method,
+      headers: await getHeaders(),
+      ...options
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return { data: null, ok: response.ok, code: response.status };
+    }
+
+    return { data, ok: response.ok, code: response.status };
+  } catch (error) {
+    console.log(`Error calling ${path} with method ${method}:`, error);
+    return { data: null, ok: false, code: 500 };
+  }
+}
+
+/**
+ * Returns headers with authorization.
+ * 
+ * @returns The headers.
+ */
+async function getHeaders(): Promise<Record<string, string>> {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': await getAuthorization()
+  };
+}
+
+/**
+ * Returns the authorization header with the access token, refreshing it if expired.
+ * 
+ * @returns The authorization header.
+ */
+async function getAuthorization(): Promise<string> {
   const cookies = getCookies();
-  const expires_at = Number(cookies["expires_at"]);
+  if (!cookies[ACCESS_TOKEN_KEY] || !cookies[EXPIRES_AT_KEY]) {
+    return nullAuthorization;
+  }
+
+  // Check if access token is expired, so it can be refreshed.
+  const expiresAt = Number(cookies[EXPIRES_AT_KEY]);
+  const isExpired = Date.now() >= expiresAt - ACCESS_TOKEN_EXPIRE_BUFFER;
 
   // Access token expired. Refresh tokens using backend.
-  if (Date.now() >= expires_at - ACCESS_TOKEN_EXPIRE_BUFFER) {
-    const response = await refreshTokens();
-    if (!response.ok) {
-      return `Bearer null`
+  if (isExpired) {
+    const { ok, data } = await refreshAccessToken();
+    if (!ok) {
+      return nullAuthorization;
     }
-    // Extract new access token and save to cookies.
-    const data = await response.json();
-    if (data.access_token && data.expires_in) {
-      setAccessToken(data.access_token, data.expires_in);
-      return `Bearer ${data.access_token}`;
+
+    if (!data.access_token || !data.expires_in) {
+      return nullAuthorization;
     }
-    return `Bearer null`;
+
+    // Save new access token to cookies and return the new authorization header.
+    saveAccessToken(data.access_token, data.expires_in);
+    return `Bearer ${data.access_token}`;
   }
 
-  return `Bearer ${cookies["access_token"]}`;
+  // Use access token from cookies since it is still valid.
+  return `Bearer ${cookies[ACCESS_TOKEN_KEY]}`;
 }
 
-export const saveRefreshToken = async (refresh_token: string) => {
-  try {
-    const response = await fetch(`${API}/save-refresh-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': await getAuthorization()
-      },
-      body: JSON.stringify({ refresh_token }),
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error('Failed to set refresh token');
-    }
-    return response;
-  } catch (error) {
-    console.log('Error setting refresh token:', error);
-    return null;
-  }
-}
-
-export const refreshTokens = async () => {
-  const response = await fetch(`${API}/get-access-token`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
+/**
+ * Refreshes the access token using the refresh token.
+ * 
+ * @returns New access token and expires in.
+ */
+async function refreshAccessToken() {
+  return await post(`refresh-access-token`, {
+    credentials: 'include'
   });
-  return response;
 }
 
-export const clearRefreshToken = async () => {
-  try {
-    const response = await fetch(`${API}/clear-refresh-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAccessToken()}`
-      },
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error('Failed to set refresh token');
-    }
-    return response;
-  } catch (error) {
-    console.log('Error setting refresh token:', error);
-    return null;
-  }
-}
 
 export const getUser = async (): Promise<User | null> => {
   try {
-    const response = await fetch(`${API}/get-user`, {
+    const response = await fetch(`${API_ENDPOINT}/get-user`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -101,7 +164,7 @@ export const getUser = async (): Promise<User | null> => {
 
 export const getMemoryLane = async (memory_id: string | null, passcode: string | null) => {
   return await fetch(
-    `${API}/get-memory-lane?memory_id=${memory_id}&passcode=${passcode}`,
+    `${API_ENDPOINT}/get-memory-lane?memory_id=${memory_id}&passcode=${passcode}`,
     {
       method: 'GET',
       headers: {
@@ -112,51 +175,9 @@ export const getMemoryLane = async (memory_id: string | null, passcode: string |
   );
 }
 
-export const createGroup = async (formData: { group_name: string }) => {
-  try {
-    const response = await fetch(`${API}/create-group`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': await getAuthorization()
-      },
-      body: JSON.stringify(formData)
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to create group');
-    }
-    return data;
-  } catch (error) {
-    console.log('Error creating group:', error);
-    return null;
-  }
-}
-
-export const deleteGroup = async (memory_id: string) => {
-  try {
-    const response = await fetch(`${API}/delete-group`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': await getAuthorization()
-      },
-      body: JSON.stringify({ memory_id })
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to delete group');
-    }
-    return data;
-  } catch (error) {
-    console.log('Error deleting group:', error);
-    return null;
-  }
-}
-
 export const getOwnedGroups = async () => {
   try {
-    const response = await fetch(`${API}/get-owned-groups`, {
+    const response = await fetch(`${API_ENDPOINT}/get-owned-groups`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -176,7 +197,7 @@ export const getOwnedGroups = async () => {
 
 export const generateS3Url = async (file_name: string, category: string) => {
   try {
-    const response = await fetch(`${API}/generate-s3-url?file_name=${file_name}&category=${category}`, {
+    const response = await fetch(`${API_ENDPOINT}/generate-s3-url?file_name=${file_name}&category=${category}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -202,7 +223,7 @@ export const createPhotoEntry = async (formData: {
   photo_url: string,
 }) => {
   try {
-    const response = await fetch(`${API}/create-photo-entry`, {
+    const response = await fetch(`${API_ENDPOINT}/create-photo-entry`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -229,7 +250,7 @@ export const createPhotoEntry = async (formData: {
 
 export const deletePhoto = async (memory_id: string, photo_id: number) => {
   try {
-    const response = await fetch(`${API}/delete-photo-entry`, {
+    const response = await fetch(`${API_ENDPOINT}/delete-photo-entry`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -253,7 +274,7 @@ export const editPhoto = async (formData: {
   photo_caption: string,
 }) => {
   try {
-    const response = await fetch(`${API}/edit-photo-entry`, {
+    const response = await fetch(`${API_ENDPOINT}/edit-photo-entry`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -277,7 +298,7 @@ export const updateGroupName = async (formData: {
   group_name: string,
 }) => {
   try {
-    const response = await fetch(`${API}/update-group-name`, {
+    const response = await fetch(`${API_ENDPOINT}/update-group-name`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -302,7 +323,7 @@ export const updateGroupPrivacy = async (formData: {
   passcode: string,
 }) => {
   try {
-    const response = await fetch(`${API}/update-group-privacy`, {
+    const response = await fetch(`${API_ENDPOINT}/update-group-privacy`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -326,7 +347,7 @@ export const updateGroupAlias = async (formData: {
   alias: string | null,
 }) => {
   try {
-    const response = await fetch(`${API}/update-group-alias`, {
+    const response = await fetch(`${API_ENDPOINT}/update-group-alias`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -345,7 +366,7 @@ export async function updateGroupThumbnail(formData: {
   memory_id: string,
   thumbnail_url: string,
 }) {
-  const response = await fetch(`${API}/update-group-thumbnail`, {
+  const response = await fetch(`${API_ENDPOINT}/update-group-thumbnail`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -365,7 +386,7 @@ export async function updateGroupThumbnail(formData: {
 export async function updateProfileName(formData: {
   profile_name: string,
 }) {
-  const response = await fetch(`${API}/update-profile-name`, {
+  const response = await fetch(`${API_ENDPOINT}/update-profile-name`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -379,7 +400,7 @@ export async function updateProfileName(formData: {
 export async function updateProfileUrl(formData: {
   profile_url: string,
 }) {
-  const response = await fetch(`${API}/update-profile-url`, {
+  const response = await fetch(`${API_ENDPOINT}/update-profile-url`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -397,7 +418,7 @@ export const addFriendsToGroup = async (formData: {
     name: string,
   }[],
 }) => {
-  const response = await fetch(`${API}/add-friends-to-group`, {
+  const response = await fetch(`${API_ENDPOINT}/add-friends-to-group`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -412,7 +433,7 @@ export const removeFriendFromGroup = async (formData: {
   memory_id: string,
   friend_id: number,
 }) => {
-  const response = await fetch(`${API}/remove-friend-from-group`, {
+  const response = await fetch(`${API_ENDPOINT}/remove-friend-from-group`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -428,7 +449,7 @@ export const updateFriendAdminStatus = async (formData: {
   friend_id: number,
   is_admin: boolean,
 }) => {
-  const response = await fetch(`${API}/update-friend-admin-status`, {
+  const response = await fetch(`${API_ENDPOINT}/update-friend-admin-status`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -445,7 +466,7 @@ export const updateFriendInfo = async (formData: {
   profile_name: string,
   email: string,
 }) => {
-  const response = await fetch(`${API}/update-friend-info`, {
+  const response = await fetch(`${API_ENDPOINT}/update-friend-info`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -454,10 +475,10 @@ export const updateFriendInfo = async (formData: {
     body: JSON.stringify(formData),
   });
   return response.json();
-} 
+}
 
 export const leaveGroup = async (memory_id: string) => {
-  const response = await fetch(`${API}/leave-group`, {
+  const response = await fetch(`${API_ENDPOINT}/leave-group`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',

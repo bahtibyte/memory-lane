@@ -6,9 +6,9 @@ import { Routes } from "@/core/utils/routes";
 import { useRouter } from "next/navigation";
 import SignOutButton from "@/app/shared/SignOutButton";
 import LoadingScreen from "@/app/shared/Loading";
-import { getOwnedGroups } from '@/core/utils/api';
+import { getOwnedGroups } from '@/core/wrappers/fetch';
 import { GroupData } from "@/core/utils/types";
-import { clearTokens } from "@/core/utils/tokens";
+import { clearAuthenticationTokens } from "@/core/wrappers/tokens";
 import UserProfileDisplay from "./components/UserProfileDisplay";
 import EditUserProfile from "./components/EditUserModal";
 import CreateGroupModal from "./components/CreateGroupModal";
@@ -75,7 +75,7 @@ export default function MyGroups() {
   };
 
   const handleSignOut = async () => {
-    await clearTokens();
+    await clearAuthenticationTokens();
     setIsSignedOut(true);
     setUser(null);
     setGroups([]);

@@ -1,4 +1,4 @@
-import { removeFriendFromGroup } from '@/core/utils/api';
+import { removeFriendFromGroup } from '@/core/wrappers/fetch';
 import { Friend } from '@/core/utils/types';
 import { useState } from 'react';
 

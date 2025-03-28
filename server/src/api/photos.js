@@ -1,5 +1,5 @@
 import { rds } from '../utils/rds.js';
-import { ml_group_lookup } from './groups.js';
+import { mlGroupLookup } from './groups.js';
 
 export const createPhotoEntry = async (req, res) => {
   console.log("received request to upload photo");
@@ -9,7 +9,7 @@ export const createPhotoEntry = async (req, res) => {
     return res.status(400).json({ error: 'missing required fields.' });
   }
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -44,7 +44,7 @@ export const createPhotoEntry = async (req, res) => {
 export const editPhotoEntry = async (req, res) => {
   const { memory_id, photo_id, photo_title, photo_date, photo_caption } = req.body;
 
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }
@@ -75,7 +75,7 @@ export const deletePhotoEntry = async (req, res) => {
     return res.status(400).json({ error: 'Memory lane and photo ID are required.' });
   }
   console.log(`Deleting photo with id: ${photo_id}`);
-  const lookup_result = await ml_group_lookup(memory_id);
+  const lookup_result = await mlGroupLookup(memory_id);
   if (lookup_result.rowCount === 0) {
     return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
   }

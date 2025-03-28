@@ -12,12 +12,11 @@ import {
   VERIFY_HEADER,
   FORGOT_PASSWORD_HEADER,
   CONFIRM_FORGOT_PASSWORD_HEADER
-} from "@/core/utils/auth";
+} from "@/core/wrappers/cognito";
 import { User } from "@/core/utils/types";
-import { getUser } from "@/core/utils/api";
+import { getUser } from "@/core/wrappers/fetch";
 
 type AuthContextType = {
-  user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
@@ -35,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  /*
   useEffect(() => {
     async function initAuth() {
       const user_result = await getUser();
@@ -45,7 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     initAuth();
   }, []);
-
+  */
+ 
   const handleSetUser = (user: User | null) => {
     setUser(user);
     setIsAuthenticated(user ? true : false);
@@ -54,7 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
         isLoading,
         isAuthenticated,
         setUser: handleSetUser,

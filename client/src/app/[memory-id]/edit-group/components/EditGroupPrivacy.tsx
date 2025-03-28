@@ -1,6 +1,6 @@
 import { MemoryLane } from "@/core/utils/types";
 import { useEffect, useState } from "react";
-import { updateGroupPrivacy } from "@/core/utils/api";
+import { updateGroupPrivacy } from "@/core/wrappers/fetch";
 import { useRouter } from "next/navigation";
 
 interface EditGroupPrivacyProps {

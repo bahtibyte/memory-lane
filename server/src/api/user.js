@@ -8,10 +8,12 @@ const cognitoClient = new CognitoIdentityProviderClient({
   region: COGNITO_REGION
 });
 
+const REFRESH_TOKEN_KEY = 'refresh_token';
+
 /**
  * Gets a new Cognito access token using the refresh token.
  */
-export const getAccessToken = async (req, res) => {
+export const refreshAccessToken = async (req, res) => {
   if (!req.cookies || !req.cookies.refresh_token) {
     return res.status(401).json({ message: 'Refresh token not found in cookies.' });
   }
@@ -45,11 +47,11 @@ export const getAccessToken = async (req, res) => {
 /**
  * Saves the refresh token in the http-only cookie.
  */
-export const saveRefreshToken = async (req, res) => {
+export const storeRefreshToken = async (req, res) => {
   const { refresh_token } = req.body;
   res.setHeader(
     'Set-Cookie',
-    `refresh_token=${refresh_token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=31536000`
+    `${REFRESH_TOKEN_KEY}=${refresh_token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=31536000`
   );
   res.status(200).json({ message: 'Refresh token set successfully' });
 }
@@ -60,7 +62,7 @@ export const saveRefreshToken = async (req, res) => {
 export const clearRefreshToken = async (req, res) => {
   res.setHeader(
     'Set-Cookie',
-    'refresh_token=; HttpOnly; Secure; SameSite=Strict; Path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    `${REFRESH_TOKEN_KEY}=; HttpOnly; Secure; SameSite=Strict; Path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
   );
   res.status(200).json({ message: 'Refresh token cleared successfully' });
 }
@@ -80,7 +82,6 @@ export const get_user_id_from_username = async (username) => {
   }
   return user_result.rows[0].user_id;
 }
-
 
 /**
  * Gets the user from the database using the Cognito username. The cognito sub

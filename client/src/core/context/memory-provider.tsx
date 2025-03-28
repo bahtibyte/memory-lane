@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { getMemoryLane } from '../../core/utils/api';
+import { getMemoryLane } from '../wrappers/fetch';
 import { MemoryLane } from '../../core/utils/types';
 
 interface MemoryLaneContextType {

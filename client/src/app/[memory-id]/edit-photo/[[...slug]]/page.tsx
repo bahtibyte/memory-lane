@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useMemoryLane } from '@/core/context/memory-provider';
 import Link from 'next/link';
 import { PhotoEntry } from '@/core/utils/types';
-import { editPhoto } from '@/core/utils/api';
+import { editPhoto } from '@/core/wrappers/fetch';
 import AccessDenied from '@/app/shared/AccessDenied';
 import Loading from '@/app/shared/Loading';
 

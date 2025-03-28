@@ -6,53 +6,32 @@ import Link from 'next/link';
 import { StatsContainer } from '../shared/StatsContainer';
 import { ImageOverlay } from '../shared/photos/ImageOverlay';
 import { PhotoEntry } from '../shared/photos/PhotoEntry';
-import { useMemoryLane } from '@/core/context/memory-provider';
-import { useAuth } from '@/core/context/auth-provider';
 import LoadingScreen from '@/app/shared/Loading';
 import { HomeIcon } from '../shared/icons/HomeIcon';
 import PasswordProtected from '../shared/memory/PasswordProtected';
 import UploadFirstPhoto from '../shared/memory/UploadFirstPhoto';
 import PageNotFound from '../shared/memory/PageNotFound';
+import FailedToLoad from '../shared/memory/FailedToLoad';
 import { PhotoIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
-
-function getYearsSpan(dates: string[]) {
-  if (dates.length === 0) return "0";
-  try {
-    // Find oldest date
-    const timestamps = dates.map(date => new Date(date).getTime());
-    const oldestDate = new Date(Math.min(...timestamps));
-    const today = new Date();
-
-    // Check if date is valid
-    if (isNaN(oldestDate.getTime())) return "0";
-
-    // Calculate difference in years from oldest date to today
-    const diffYears = (today.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    const fixedYears = Math.max(0, diffYears).toFixed(1);
-    return fixedYears == "1.0" ? "1" : fixedYears;
-  } catch (error) {
-    console.error('Error calculating years span:', error);
-    return "0";
-  }
-}
+import { useAppData } from '@/core/context/app-provider';
+import { sortPhotos } from '@/core/utils/helpers';
 
 export default function Timeline() {
-  const memory_id = useParams()['memory-id'] as string;
-  const {
-    memoryLane,
-    loading,
-    failedToLoad,
-    fetchData,
-    unauthorized
-  } = useMemoryLane();
-  
-  const { isAuthenticated } = useAuth();
+  const memoryId = useParams()['memory-id'] as string;
+  const { 
+    isLoading, 
+    isAuthorized, 
+    protectedLane, 
+    failedToLoad, 
+    appData, 
+    fetchAppData
+  } = useAppData();
 
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageDimensions, setImageDimensions] = useState<{ [key: string]: { width: number, height: number } }>({});
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
 
-  useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
+  useEffect(() => { fetchAppData(memoryId, null); }, [memoryId, fetchAppData]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -107,33 +86,34 @@ export default function Timeline() {
     };
   }, [selectedImage]);
 
-  if (unauthorized) {
-    return <PasswordProtected memory_id={memory_id} />
-  }
+  console.log('isLoading', isLoading, 'failedToLoad', failedToLoad, 'protectedLane', protectedLane, 'isAuthorized', isAuthorized, 'appData', appData);
 
-  if (failedToLoad) {
-    return <PageNotFound />
-  }
-
-  if (loading || !memoryLane) {
+  if (isLoading) {
     return <LoadingScreen />
   }
 
-  if (memoryLane.photo_entries.length === 0) {
+  if (failedToLoad) {
+    return <FailedToLoad />
+  }
+
+  if (protectedLane) {
+    return <PasswordProtected memoryId={memoryId} />
+  }
+
+  if (!appData) {
+    return <PageNotFound />
+  }
+
+  if (appData.photos.length === 0) {
     return <UploadFirstPhoto
-      memoryLane={memoryLane}
-      isAuthenticated={isAuthenticated}
-      memory_id={memory_id}
+      group={appData.group}
+      isAuthorized={isAuthorized}
+      memoryId={memoryId}
     />
   }
 
   // Update the data source for sorted entries and stats
-  const sortedEntries = [...memoryLane.photo_entries].sort((a, b) =>
-    new Date(b.photo_date).getTime() - new Date(a.photo_date).getTime()
-  );
-  const yearsSpan = getYearsSpan(sortedEntries.map(entry => entry.photo_date));
-  const photoCount = sortedEntries.length;
-  const friendsCount = memoryLane.friends.length;
+  const sortedPhotos = sortPhotos(appData.photos);
 
   // Function to get year from date string
   const getYear = (dateString: string) => new Date(dateString).getFullYear();
@@ -147,7 +127,7 @@ export default function Timeline() {
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-4">
             <Link
-              href={isAuthenticated ? "/my-groups" : "/"}
+              href={isAuthorized ? "/my-groups" : "/"}
               className="px-2 md:px-3 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors flex items-center gap-2"
             >
               <HomeIcon className="w-4 h-4 md:w-5 md:h-5" />
@@ -155,10 +135,10 @@ export default function Timeline() {
             </Link>
           </div>
           <div className="flex justify-end gap-2 md:gap-4 flex-shrink-0">
-            {isAuthenticated ? (
+            {isAuthorized ? (
               <>
                 <Link
-                  href={`/${memory_id}/upload-photo`}
+                  href={`/${memoryId}/upload-photo`}
                   className="px-2 md:px-4 py-2 bg-purple-300 text-black rounded hover:bg-purple-400 transition-colors text-sm md:text-base whitespace-nowrap flex items-center gap-2"
                 >
                   <PhotoIcon className="w-4 h-4 md:w-5 md:h-5" />
@@ -166,7 +146,7 @@ export default function Timeline() {
                   <span className="hidden sm:inline">Upload Photo</span>
                 </Link>
                 <Link
-                  href={`/${memory_id}/edit-group`}
+                  href={`/${memoryId}/edit-group`}
                   className="px-2 md:px-4 py-2 border border-purple-300 text-purple-300 rounded hover:bg-purple-300 hover:text-black transition-colors text-sm md:text-base whitespace-nowrap flex items-center gap-2"
                 >
                   <PencilSquareIcon className="w-4 h-4 md:w-5 md:h-5" />
@@ -198,10 +178,9 @@ export default function Timeline() {
         </div>
 
         <StatsContainer 
-          photoCount={photoCount} 
-          friendsCount={friendsCount} 
-          yearsSpan={yearsSpan} 
-          groupName={memoryLane.group_data.group_name}
+          photos={sortedPhotos}
+          friendsCount={appData.friends.length}
+          groupName={appData.group.group_name}
         />
 
         {/* Timeline */}
@@ -223,17 +202,17 @@ export default function Timeline() {
             }}
           ></div>
 
-          {sortedEntries.map((entry, index) => {
-            const currentYear = getYear(entry.photo_date);
-            const prevYear = index > 0 ? getYear(sortedEntries[index - 1].photo_date) : currentYear;
-            const nextYear = index < sortedEntries.length - 1 ? getYear(sortedEntries[index + 1].photo_date) : currentYear;
+          {sortedPhotos.map((photo, index) => {
+            const currentYear = getYear(photo.photo_date);
+            const prevYear = index > 0 ? getYear(sortedPhotos[index - 1].photo_date) : currentYear;
+            const nextYear = index < sortedPhotos.length - 1 ? getYear(sortedPhotos[index + 1].photo_date) : currentYear;
 
             return (
               <PhotoEntry
                 key={index}
-                entry={entry}
+                photo={photo}
                 index={index}
-                totalEntries={sortedEntries.length}
+                totalPhotos={sortedPhotos.length}
                 scrollProgress={scrollProgress}
                 currentYear={currentYear}
                 prevYear={prevYear}

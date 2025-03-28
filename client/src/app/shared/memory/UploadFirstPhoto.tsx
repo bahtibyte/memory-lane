@@ -1,13 +1,13 @@
-import { MemoryLane } from "@/core/utils/types";
+import { Group } from "@/core/utils/types";
 import Link from "next/link";
 
 interface UploadFirstPhotoProps {
-  memoryLane: MemoryLane;
-  isAuthenticated: boolean;
-  memory_id: string;
+  group: Group;
+  isAuthorized: boolean;
+  memoryId: string;
 }
 
-export default function UploadFirstPhoto({ memoryLane, isAuthenticated, memory_id }: UploadFirstPhotoProps) {
+export default function UploadFirstPhoto({ group, isAuthorized, memoryId }: UploadFirstPhotoProps) {
   return (
     <div className="min-h-screen bg-[#0E0E0E] p-4 md:p-8 flex flex-col items-center justify-center">
       <div className="max-w-md w-full">
@@ -15,7 +15,7 @@ export default function UploadFirstPhoto({ memoryLane, isAuthenticated, memory_i
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              {memoryLane.group_data.group_name}
+              {group.group_name}
             </h1>
             <p className="text-gray-400 text-sm md:text-base">
               Start your timeline by uploading the first photo
@@ -24,9 +24,9 @@ export default function UploadFirstPhoto({ memoryLane, isAuthenticated, memory_i
 
           {/* Upload Button Section */}
           <div className="space-y-6">
-            {isAuthenticated ? (
+            {isAuthorized ? (
               <Link
-                href={`/${memory_id}/upload-photo`}
+                href={`/${memoryId}/upload-photo`}
                 className="w-full inline-block bg-purple-300 text-black rounded-lg px-4 py-3 font-medium hover:bg-purple-400 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/20 transition-all duration-200"
               >
                 Upload First Photo
@@ -47,10 +47,10 @@ export default function UploadFirstPhoto({ memoryLane, isAuthenticated, memory_i
 
             {/* Back Button */}
             <Link
-              href={isAuthenticated ? "/my-groups" : "/"}
+              href={isAuthorized ? "/my-groups" : "/"}
               className="w-full inline-block border border-[#242424] text-gray-300 rounded-lg px-4 py-3 hover:bg-[#242424] transition-all duration-200"
             >
-              Back to {isAuthenticated ? "My Groups" : "Home"}
+              Back to {isAuthorized ? "My Groups" : "Home"}
             </Link>
           </div>
         </div>

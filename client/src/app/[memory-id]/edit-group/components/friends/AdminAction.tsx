@@ -1,4 +1,4 @@
-import { updateFriendAdminStatus } from '@/core/utils/api';
+import { updateFriendAdminStatus } from '@/core/wrappers/fetch';
 import { Friend } from '@/core/utils/types';
 
 interface AdminActionProps {

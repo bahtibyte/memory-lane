@@ -1,4 +1,4 @@
-import { updateGroupAlias } from "@/core/utils/api";
+import { updateGroupAlias } from "@/core/wrappers/fetch";
 import { MemoryLane } from "@/core/utils/types";
 import { useRouter } from "next/dist/client/components/navigation";
 import Link from "next/link";

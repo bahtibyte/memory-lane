@@ -1,4 +1,4 @@
-import { deletePhoto } from "@/core/utils/api";
+import { deletePhoto } from "@/core/wrappers/fetch";
 import { PhotoEntry } from "@/core/utils/types";
 import Link from "next/link";
 import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";

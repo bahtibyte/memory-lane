@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createGroup } from '@/core/utils/api';
+import { createGroup } from '@/core/wrappers/api';
 import { GroupData } from "@/core/utils/types";
 
 interface CreateGroupModalProps {
@@ -19,7 +19,7 @@ export default function CreateGroupModal({ groups, setGroups, setShowCreateGroup
     setIsCreating(true);
 
     try {
-      const response = await createGroup({ group_name: groupName });
+      const response = await createGroup(groupName);
       if (response) {
         setShowCreateGroup(false);
         setGroups([...groups, response.result]);

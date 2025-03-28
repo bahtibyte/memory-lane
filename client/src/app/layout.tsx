@@ -5,6 +5,7 @@ import { MemoryLaneProvider } from '@/core/context/memory-provider';
 import { AuthProvider } from "@/core/context/auth-provider";
 import { Toaster } from 'react-hot-toast';
 import { toastConfig } from '@/core/config/toast';
+import { AppDataProvider } from "@/core/context/app-provider";
 
 const roboto = Roboto({
   weight: '500',
@@ -27,6 +28,13 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * The root layout for the memory lane web app. All providers are wrapped around
+ * the children components.
+ * 
+ * @param {*} children 
+ * @returns 
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,12 +43,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={roboto.className}>
-        <AuthProvider>
-          <MemoryLaneProvider>
-            {children}
-            <Toaster {...toastConfig} />
-          </MemoryLaneProvider>
-        </AuthProvider>
+        <AppDataProvider>
+          <AuthProvider>
+            <MemoryLaneProvider>
+              {children}
+              <Toaster {...toastConfig} />
+            </MemoryLaneProvider>
+          </AuthProvider>
+        </AppDataProvider>
       </body>
     </html>
   );

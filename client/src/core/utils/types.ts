@@ -1,3 +1,24 @@
+export interface AppData {
+  user: User;
+  group: Group;
+  photos: Photo[];
+  friends: Friend[];
+}
+
+export interface Group {
+  uuid: string;
+  owner_id: number;
+  group_name: string;
+  group_url: string;
+  is_public: boolean;
+  passcode: string | null;
+  thumbnail_url: string | null;
+  alias: string | null;
+  alias_url: string | null;
+  is_owner: boolean;
+  is_admin: boolean;
+  is_friend: boolean;
+}
 
 export interface User {
   user_id: number;
@@ -29,6 +50,14 @@ export interface GroupData {
 }
 
 export interface PhotoEntry {
+  photo_id: number;
+  photo_date: string;
+  photo_url: string;
+  photo_title: string;
+  photo_caption: string;
+}
+
+export interface Photo {
   photo_id: number;
   photo_date: string;
   photo_url: string;
