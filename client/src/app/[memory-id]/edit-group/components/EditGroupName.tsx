@@ -2,27 +2,20 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { generateS3Url, updateGroupName, updateGroupThumbnail } from '@/core/wrappers/fetch';
-import { MemoryLane } from '@/core/utils/types';
+import { generateS3Url, uploadFileToS3, updateGroupName, updateGroupThumbnail } from '@/core/wrappers/api';
+import { AppData } from '@/core/utils/types';
 import Image from 'next/image';
 
 interface EditGroupNameProps {
   memoryId: string;
-  initialGroupName: string;
-  memoryLane: MemoryLane;
-  setMemoryLane: (data: MemoryLane) => void;
+  appData: AppData;
+  setAppData: (data: AppData) => void;
   isAdmin: boolean;
 }
 
-export default function EditGroupName({
-  memoryId,
-  initialGroupName,
-  memoryLane,
-  setMemoryLane,
-  isAdmin
-}: EditGroupNameProps) {
+export default function EditGroupName({ memoryId, appData, setAppData, isAdmin }: EditGroupNameProps) {
   const router = useRouter();
-  const [groupName, setGroupName] = useState(initialGroupName);
+  const [groupName, setGroupName] = useState(appData.group.groupName);
   const [showNameSuccess, setShowNameSuccess] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,30 +40,22 @@ export default function EditGroupName({
 
   const handleNameSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const result = await updateGroupName({
-        memory_id: memoryId,
-        group_name: groupName
-      });
-      
-      if (result.group_data) {
-        setMemoryLane({
-          group_data: result.group_data,
-          photo_entries: memoryLane.photo_entries,
-          friends: memoryLane.friends
-        });
-        setShowNameSuccess(true);
-        setIsEditingName(false);
-      }
-      
-      setTimeout(() => {
-        setShowNameSuccess(false);
-      }, 3000);
+    const { data } = await updateGroupName(memoryId, groupName);
 
-      router.refresh();
-    } catch (error) {
-      console.error('Error updating group name:', error);
+    if (data) {
+      setAppData({
+        ...appData,
+        group: data.group
+      });
+      setShowNameSuccess(true);
+      setIsEditingName(false);
     }
+
+    setTimeout(() => {
+      setShowNameSuccess(false);
+    }, 3000);
+
+    router.refresh();
   };
 
   const handleThumbnailClick = () => {
@@ -86,7 +71,6 @@ export default function EditGroupName({
     try {
       setUploading(true);
       setThumbnailError(null);
-      console.log('trying to update file', file);
 
       if (!file.type.startsWith('image/')) {
         setThumbnailError('Please select an image file.');
@@ -107,34 +91,19 @@ export default function EditGroupName({
       const preview = URL.createObjectURL(file);
       setPreviewUrl(preview);
 
-      const s3UrlData = await generateS3Url(file.name, 'thumbnail');
-
-      console.log("s3UrlData", s3UrlData);
+      const { data: s3UrlData } = await generateS3Url(file.name, 'thumbnail');
       if (s3UrlData.presignedUrl) {
-        const uploadResponse = await fetch(s3UrlData.presignedUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        });
+        const uploadResponse = await uploadFileToS3(s3UrlData.presignedUrl, file);
 
-        console.log("uploadResponse", uploadResponse);
         if (!uploadResponse.ok) {
           throw new Error('Failed to upload file to S3');
         }
 
-        const result = await updateGroupThumbnail({
-          memory_id: memoryId,
-          thumbnail_url: s3UrlData.photo_url
-        });
-
-        console.log("result", result);
-        if (result.group_data) {
-          setMemoryLane({
-            group_data: result.group_data,
-            photo_entries: memoryLane.photo_entries,
-            friends: memoryLane.friends
+        const { data: result } = await updateGroupThumbnail(memoryId, s3UrlData.photoUrl);
+        if (result) {
+          setAppData({
+            ...appData,
+            group: result.group
           });
 
           setShowThumbnailSuccess(true);
@@ -143,7 +112,6 @@ export default function EditGroupName({
         }
       }
     } catch (error) {
-      console.error('Error updating thumbnail:', error);
       if (error instanceof Error) {
         setThumbnailError(error.message);
       }
@@ -161,7 +129,7 @@ export default function EditGroupName({
     };
   }, [previewUrl]);
 
-  const thumbnail = previewUrl ? previewUrl : memoryLane.group_data.thumbnail_url;
+  const thumbnail = previewUrl ? previewUrl : appData.group.thumbnailUrl;
 
   return (
     <div className="bg-[#1A1A1A] border border-[#242424] rounded-lg p-4 md:p-6 mb-6">
@@ -235,7 +203,7 @@ export default function EditGroupName({
           <label className="block text-white font-medium mb-2">Group Name</label>
           <form onSubmit={handleNameSave} className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
-              <div 
+              <div
                 className={`relative w-full ${isAdmin && !isEditingName ? 'cursor-pointer' : ''}`}
                 onClick={!isEditingName ? handleEditClick : undefined}
               >
@@ -244,11 +212,10 @@ export default function EditGroupName({
                   type="text"
                   value={groupName}
                   onChange={handleNameChange}
-                  className={`w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white transition-all duration-200 ${
-                    isAdmin 
-                      ? 'focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300' 
-                      : 'cursor-not-allowed'
-                  }`}
+                  className={`w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white transition-all duration-200 ${isAdmin
+                    ? 'focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-300'
+                    : 'cursor-not-allowed'
+                    }`}
                   placeholder="Enter group name"
                   readOnly={!isEditingName || !isAdmin}
                 />

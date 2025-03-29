@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import ErrorIcon from "@/app/shared/icons/ErrorIcon";
-import { useAuth } from "@/core/context/auth-provider";
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import { useState } from "react";
 import HomeLink from "./misc/HomeLink";
+import { sendLoginCommand, sendVerifyCommand } from "@/core/wrappers/cognito";
 
 interface VerifyAccountProps {
   email: string;
@@ -12,8 +12,6 @@ interface VerifyAccountProps {
 }
 
 export default function VerifyAccount({ email, password, onSuccess }: VerifyAccountProps) {
-
-  const { verify, login } = useAuth();
 
   const [code, setCode] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -25,11 +23,11 @@ export default function VerifyAccount({ email, password, onSuccess }: VerifyAcco
     setIsLoading(true);
 
     try {
-      const response = await verify(email, code);
+      const response = await sendVerifyCommand(email, code);
       if (!response) {
         setError('Verification failed. Please try again.');
       } else if (response.Session) {
-        const response = await login(email, password);
+        const response = await sendLoginCommand(email, password);
         if (response) {
           await onSuccess(response);
         }

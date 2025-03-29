@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, FormEvent, DragEvent } from 'react';
 import Image from 'next/image';
-import { generateS3Url, createPhotoEntry } from '@/core/wrappers/fetch';
-import { PhotoEntry } from '@/core/utils/types';
+import { useState, FormEvent, DragEvent } from 'react';
+import { generateS3Url, uploadFileToS3, createPhoto } from '@/core/wrappers/api';
+import { Photo } from '@/core/utils/types';
 
 interface PhotoUploadProps {
-  memory_id: string;
-  onSuccess: (photoEntry: PhotoEntry) => void;
+  memoryId: string;
+  onSuccess: (photo: Photo) => void;
 }
 
-export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) {
+export default function PhotoUpload({ memoryId, onSuccess }: PhotoUploadProps) {
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [date, setDate] = useState('');
@@ -47,28 +47,20 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
         setDate(new Date(file.lastModified).toISOString().split('T')[0]);
 
         // Get S3 presigned URL
-        const s3UrlData = await generateS3Url(file.name, 'memories');
+        const { data:s3UrlData} = await generateS3Url(file.name, 'memories');
 
         if (s3UrlData.presignedUrl) {
           // Upload file to S3
-          const uploadResponse = await fetch(s3UrlData.presignedUrl, {
-            method: 'PUT',
-            body: file,
-            headers: {
-              'Content-Type': file.type,
-            },
-          });
-
-          if (!uploadResponse.ok) {
+          const response = await uploadFileToS3(s3UrlData.presignedUrl, file);
+          if (!response.ok) {
             throw new Error('Failed to upload file to S3');
           }
-          setPhotoUrl(s3UrlData.photo_url);
+          setPhotoUrl(s3UrlData.photoUrl);
           setPhoto(file);
         } else {
           throw new Error('Failed to get presigned URL');
         }
       } catch (error) {
-        console.error('Error processing image:', error);
         setError(error instanceof Error ? error.message : 'Failed to process image.');
         setPhoto(null);
         setPhotoUrl('');
@@ -107,22 +99,21 @@ export default function PhotoUpload({ memory_id, onSuccess }: PhotoUploadProps) 
     }
 
     try {
-      const result = await createPhotoEntry({
-        memory_id: memory_id,
+      const { data } = await createPhoto(
+        memoryId,
         title,
         caption,
         date,
-        photo_url: photoUrl
-      });
+        photoUrl
+      );
 
-      if (result) {
-        onSuccess(result.photo_entry);
+      if (data) {
+        onSuccess(data.photo);
         resetForm();
       } else {
         setError('Failed to upload photo. Please try again.');
       }
     } catch (error) {
-      console.error("Error uploading photo:", error);
       setError('An error occurred while uploading the photo.');
     } finally {
       setIsLoading(false);

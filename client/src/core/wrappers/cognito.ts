@@ -17,8 +17,6 @@ const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.NEXT_PUBLIC_AWS_COGNITO_REGION
 });
 
-export type SIGNUP_HEADER = (name: string, email: string, password: string) => Promise<SignUpCommandOutput | null>;
-
 /**
  * Sends a sign up command to AWS Cognito.
  * 
@@ -27,7 +25,7 @@ export type SIGNUP_HEADER = (name: string, email: string, password: string) => P
  * @param password - The password of the user.
  * @returns SignUpCommandOutput which contains the user's Cognito ID.
  */
-export const sendSignUpCommand: SIGNUP_HEADER = async (name, email, password) => {
+export const sendSignUpCommand = async (name: string, email: string, password: string): Promise<SignUpCommandOutput | null> => {
   return await cognitoClient.send(new SignUpCommand({
     ClientId: CLIENT_ID,
     Username: email,
@@ -39,8 +37,6 @@ export const sendSignUpCommand: SIGNUP_HEADER = async (name, email, password) =>
   }));
 }
 
-export type VERIFY_HEADER = (email: string, code: string) => Promise<ConfirmSignUpCommandOutput | null>;
-
 /**
  * Sends a verify command to AWS Cognito to verify the user's email.
  * 
@@ -48,15 +44,13 @@ export type VERIFY_HEADER = (email: string, code: string) => Promise<ConfirmSign
  * @param code - The code sent to the user's email.
  * @returns ConfirmSignUpCommandOutput which contains the user's Cognito ID.
  */
-export const sendVerifyCommand: VERIFY_HEADER = async (email, code) => {
+export const sendVerifyCommand = async (email: string, code: string): Promise<ConfirmSignUpCommandOutput | null> => {
   return await cognitoClient.send(new ConfirmSignUpCommand({
     ClientId: CLIENT_ID,
     Username: email,
     ConfirmationCode: code,
   }));
 }
-
-export type LOGIN_HEADER = (email: string, password: string) => Promise<InitiateAuthCommandOutput | null>;
 
 /**
  * Sends a login command to AWS Cognito.
@@ -65,7 +59,7 @@ export type LOGIN_HEADER = (email: string, password: string) => Promise<Initiate
  * @param password - The password of the user.
  * @returns InitiateAuthCommandOutput which contains the user's Cognito ID.
  */
-export const sendLoginCommand: LOGIN_HEADER = async (email, password) => {
+export const sendLoginCommand = async (email: string, password: string): Promise<InitiateAuthCommandOutput | null> => {
   return await cognitoClient.send(new InitiateAuthCommand({
     ClientId: CLIENT_ID,
     AuthFlow: "USER_PASSWORD_AUTH",
@@ -76,22 +70,18 @@ export const sendLoginCommand: LOGIN_HEADER = async (email, password) => {
   }));
 }
 
-export type FORGOT_PASSWORD_HEADER = (email: string) => Promise<ForgotPasswordCommandOutput | null>;
-
 /**
  * Sends a forgot password command to AWS Cognito.
  * 
  * @param email - The email of the user.
  * @returns ForgotPasswordCommandOutput which contains the user's Cognito ID.
  */
-export const sendForgotPasswordCommand: FORGOT_PASSWORD_HEADER = async (email) => {
+export const sendForgotPasswordCommand = async (email: string): Promise<ForgotPasswordCommandOutput | null> => {
   return await cognitoClient.send(new ForgotPasswordCommand({
     ClientId: CLIENT_ID,
     Username: email,
   }));
 }
-
-export type CONFIRM_FORGOT_PASSWORD_HEADER = (email: string, code: string, password: string) => Promise<ConfirmForgotPasswordCommandOutput | null>;
 
 /**
  * Sends a confirm forgot password command to AWS Cognito.
@@ -100,7 +90,7 @@ export type CONFIRM_FORGOT_PASSWORD_HEADER = (email: string, code: string, passw
  * @param code - The code sent to the user's email.
  * @param password - The new password of the user.
  */
-export const confirmForgotPasswordCommand: CONFIRM_FORGOT_PASSWORD_HEADER = async (email, code, password) => {
+export const confirmForgotPasswordCommand = async (email: string, code: string, password: string): Promise<ConfirmForgotPasswordCommandOutput | null> => {
   return await cognitoClient.send(
     new ConfirmForgotPasswordCommand({
       ClientId: CLIENT_ID,

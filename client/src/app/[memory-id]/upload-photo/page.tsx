@@ -2,26 +2,27 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useMemoryLane } from '@/core/context/memory-provider';
 import { useEffect, useState } from 'react';
-import { PhotoEntry } from '@/core/utils/types';
+import { Photo } from '@/core/utils/types';
 import LoadingScreen from '@/app/shared/Loading';
-import AccessDenied from '@/app/shared/AccessDenied';
+import AccessDenied from '@/app/shared/memory/AccessDenied';
 import PhotoUpload from './components/PhotoUpload';
+import { useAppData } from '@/core/context/app-provider';
+import PageNotFound from '@/app/shared/PageNotFound';
 
 export default function UploadPage() {
-  const memory_id = useParams()['memory-id'] as string;
-  const { memoryLane, loading, unauthorized, setMemoryLane, fetchData } = useMemoryLane();
+  const memoryId = useParams()['memory-id'] as string;
+
+  const { appData, isLoading, isAuthorized, protectedLane, failedToLoad, fetchAppData, setAppData } = useAppData();
   const [uploadComplete, setUploadComplete] = useState(false);
 
-  const groupName = memoryLane?.group_data.group_name || 'Loading...';
+  const groupName = appData?.group.groupName || 'Loading...';
 
-  const handleSuccess = (photoEntry: PhotoEntry) => {
-    if (memoryLane) {
-      setMemoryLane({
-        group_data: memoryLane.group_data,
-        photo_entries: [...memoryLane.photo_entries, photoEntry],
-        friends: memoryLane.friends
+  const handleSuccess = (photo: Photo) => {
+    if (appData) {
+      setAppData({
+        ...appData,
+        photos: [...appData.photos, photo],
       });
       setUploadComplete(true);
     }
@@ -31,21 +32,26 @@ export default function UploadPage() {
     setUploadComplete(false);
   };
 
-  useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
+  useEffect(() => { fetchAppData(memoryId, null); }, [memoryId, fetchAppData]);
 
-  if (unauthorized) {
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthorized) {
     return <AccessDenied />
   }
 
-  if (loading || !memoryLane) {
-    return <LoadingScreen />;
+  if (!appData) {
+    return <PageNotFound />
   }
+
 
   return (
     <div className="min-h-screen bg-[#0E0E0E] p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <Link
-          href={`/${memory_id}`}
+          href={`/${memoryId}`}
           className="inline-flex items-center text-purple-300 hover:text-purple-400 transition-colors mb-6 md:mb-12"
         >
           <span className="mr-2">←</span> Back to Group
@@ -85,7 +91,7 @@ export default function UploadPage() {
                   Upload Another Photo
                 </button>
                 <Link
-                  href={`/${memory_id}`}
+                  href={`/${memoryId}`}
                   className="inline-flex px-6 md:px-8 py-2.5 md:py-3 bg-[#242424] text-purple-300 rounded-lg hover:bg-[#2A2A2A] transition-colors font-medium items-center justify-center text-sm md:text-base whitespace-nowrap"
                 >
                   Back to Memory Lane
@@ -95,7 +101,7 @@ export default function UploadPage() {
           </div>
         ) : (
           <PhotoUpload 
-            memory_id={memory_id} 
+            memoryId={memoryId} 
             onSuccess={handleSuccess}
           />
         )}

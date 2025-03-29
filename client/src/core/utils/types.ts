@@ -7,71 +7,42 @@ export interface AppData {
 
 export interface Group {
   uuid: string;
-  owner_id: number;
-  group_name: string;
-  group_url: string;
-  is_public: boolean;
+  ownerId: number;
+  groupName: string;
+  groupUrl: string;
+  isPublic: boolean;
   passcode: string | null;
-  thumbnail_url: string | null;
+  thumbnailUrl: string | null;
   alias: string | null;
-  alias_url: string | null;
-  is_owner: boolean;
-  is_admin: boolean;
-  is_friend: boolean;
+  aliasUrl: string | null;
+  isOwner: boolean | null;
+  isAdmin: boolean | null;
+  isFriend: boolean | null;
 }
 
 export interface User {
-  user_id: number;
+  userId: number;
   username: string;
   email: string;
-  profile_name: string;
-  profile_url: string;
-}
-
-export interface MemoryLane {
-  group_data: GroupData;
-  photo_entries: PhotoEntry[];
-  friends: Friend[];
-}
-
-export interface GroupData {
-  uuid: string;
-  owner_id: number;
-  group_name: string;
-  group_url: string;
-  is_public: boolean;
-  passcode: string | null;
-  thumbnail_url: string | null;
-  alias: string | null;
-  alias_url: string | null;
-  is_owner: boolean;
-  is_admin: boolean;
-  is_friend: boolean;
-}
-
-export interface PhotoEntry {
-  photo_id: number;
-  photo_date: string;
-  photo_url: string;
-  photo_title: string;
-  photo_caption: string;
+  profileName: string;
+  profileUrl: string;
 }
 
 export interface Photo {
-  photo_id: number;
-  photo_date: string;
-  photo_url: string;
-  photo_title: string;
-  photo_caption: string;
+  photoId: number;
+  photoDate: string;
+  photoUrl: string;
+  photoTitle: string;
+  photoCaption: string;
 }
 
 export interface Friend {
-  friend_id: number;
-  user_id: number | null;
-  profile_name: string;
+  friendId: number;
+  userId: number | null;
+  profileName: string;
   email: string;
-  is_owner: boolean;
-  is_admin: boolean;
-  is_confirmed: boolean;
-  profile_url: string | null;
+  isOwner: boolean;
+  isAdmin: boolean;
+  isConfirmed: boolean;
+  profileUrl: string | null;
 }

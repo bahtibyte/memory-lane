@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useMemoryLane } from '@/core/context/memory-provider';
 import EditGroupPrivacy from '@/app/[memory-id]/edit-group/components/EditGroupPrivacy';
 import EditGroupAlias from '@/app/[memory-id]/edit-group/components/EditGroupAlias';
 import EditGroupPhotos from '@/app/[memory-id]/edit-group/components/EditGroupPhotos';
@@ -11,78 +10,35 @@ import PageNotFound from '@/app/shared/PageNotFound';
 import Link from 'next/link';
 import EditGroupName from '@/app/[memory-id]/edit-group/components/EditGroupName';
 import EditGroupFriends from '@/app/[memory-id]/edit-group/components/EditGroupFriends';
-import AccessDenied from '@/app/shared/AccessDenied';
-import { useAuth } from '@/core/context/auth-provider';
-import { Friend } from '@/core/utils/types';
+import AccessDenied from '@/app/shared/memory/AccessDenied';
+import { useAppData } from '@/core/context/app-provider';
+import FailedToLoad from '@/app/shared/memory/FailedToLoad';
 
 export default function EditGroupPage() {
-  const memory_id = useParams()['memory-id'] as string;
-  const {
-    memoryLane,
-    setMemoryLane,
-    loading,
-    failedToLoad,
-    unauthorized,
-    fetchData,
-  } = useMemoryLane();
+  const memoryId = useParams()['memory-id'] as string;
 
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { appData, isLoading, isAuthorized, failedToLoad, fetchAppData, setAppData } = useAppData();
 
-  useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
+  useEffect(() => { fetchAppData(memoryId, null); }, [memoryId, fetchAppData]);
 
-  const onFriendsAdded = (friends: Friend[]) => {
-    if (!memoryLane) return;
-    setMemoryLane({
-      ...memoryLane,
-      friends: [...memoryLane.friends, ...friends]
+  const onDeletePhoto = (photoId: number) => {
+    if (!appData) return;
+    setAppData({
+      ...appData,
+      photos: appData.photos.filter(p => p.photoId !== photoId)
     });
   };
 
-  const onFriendRemoved = (friend: Friend) => {
-    if (!memoryLane) return;
-    setMemoryLane({
-      ...memoryLane,
-      friends: memoryLane.friends.filter(f => f.friend_id !== friend.friend_id)
-    });
-  };
-
-  const onAdminChange = (friend: Friend) => {
-    if (!memoryLane) return;
-    setMemoryLane({
-      ...memoryLane,
-      friends: memoryLane.friends.map(f => f.friend_id === friend.friend_id ? friend : f)
-    });
-  };
-
-  const onEditFriend = (friend: Friend) => {
-    if (!memoryLane) return;
-    setMemoryLane({
-      ...memoryLane,
-      friends: memoryLane.friends.map(f => f.friend_id === friend.friend_id ? friend : f)
-    });
-  };
-
-  const onDeletePhoto = (photo_id: number) => {
-    if (!memoryLane) return;
-    setMemoryLane({
-      ...memoryLane,
-      photo_entries: memoryLane.photo_entries.filter(p => p.photo_id !== photo_id)
-    });
-  };
-
-  if (loading || isLoading) return <Loading />;
-
-  if (!isAuthenticated || unauthorized) {
-    return <AccessDenied />
-  }
-
-  if (!memory_id || failedToLoad || !memoryLane || !user) return <PageNotFound />;
+  if (isLoading) return <Loading />;
+  if (!isAuthorized) return <AccessDenied />
+  if (failedToLoad) return <FailedToLoad />
+  if (!appData) return <PageNotFound />;
 
   return (
     <div className="min-h-screen bg-[#0E0E0E] p-4 md:p-8">
       <div className="max-w-3xl mx-auto">
         <Link
-          href={`/${memory_id}`}
+          href={`/${memoryId}`}
           className="inline-flex items-center text-purple-300 hover:text-purple-400 hover:scale-105 transition-all duration-200 mb-6 md:mb-8 text-sm"
         >
           <svg
@@ -120,37 +76,31 @@ export default function EditGroupPage() {
         </div>
 
         <EditGroupName
-          memoryId={memory_id}
-          initialGroupName={memoryLane.group_data.group_name ?? ''}
-          memoryLane={memoryLane!}
-          setMemoryLane={setMemoryLane}
+          memoryId={memoryId}
+          appData={appData}
+          setAppData={setAppData}
           isAdmin={true}//for testing purposes
         />
 
         <EditGroupFriends
-          memoryId={memory_id}
-          user={user}
-          friends={memoryLane.friends}
-          onFriendsAdded={onFriendsAdded}
-          onFriendRemoved={onFriendRemoved}
-          onAdminChange={onAdminChange}
-          onEditFriend={onEditFriend}
+          memoryId={memoryId}
+          appData={appData}
+          setAppData={setAppData}
         />
 
-        {/* Existing Components */}
         <EditGroupPrivacy
-          memoryId={memory_id}
-          memoryLane={memoryLane}
-          setMemoryLane={setMemoryLane}
+          memoryId={memoryId}
+          appData={appData}
+          setAppData={setAppData}
         />
         <EditGroupAlias
-          memoryId={memory_id}
-          memoryLane={memoryLane}
-          setMemoryLane={setMemoryLane}
+          memoryId={memoryId}
+          appData={appData}
+          setAppData={setAppData}
         />
         <EditGroupPhotos
-          memoryId={memory_id}
-          photoEntries={memoryLane.photo_entries}
+          memoryId={memoryId}
+          photos={appData.photos}
           onDeletePhoto={onDeletePhoto}
         />
       </div>

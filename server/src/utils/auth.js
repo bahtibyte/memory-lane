@@ -4,10 +4,6 @@ import { CognitoJwtVerifier } from "aws-jwt-verify";
 const COGNITO_USER_POOL_ID = process.env.NODE_AWS_COGNITO_USER_POOL_ID;
 const COGNITO_CLIENT_ID = process.env.NODE_AWS_COGNITO_CLIENT_ID;
 
-console.log('[auth]: Verifying Cognito access token.');
-console.log('[auth]: User pool ID:', COGNITO_USER_POOL_ID);
-console.log('[auth]: Client ID:', COGNITO_CLIENT_ID);
-
 const verifier = CognitoJwtVerifier.create({
   userPoolId: COGNITO_USER_POOL_ID,
   clientId: COGNITO_CLIENT_ID,

@@ -3,105 +3,74 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useMemoryLane } from '@/core/context/memory-provider';
 import Link from 'next/link';
-import { PhotoEntry } from '@/core/utils/types';
-import { editPhoto } from '@/core/wrappers/fetch';
-import AccessDenied from '@/app/shared/AccessDenied';
+import { Photo } from '@/core/utils/types';
+import { editPhoto } from '@/core/wrappers/api';
+import AccessDenied from '@/app/shared/memory/AccessDenied';
 import Loading from '@/app/shared/Loading';
-
-interface PhotoFormData {
-  photo_date: string;
-  photo_title: string;
-  photo_caption: string;
-}
+import { useAppData } from '@/core/context/app-provider';
+import FailedToLoad from '@/app/shared/memory/FailedToLoad';
+import PageNotFound from '@/app/shared/memory/PageNotFound';
 
 export default function EditPhotoPage() {
   const router = useRouter();
   const params = useParams();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const memory_id = params['memory-id'] as string;
-  const photo_id = parseInt(params.slug?.[0] || '0');
+  const memoryId = params['memory-id'] as string;
+  const photoId = parseInt(params.slug?.[0] || '0');
 
-  const { memoryLane, loading, unauthorized, fetchData, setMemoryLane } = useMemoryLane();
-  const [photoEntry, setPhotoEntry] = useState<PhotoEntry | null>(null);
+  const { appData, isLoading, isAuthorized, failedToLoad, fetchAppData, setAppData } = useAppData();
+  const [photo, setPhoto] = useState<Photo | null>(null);
 
-  const [formData, setFormData] = useState<PhotoFormData>({
-    photo_date: '',
-    photo_title: '',
-    photo_caption: '',
-  });
+  const [photoDate, setPhotoDate] = useState<string>('');
+  const [photoTitle, setPhotoTitle] = useState<string>('');
+  const [photoCaption, setPhotoCaption] = useState<string>('');
 
-  useEffect(() => { fetchData(memory_id); }, [memory_id, fetchData]);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+
+  useEffect(() => { fetchAppData(memoryId, null); }, [memoryId, fetchAppData]);
 
   useEffect(() => {
-    if (memoryLane && photo_id) {
-      const photo = memoryLane.photo_entries.find(entry => entry.photo_id === photo_id);
+    if (appData && photoId) {
+      const photo = appData.photos.find(photo => photo.photoId === photoId);
       if (photo) {
-        setPhotoEntry(photo);
-        setFormData({
-          photo_date: photo.photo_date,
-          photo_title: photo.photo_title,
-          photo_caption: photo.photo_caption || ''
-        });
+        setPhoto(photo);
+        setPhotoDate(photo.photoDate);
+        setPhotoTitle(photo.photoTitle);
+        setPhotoCaption(photo.photoCaption || '');
       }
     }
-  }, [memoryLane, photo_id]);
+  }, [appData, photoId]);
 
-  if (unauthorized) {
-    return <AccessDenied />
-  }
+  if (isLoading) return <Loading />;
+  if (!isAuthorized) return <AccessDenied />
+  if (failedToLoad) return <FailedToLoad />
+  if (!appData) return <PageNotFound />;
 
-  if (loading) {
-    return <Loading />;
-  }
-
-  if (!photoEntry) {
+  if (!photo) {
     return (
       <div className="min-h-screen p-4 bg-[#0E0E0E] flex flex-col items-center justify-center">
         <h1 className="text-white text-2xl mb-4">Photo not found</h1>
-        <Link href={`/${memory_id}`} className="text-purple-300 hover:text-purple-400 underline">
+        <Link href={`/${memoryId}`} className="text-purple-300 hover:text-purple-400 underline">
           Go back to timeline
         </Link>
       </div>
     );
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      const result = await editPhoto({
-        memory_id: memory_id,
-        photo_id: photo_id,
-        photo_title: formData.photo_title,
-        photo_date: formData.photo_date,
-        photo_caption: formData.photo_caption
-      });
+    setIsUpdating(true);
 
-      if (result && memoryLane) {
-        setMemoryLane({
-          group_data: memoryLane.group_data,
-          photo_entries: memoryLane.photo_entries.map(entry => entry.photo_id === photo_id ? result.updated_photo : entry),
-          friends: memoryLane.friends
-        });
-        router.push(`/${memory_id}`);
-      }
-    } catch (error) {
-      console.error('Error saving photo:', error);
-    } finally {
-      setIsLoading(false);
+    const { data } = await editPhoto(memoryId, photoId, photoTitle, photoCaption, photoDate);
+    if (data) {
+      setAppData({
+        ...appData,
+        photos: appData.photos.map(p => p.photoId === photoId ? data.photo : p)
+      });
+      router.push(`/${memoryId}`);
     }
+    setIsUpdating(false);
   };
 
   return (
@@ -109,7 +78,7 @@ export default function EditPhotoPage() {
       <div className="max-w-3xl mx-auto">
         {/* Back Button */}
         <Link
-          href={`/${memory_id}/edit-group`}
+          href={`/${memoryId}/edit-group`}
           className="inline-flex items-center text-purple-300 hover:text-purple-400 hover:scale-105 transition-all duration-200 mb-6 md:mb-8 text-sm"
         >
           <svg
@@ -145,14 +114,14 @@ export default function EditPhotoPage() {
             <div
               className="absolute inset-0 blur-xl scale-110 opacity-50"
               style={{
-                backgroundImage: `url(${photoEntry.photo_url})`,
+                backgroundImage: `url(${photo.photoUrl})`,
                 backgroundPosition: 'center',
                 backgroundSize: 'cover',
               }}
             />
             <Image
-              src={photoEntry.photo_url}
-              alt={formData.photo_title || 'Photo preview'}
+              src={photo.photoUrl}
+              alt={photo.photoTitle || 'Photo preview'}
               fill
               sizes="(max-width: 768px) 100vw, 800px"
               className="object-contain"
@@ -172,8 +141,8 @@ export default function EditPhotoPage() {
                 type="text"
                 id="photo_title"
                 name="photo_title"
-                value={formData.photo_title}
-                onChange={handleInputChange}
+                value={photoTitle}
+                onChange={e => setPhotoTitle(e.target.value)}
                 required
                 className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-[#CECECE] focus:outline-none focus:border-purple-300 placeholder-[#707070]"
                 placeholder="Untitled"
@@ -188,8 +157,8 @@ export default function EditPhotoPage() {
                 type="date"
                 id="photo_date"
                 name="photo_date"
-                value={formData.photo_date.split('T')[0]}
-                onChange={handleInputChange}
+                value={photoDate.split('T')[0]}
+                onChange={e => setPhotoDate(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
                 required
                 className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-[#CECECE] focus:outline-none focus:border-purple-300 placeholder-[#707070] [color-scheme:dark]"
@@ -201,8 +170,8 @@ export default function EditPhotoPage() {
               <textarea
                 id="photo_caption"
                 name="photo_caption"
-                value={formData.photo_caption}
-                onChange={handleInputChange}
+                value={photoCaption}
+                onChange={e => setPhotoCaption(e.target.value)}
                 rows={2}
                 className="w-full bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-[#CECECE] focus:outline-none focus:border-purple-300 h-24 resize-none placeholder-[#707070]"
                 placeholder="Add a caption to your memory..."
@@ -211,21 +180,19 @@ export default function EditPhotoPage() {
 
             <div className="flex gap-4 pt-4">
               <Link
-                href={`/${memory_id}`}
-                className={`flex-1 px-4 py-2 border border-purple-300 text-purple-300 rounded-lg hover:bg-purple-300 hover:text-black transition-colors text-center ${
-                  isLoading ? 'opacity-50 pointer-events-none' : ''
-                }`}
+                href={`/${memoryId}`}
+                className={`flex-1 px-4 py-2 border border-purple-300 text-purple-300 rounded-lg hover:bg-purple-300 hover:text-black transition-colors text-center ${isLoading ? 'opacity-50 pointer-events-none' : ''
+                  }`}
               >
                 Cancel
               </Link>
               <button
                 type="submit"
-                disabled={isLoading}
-                className={`flex-1 text-center px-4 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 transition-colors ${
-                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                disabled={isUpdating}
+                className={`flex-1 text-center px-4 py-2 bg-purple-300 text-black rounded-lg hover:bg-purple-400 transition-colors ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
-                {isLoading ? 'Saving...' : 'Save Changes'}
+                {isUpdating ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>

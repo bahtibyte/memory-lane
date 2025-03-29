@@ -50,7 +50,7 @@ interface PhotoEntryProps {
   nextYear: number;
   imageDimensions: { [key: string]: { width: number; height: number } };
   onImageLoad: (event: React.SyntheticEvent<HTMLImageElement>, photoUrl: string) => void;
-  onImageClick: (url: string, title: string) => void;
+  onImageClick: (photo: Photo) => void;
 }
 
 export function PhotoEntry({
@@ -65,14 +65,14 @@ export function PhotoEntry({
   onImageLoad,
   onImageClick,
 }: PhotoEntryProps) {
-  const dimensions = imageDimensions[photo.photo_url];
+  const dimensions = imageDimensions[photo.photoUrl];
   const isPortrait = dimensions?.height > dimensions?.width;
   const isSquare = dimensions?.height === dimensions?.width;
   const [imageLoaded, setImageLoaded] = React.useState(false);
   
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     setImageLoaded(true);
-    onImageLoad(e, photo.photo_url);
+    onImageLoad(e, photo.photoUrl);
   };
 
   return (
@@ -91,8 +91,8 @@ export function PhotoEntry({
         <div className="flex-1">
           <div className="flex gap-4 sm:gap-8 items-center relative">
             <div className="w-[80px] sm:w-[140px] md:w-[200px] text-right pr-4 sm:pr-6">
-              <p className="text-[12px] sm:text-[14px] md:text-[16px] font-semibold text-[#CCC7F8]">{formatDate(photo.photo_date)}</p>
-              <p className="text-white mt-2 text-[14px] sm:text-[18px] md:text-[24px]">{photo.photo_title}</p>
+              <p className="text-[12px] sm:text-[14px] md:text-[16px] font-semibold text-[#CCC7F8]">{formatDate(photo.photoDate)}</p>
+              <p className="text-white mt-2 text-[14px] sm:text-[18px] md:text-[24px]">{photo.photoTitle}</p>
             </div>
 
             <div
@@ -106,7 +106,7 @@ export function PhotoEntry({
                   {(isPortrait || isSquare) && (
                     <div className="absolute inset-0 overflow-hidden">
                       <Image
-                        src={photo.photo_url}
+                        src={photo.photoUrl}
                         alt=""
                         fill
                         className="opacity-30 blur-xl scale-110 object-cover"
@@ -118,11 +118,11 @@ export function PhotoEntry({
                   )}
                   <div
                     className={`relative ${isPortrait || isSquare ? 'h-[50vh]' : ''} flex items-center justify-center cursor-pointer max-w-[1000px] mx-auto`}
-                    onClick={() => onImageClick(photo.photo_url, photo.photo_title)}
+                    onClick={() => onImageClick(photo)}
                   >
                     <Image
-                      src={photo.photo_url}
-                      alt={photo.photo_title}
+                      src={photo.photoUrl}
+                      alt={photo.photoTitle}
                       fill={isPortrait || isSquare}
                       priority
                       width={!isPortrait && !isSquare ? 1000 : undefined}
@@ -142,8 +142,8 @@ export function PhotoEntry({
           </div>
 
           <div className="mt-2 ml-[calc(80px+16px)] sm:ml-[calc(140px+32px)] md:ml-[calc(200px+32px)]">
-            <p className="text-white text-[12px] sm:text-[13px] md:text-[16px]">{photo.photo_caption}</p>
-            <p className="text-gray-400 text-[10px] sm:text-[11px] md:text-sm mt-1">{getDaysAgo(photo.photo_date)}</p>
+            <p className="text-white text-[12px] sm:text-[13px] md:text-[16px]">{photo.photoCaption}</p>
+            <p className="text-gray-400 text-[10px] sm:text-[11px] md:text-sm mt-1">{getDaysAgo(photo.photoDate)}</p>
           </div>
         </div>
       </div>

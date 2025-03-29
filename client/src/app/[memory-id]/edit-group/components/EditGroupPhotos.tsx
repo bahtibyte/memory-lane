@@ -1,28 +1,26 @@
-import { deletePhoto } from "@/core/wrappers/fetch";
-import { PhotoEntry } from "@/core/utils/types";
+import { deletePhoto } from "@/core/wrappers/api";
+import { Photo } from "@/core/utils/types";
 import Link from "next/link";
 import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-hot-toast";
 
 interface EditGroupPhotosProps {
   memoryId: string;
-  photoEntries: PhotoEntry[];
-  onDeletePhoto: (photo_id: number) => void;
+  photos: Photo[];
+  onDeletePhoto: (photoId: number) => void;
 }
 
-export default function EditGroupPhotos({ memoryId, photoEntries, onDeletePhoto }: EditGroupPhotosProps) {
-  const handleDeletePhoto = async (photo_id: number) => {
+export default function EditGroupPhotos({ memoryId, photos, onDeletePhoto }: EditGroupPhotosProps) {
+  const handleDeletePhoto = async (photoId: number) => {
     if (!confirm('Are you sure you want to delete this photo?')) return;
 
     try {
-      const result = await deletePhoto(memoryId, photo_id);
-      console.log('Result:', result);
-      if (result.deleted_photo) {
-        onDeletePhoto(result.deleted_photo.photo_id);
+      const { data } = await deletePhoto(memoryId, photoId);
+      if (data) {
+        onDeletePhoto(photoId);
         toast.success('Photo deleted successfully');
       }
     } catch (error) {
-      console.error('Error deleting photo:', error);
       toast.error('Failed to delete photo');
     }
   };
@@ -41,38 +39,38 @@ export default function EditGroupPhotos({ memoryId, photoEntries, onDeletePhoto 
             </tr>
           </thead>
           <tbody>
-            {photoEntries
-              .sort((a, b) => new Date(b.photo_date).getTime() - new Date(a.photo_date).getTime())
+            {photos
+              .sort((a, b) => new Date(b.photoDate).getTime() - new Date(a.photoDate).getTime())
               .map((photo, index) => (
                 <tr
                   key={index}
                   className="border-b border-[#242424] hover:bg-[#242424] transition-all duration-200 text-center"
                 >
                   <td className="p-4 text-gray-300 whitespace-normal">
-                    {photo.photo_date ? (
+                    {photo.photoDate ? (
                       <>
                         <div>
-                          {new Date(photo.photo_date).toLocaleDateString('en-US', {
+                          {new Date(photo.photoDate).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric'
                           })}
                         </div>
                         <div className="text-sm text-gray-400">
-                          {new Date(photo.photo_date).getFullYear()}
+                          {new Date(photo.photoDate).getFullYear()}
                         </div>
                       </>
                     ) : 'N/A'}
                   </td>
                   <td className="p-4 text-gray-300">
-                    {photo.photo_title || ''}
+                    {photo.photoTitle || ''}
                   </td>
                   <td className="p-4 text-gray-300">
-                    {photo.photo_caption || ''}
+                    {photo.photoCaption || ''}
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-3">
                       <a
-                        href={photo.photo_url}
+                        href={photo.photoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 bg-[#0E0E0E] text-blue-300 rounded-lg hover:bg-[#2A2A2A] hover:text-blue-400 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200"
@@ -81,14 +79,14 @@ export default function EditGroupPhotos({ memoryId, photoEntries, onDeletePhoto 
                         <EyeIcon className="w-4 h-4" />
                       </a>
                       <Link
-                        href={`/${memoryId}/edit-photo/${photo.photo_id}`}
+                        href={`/${memoryId}/edit-photo/${photo.photoId}`}
                         className="p-2 bg-[#0E0E0E] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-200"
                         title="Edit photo"
                       >
                         <PencilIcon className="w-4 h-4" />
                       </Link>
                       <button
-                        onClick={() => handleDeletePhoto(photo.photo_id)}
+                        onClick={() => handleDeletePhoto(photo.photoId)}
                         className="p-2 bg-[#0E0E0E] text-red-400 rounded-lg hover:bg-red-500 hover:text-white hover:scale-105 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
                         title="Delete photo"
                       >
@@ -101,7 +99,7 @@ export default function EditGroupPhotos({ memoryId, photoEntries, onDeletePhoto 
           </tbody>
         </table>
 
-        {photoEntries.length === 0 && (
+        {photos.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-400 text-sm">No photos have been added yet.</p>
           </div>

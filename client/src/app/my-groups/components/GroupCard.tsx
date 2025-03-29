@@ -1,47 +1,44 @@
 import Image from "next/image";
-import { GroupData, User } from "@/core/utils/types";
+import { Group, User } from "@/core/utils/types";
 import { useRouter } from "next/navigation";
-import { leaveGroup } from "@/core/wrappers/fetch";
-import { deleteGroup } from "@/core/wrappers/api";
+import { deleteGroup, leaveGroup } from "@/core/wrappers/api";
 import GroupFlair from "./GroupFlair";
+import { toast } from "react-hot-toast";
 
 interface GroupCardProps {
-  group: GroupData;
+  group: Group;
   user: User;
   activeOptionsMenu: string | null;
   menuRef: React.RefObject<HTMLDivElement | null>;
   toggleOptionsMenu: (groupUuid: string) => void;
   setActiveOptionsMenu: (groupUuid: string | null) => void;
-  handleDeletedGroup: (group: GroupData) => void;
+  handleDeletedGroup: (group: Group) => void;
 }
 
 export default function GroupCard({ group, user, activeOptionsMenu, menuRef, toggleOptionsMenu, setActiveOptionsMenu, handleDeletedGroup }: GroupCardProps) {
   const router = useRouter();
 
-  const removeAction = group.owner_id === user.user_id ? "Delete" : "Leave";
+  const removeAction = group.ownerId === user.userId ? "Delete" : "Leave";
 
-  function handleEditGroup(group: GroupData) {
+  function handleEditGroup(group: Group) {
     router.push(`/${group.uuid}/edit-group`);
   }
 
-  async function handleRemoveAction(group: GroupData) {
-    if (!confirm(`Are you sure you want to ${removeAction} "${group.group_name}"?`)) {
+  async function handleRemoveAction(group: Group) {
+    if (!confirm(`Are you sure you want to ${removeAction} "${group.groupName}"?`)) {
       return;
     }
 
-    try {
-      const response =
-        group.owner_id === user.user_id ?
-          await deleteGroup(group.uuid) :
-          await leaveGroup(group.uuid);
+    const { data } =
+      group.ownerId === user.userId ?
+        await deleteGroup(group.uuid) :
+        await leaveGroup(group.uuid);
 
-      if (response.group_data) {
-        handleDeletedGroup(group);
-      } else {
-        throw new Error('Failed to delete group');
-      }
-    } catch (error) {
-      console.error('Error deleting group:', error);
+    if (data && data.group) {
+      toast.success(`Group ${removeAction} successfully`);
+      handleDeletedGroup(group);
+    } else {
+      toast.error(`Failed to ${removeAction} group`);
     }
   }
 
@@ -53,10 +50,10 @@ export default function GroupCard({ group, user, activeOptionsMenu, menuRef, tog
       >
         {/* Thumbnail Image - Adjusted height for mobile */}
         <div className="relative w-full h-36 sm:h-48 bg-[#242424]">
-          {group.thumbnail_url ? (
+          {group.thumbnailUrl ? (
             <Image
-              src={group.thumbnail_url}
-              alt={group.group_name}
+              src={group.thumbnailUrl}
+              alt={group.groupName}
               fill
               priority
               className="object-cover"
@@ -74,7 +71,7 @@ export default function GroupCard({ group, user, activeOptionsMenu, menuRef, tog
         <div className="p-4 sm:p-6">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-semibold text-white">{group.group_name}</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-white">{group.groupName}</h2>
               <GroupFlair group={group} />
             </div>
             <div className="relative" ref={activeOptionsMenu === group.uuid ? menuRef : null}>

@@ -1,15 +1,12 @@
 import Image from 'next/image';
 import CloseIcon from '../icons/CloseIcon';
-
+import { Photo } from '@/core/utils/types';
 interface ImageOverlayProps {
-  image: {
-    url: string;
-    title: string;
-  };
+  photo: Photo;
   onClose: () => void;
 }
 
-export function ImageOverlay({ image, onClose }: ImageOverlayProps) {
+export function ImageOverlay({ photo, onClose }: ImageOverlayProps) {
   return (
     <div 
       className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
@@ -24,8 +21,8 @@ export function ImageOverlay({ image, onClose }: ImageOverlayProps) {
 
       <div className="relative w-full h-full p-4 flex items-center justify-center">
         <Image
-          src={image.url}
-          alt={image.title}
+          src={photo.photoUrl}
+          alt={photo.photoTitle}
           className="max-h-[90vh] max-w-[90vw] object-contain"
           onClick={(e) => e.stopPropagation()}
           width={1920}

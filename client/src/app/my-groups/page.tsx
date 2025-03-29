@@ -1,24 +1,38 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useAuth } from "@/core/context/auth-provider";
 import { Routes } from "@/core/utils/routes";
 import { useRouter } from "next/navigation";
 import SignOutButton from "@/app/shared/SignOutButton";
 import LoadingScreen from "@/app/shared/Loading";
-import { getOwnedGroups } from '@/core/wrappers/fetch';
-import { GroupData } from "@/core/utils/types";
+import { getGroups } from '@/core/wrappers/api';
+import { Group, User } from "@/core/utils/types";
 import { clearAuthenticationTokens } from "@/core/wrappers/tokens";
 import UserProfileDisplay from "./components/UserProfileDisplay";
 import EditUserProfile from "./components/EditUserModal";
 import CreateGroupModal from "./components/CreateGroupModal";
 import GroupCard from "./components/GroupCard";
+import AccessDenied from "../shared/memory/AccessDenied";
+
+/**
+ * Sorts groups by role priority: owner -> admin -> friend
+ */
+function groupSorter(a: Group, b: Group) {
+  if (a.isOwner && !b.isOwner) return -1;
+  if (!a.isOwner && b.isOwner) return 1;
+  if (a.isAdmin && !b.isAdmin) return -1;
+  if (!a.isAdmin && b.isAdmin) return 1;
+  if (a.isFriend && !b.isFriend) return -1;
+  if (!a.isFriend && b.isFriend) return 1;
+  return 0;
+}
 
 export default function MyGroups() {
   const router = useRouter();
 
-  const { user, isLoading, isAuthenticated, setUser } = useAuth();
-  const [groups, setGroups] = useState<GroupData[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isSignedOut, setIsSignedOut] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -26,34 +40,27 @@ export default function MyGroups() {
   const [activeOptionsMenu, setActiveOptionsMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Sort groups by role priority: owner -> admin -> friend
-  const sortedGroups = [...groups].sort((a, b) => {
-    if (a.is_owner && !b.is_owner) return -1;
-    if (!a.is_owner && b.is_owner) return 1;
-    if (a.is_admin && !b.is_admin) return -1; 
-    if (!a.is_admin && b.is_admin) return 1;
-    if (a.is_friend && !b.is_friend) return -1;
-    if (!a.is_friend && b.is_friend) return 1;
-    return 0;
-  });
+  const sortedGroups = [...groups].sort(groupSorter);
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      const { data, ok } = await getGroups();
+      if (ok) {
+        setGroups(data.groups);
+        setUser(data.user);
+      }
+      setIsLoading(false);
+    };
+    fetchGroups();
+  }, []);
 
   useEffect(() => {
     if (isSignedOut) {
       router.push(Routes.LANDING_PAGE);
-    } else if (!isLoading && !isAuthenticated) {
+    } else if (!isLoading && !user) {
       router.push(Routes.AUTHENTICATION_PAGE);
     }
-  }, [isLoading, isAuthenticated, router, isSignedOut]);
-
-  useEffect(() => {
-    const fetchGroups = async () => {
-      const response = await getOwnedGroups();
-      if (response && response.groups) {
-        setGroups(response.groups);
-      }
-    };
-    fetchGroups();
-  }, []);
+  }, [isLoading, router, isSignedOut, user]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -81,12 +88,16 @@ export default function MyGroups() {
     setGroups([]);
   };
 
-  const handleDeletedGroup = (group: GroupData) => {
+  const handleDeletedGroup = (group: Group) => {
     setGroups(groups.filter(g => g.uuid !== group.uuid));
   };
 
-  if (isLoading || !isAuthenticated || !user) {
+  if (isLoading) {
     return <LoadingScreen />;
+  }
+
+  if (!user) {
+    return <AccessDenied />
   }
 
   return (

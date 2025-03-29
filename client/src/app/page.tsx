@@ -7,8 +7,12 @@ import ExternalNavigation from './shared/landing/ExternalNavigation';
 import LandingSection from './shared/landing/LandingSection';
 
 import '@/styles/landing.css';
+import { useAppData } from '@/core/context/app-provider';
 
 export default function LandingPage() {
+
+  const { loadingUser, isAuthorized } = useAppData();
+
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [activeCard, setActiveCard] = useState<number | null>(null);
   const [activeSection, setActiveSection] = useState<'first' | 'second' | 'third'>('first');
@@ -83,7 +87,10 @@ export default function LandingPage() {
         {/* Top-right navigation - Back to original position */}
         <ExternalNavigation links={{ home: false, contributors: true, github: true }} />
 
-        <LandingSection />
+        <LandingSection
+          isLoading={loadingUser}
+          isAuthorized={isAuthorized}
+        />
       </main>
 
       <HowItWorksSection

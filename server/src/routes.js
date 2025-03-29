@@ -2,20 +2,20 @@ import express from 'express';
 import { requireAuth, attachUser } from './utils/auth.js';
 
 import {
+    getGroups,
     createGroup,
     deleteGroup,
-    getOwnedGroups,
+    leaveGroup,
     updateGroupName,
     updateGroupAlias,
     updateGroupPrivacy,
-    leaveGroup,
     updateGroupThumbnail,
 } from './api/groups.js';
 
 import {
-    createPhotoEntry,
-    editPhotoEntry,
-    deletePhotoEntry
+    createPhoto,
+    editPhoto,
+    deletePhoto
 } from './api/photos.js';
 
 import {
@@ -42,35 +42,29 @@ import {
 } from './utils/s3.js';
 
 import {
-    getMemoryLane,
-} from './api/app.js';
-
-import {
     getMainApp
 } from './api/app.js';
+
 
 const router = express.Router();
 
 // Gets the main app data.
 router.get('/main-app', attachUser, getMainApp);
 
-// Does not require auth to access memories.
-router.get('/get-memory-lane', attachUser, getMemoryLane);
-
 // Groups API.
+router.get('/get-groups', requireAuth, getGroups);
 router.post('/create-group', requireAuth, createGroup);
-router.get('/get-owned-groups', requireAuth, getOwnedGroups);
 router.delete('/leave-group', requireAuth, leaveGroup);
 router.delete('/delete-group', requireAuth, deleteGroup);
-router.post('/update-group-thumbnail', requireAuth, updateGroupThumbnail);
-router.post('/update-group-name', requireAuth, updateGroupName);
-router.post('/update-group-privacy', requireAuth, updateGroupPrivacy);
-router.post('/update-group-alias', requireAuth, updateGroupAlias);
+router.put('/update-group-name', requireAuth, updateGroupName);
+router.put('/update-group-thumbnail', requireAuth, updateGroupThumbnail);
+router.put('/update-group-privacy', requireAuth, updateGroupPrivacy);
+router.put('/update-group-alias', requireAuth, updateGroupAlias);
 
 // Photos API.
-router.post('/create-photo-entry', requireAuth, createPhotoEntry);
-router.post('/edit-photo-entry', requireAuth, editPhotoEntry);
-router.delete('/delete-photo-entry', requireAuth, deletePhotoEntry);
+router.post('/create-photo', requireAuth, createPhoto);
+router.put('/edit-photo', requireAuth, editPhoto);
+router.delete('/delete-photo', requireAuth, deletePhoto);
 
 // Profile API.
 router.put('/update-profile-name', requireAuth, updateProfileName);

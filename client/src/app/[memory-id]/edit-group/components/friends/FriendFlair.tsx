@@ -5,10 +5,10 @@ interface FriendFlairProps {
 }
 
 export default function FriendFlair({ friend }: FriendFlairProps) {
-  const owner = friend.is_owner;
-  const admin = friend.is_admin;
-  const member = !owner && !admin && friend.is_confirmed;
-  const unconfirmed = !friend.is_confirmed;
+  const owner = friend.isOwner;
+  const admin = friend.isAdmin;
+  const member = !owner && !admin && friend.isConfirmed;
+  const unconfirmed = !friend.isConfirmed;
 
   return (
     <div>

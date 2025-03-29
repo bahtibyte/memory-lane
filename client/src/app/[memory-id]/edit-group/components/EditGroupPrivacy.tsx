@@ -1,19 +1,19 @@
-import { MemoryLane } from "@/core/utils/types";
 import { useEffect, useState } from "react";
-import { updateGroupPrivacy } from "@/core/wrappers/fetch";
+import { updateGroupPrivacy } from "@/core/wrappers/api";
 import { useRouter } from "next/navigation";
+import { AppData } from "@/core/utils/types";
 
 interface EditGroupPrivacyProps {
   memoryId: string;
-  memoryLane: MemoryLane;
-  setMemoryLane: (data: MemoryLane) => void;
+  appData: AppData;
+  setAppData: (data: AppData) => void;
 }
 
-export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }: EditGroupPrivacyProps) {
+export default function EditGroupPrivacy({ memoryId, appData, setAppData }: EditGroupPrivacyProps) {
   const router = useRouter();
 
-  const [isPublic, setIsPublic] = useState(memoryLane.group_data.is_public);
-  const [password, setPassword] = useState(memoryLane.group_data.passcode ?? '');
+  const [isPublic, setIsPublic] = useState(appData.group.isPublic);
+  const [password, setPassword] = useState(appData.group.passcode ?? '');
   const [showPassword, setShowPassword] = useState(false);
   const [showSavePrivacy, setShowSavePrivacy] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -22,39 +22,29 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
   const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
-    setIsPublic(memoryLane.group_data.is_public);
-    setPassword(memoryLane.group_data.passcode ?? '');
-  }, [memoryLane]);
+    setIsPublic(appData.group.isPublic);
+    setPassword(appData.group.passcode ?? '');
+  }, [appData]);
 
   const handlePrivacyUpdate = async () => {
-    try {
-      setPasswordError('');
-      console.log('updating privacy', isPublic, password);
-      const result = await updateGroupPrivacy({
-        memory_id: memoryId,
-        is_public: isPublic,
-        passcode: password
+    setPasswordError('');
+    console.log('updating privacy', isPublic, password);
+    const { data } = await updateGroupPrivacy(memoryId, isPublic, password);
+    if (data) {
+      setAppData({
+        ...appData,
+        group: data.group,
       });
-      console.log('result', result);
-      if (result.group_data) {
-        setMemoryLane({
-          group_data: result.group_data,
-          photo_entries: memoryLane.photo_entries,
-          friends: memoryLane.friends
-        });
-        setShowSavePrivacy(false);
-        setShowSuccessMessage(true);
-      }
-
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 3000);
-
-      router.refresh();
-    } catch (error) {
-      console.error('Error updating privacy settings:', error);
+      setShowSavePrivacy(false);
+      setShowSuccessMessage(true);
     }
+
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setShowSuccessMessage(false);
+    }, 3000);
+
+    router.refresh();
   };
 
   const handleSavePrivacy = () => {
@@ -73,18 +63,18 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
       setIsEditingPassword(true);
       setShowPassword(true);
     }
-    setShowSavePrivacy(isPublic !== memoryLane.group_data.is_public);
+    setShowSavePrivacy(isPublic !== appData.group.isPublic);
   };
 
   const handlePasswordChange = (newPassword: string) => {
     setPassword(newPassword);
-    setShowSavePrivacy(newPassword !== memoryLane.group_data.passcode);
+    setShowSavePrivacy(newPassword !== appData.group.passcode);
     setPasswordError('');
   };
 
   const handleEditPasswordClick = () => {
     setIsEditingPassword(true);
-    setShowSavePrivacy(password !== memoryLane.group_data.passcode);
+    setShowSavePrivacy(password !== appData.group.passcode);
   };
 
   const handleCancel = () => {
@@ -93,9 +83,9 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
     setShowSavePrivacy(false);
     setPasswordError('');
     // Reset password to original value
-    setPassword(memoryLane.group_data.passcode ?? '');
+    setPassword(appData.group.passcode ?? '');
     // Reset privacy to original value
-    setIsPublic(memoryLane.group_data.is_public);
+    setIsPublic(appData.group.isPublic);
   };
 
   return (
@@ -144,8 +134,8 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
               onClick={() => !isEditingPassword && setHighlightEditButton(true)}
               onMouseLeave={() => setHighlightEditButton(false)}
               className={`flex-1 bg-[#0E0E0E] border border-[#242424] rounded-lg px-4 py-2 text-white focus:outline-none ${isEditingPassword
-                  ? 'focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200'
-                  : 'cursor-default'
+                ? 'focus:border-purple-300 focus:ring-1 focus:ring-purple-300 transition-all duration-200'
+                : 'cursor-default'
                 } ${!isEditingPassword ? 'bg-opacity-50' : ''} ${passwordError ? 'border-red-500' : ''
                 }`}
               readOnly={!isEditingPassword}
@@ -202,7 +192,7 @@ export default function EditGroupPrivacy({ memoryId, memoryLane, setMemoryLane }
         </div>
       )}
 
-      {(showSavePrivacy || isPublic !== memoryLane.group_data.is_public) && (
+      {(showSavePrivacy || isPublic !== appData.group.isPublic) && (
         <div className="flex gap-3">
           <button
             onClick={handleSavePrivacy}

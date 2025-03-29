@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { createGroup } from '@/core/wrappers/api';
-import { GroupData } from "@/core/utils/types";
+import { Group } from "@/core/utils/types";
+import { toast } from "react-hot-toast";
 
 interface CreateGroupModalProps {
-  groups: GroupData[];
-  setGroups: (groups: GroupData[]) => void;
+  groups: Group[];
+  setGroups: (groups: Group[]) => void;
   setShowCreateGroup: (show: boolean) => void;
 }
 
@@ -18,20 +19,17 @@ export default function CreateGroupModal({ groups, setGroups, setShowCreateGroup
     setError('');
     setIsCreating(true);
 
-    try {
-      const response = await createGroup(groupName);
-      if (response) {
-        setShowCreateGroup(false);
-        setGroups([...groups, response.result]);
-      } else {
-        throw new Error('Failed to create group');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to create group');
-    } finally {
-      setIsCreating(false);
+    const { data } = await createGroup(groupName);
+    if (data && data.group) {
+      toast.success('Group created successfully');
+      setShowCreateGroup(false);
+      setGroups([...groups, data.group]);
+    } else {
+      toast.error('Failed to create group');
+      setError('Failed to create group');
     }
+
+    setIsCreating(false);
   };
 
   return (

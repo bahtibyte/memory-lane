@@ -1,100 +1,91 @@
+import { INSERT_PHOTO_SQL, DELETE_PHOTO_SQL, UPDATE_PHOTO_SQL } from './helpers/queries.js';
+import { buildPhoto } from './helpers/build.js';
+
 import { rds } from '../utils/rds.js';
 import { mlGroupLookup } from './groups.js';
 
-export const createPhotoEntry = async (req, res) => {
-  console.log("received request to upload photo");
-  const { memory_id, photo_title, photo_date, photo_caption, photo_url } = req.body;
-  if (!memory_id || !photo_url || !photo_title || !photo_date) {
-    console.log("missing required fields");
-    return res.status(400).json({ error: 'missing required fields.' });
+/**
+ * Creates a new photo in the database.
+ */
+export const createPhoto = async (req, res) => {
+  const { memoryId, title, caption, date, photoUrl } = req.body;
+  if (!memoryId || !photoUrl || !title || !date) {
+    return res.status(400).json({ error: 'Missing required fields.' });
   }
 
-  const lookup_result = await mlGroupLookup(memory_id);
-  if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
+  // Check if the memory lane exists.
+  const groupLookupResult = await mlGroupLookup(memoryId);
+  if (groupLookupResult.rowCount === 0) {
+    return res.status(400).json({ error: `Memory lane does not exist for ${memoryId}.` });
   }
-  const group_lookup = lookup_result.rows[0];
-  const group_id = group_lookup.group_id;
-
-  const caption = photo_caption ? photo_caption : null;
+  const groupLookup = groupLookupResult.rows[0];
+  const groupId = groupLookup.group_id;
 
   // Insert the photo entry into the database.
-  const result = await rds.query(
-    `INSERT INTO ml_photos (group_id, photo_url, photo_title, photo_date, photo_caption) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [group_id, photo_url, photo_title, photo_date, caption]
-  );
-  if (result.rowCount === 0) {
-    console.log("failed to upload photo to database");
+  const photoResult = await rds.query(...INSERT_PHOTO_SQL(groupId, photoUrl, title, date, caption));
+  if (photoResult.rowCount === 0) {
     return res.status(400).json({ error: 'Failed to upload photo to database.' });
   }
 
-  res.status(200).json({
-    message: 'Photo entry inserted successfully',
-    photo_entry: {
-      photo_id: result.rows[0].photo_id,
-      photo_url: result.rows[0].photo_url,
-      photo_title: result.rows[0].photo_title,
-      photo_date: result.rows[0].photo_date,
-      photo_caption: result.rows[0].photo_caption,
-    },
+  return res.status(200).json({
+    photo: buildPhoto(photoResult.rows[0]),
   });
 };
 
-
-export const editPhotoEntry = async (req, res) => {
-  const { memory_id, photo_id, photo_title, photo_date, photo_caption } = req.body;
-
-  const lookup_result = await mlGroupLookup(memory_id);
-  if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
+/**
+ * Edits a photo in the database.
+ */
+export const editPhoto = async (req, res) => {
+  const { memoryId, photoId, photoTitle, photoCaption, photoDate } = req.body;
+  if (!memoryId || !photoId || !photoTitle || !photoDate) {
+    return res.status(400).json({ error: 'Missing required fields.' });
   }
 
-  const group_lookup = lookup_result.rows[0];
-  const group_id = group_lookup.group_id;
+  // Check if the memory lane exists.
+  const groupLookupResult = await mlGroupLookup(memoryId);
+  if (groupLookupResult.rowCount === 0) {
+    return res.status(400).json({ error: `Memory lane does not exist for ${memoryId}.` });
+  }
+  const groupLookup = groupLookupResult.rows[0];
+  const groupId = groupLookup.group_id;
 
-  const update_result = await rds.query(
-    `UPDATE ml_photos SET photo_title = $1, photo_date = $2, photo_caption = $3 WHERE photo_id = $4 AND group_id = $5 RETURNING *`,
-    [photo_title, photo_date, photo_caption, photo_id, group_id]
-  );
-
-  if (update_result.rowCount === 0) {
+  // Update the photo in the database.
+  const updateResult = await rds.query(...UPDATE_PHOTO_SQL(
+    groupId, photoId, photoTitle, photoDate, photoCaption
+  ));
+  if (updateResult.rowCount === 0) {
     return res.status(400).json({ error: 'Failed to update photo.' });
   }
 
   return res.status(200).json({
-    message: 'Photo updated successfully.',
-    updated_photo: update_result.rows[0]
+    photo: buildPhoto(updateResult.rows[0]),
   });
 }
 
-
-export const deletePhotoEntry = async (req, res) => {
-  const { memory_id, photo_id } = req.body;
-
-  if (!memory_id || !photo_id) {
-    return res.status(400).json({ error: 'Memory lane and photo ID are required.' });
+/**
+ * Deletes a photo from the database.
+ */
+export const deletePhoto = async (req, res) => {
+  const { memoryId, photoId } = req.body;
+  if (!memoryId || !photoId) {
+    return res.status(400).json({ error: 'Memory Id and photo Id are required.' });
   }
-  console.log(`Deleting photo with id: ${photo_id}`);
-  const lookup_result = await mlGroupLookup(memory_id);
-  if (lookup_result.rowCount === 0) {
-    return res.status(400).json({ error: `Memory lane does not exist for ${memory_id}.` });
+
+  // Check if the memory lane exists.
+  const groupLookupResult = await mlGroupLookup(memoryId);
+  if (groupLookupResult.rowCount === 0) {
+    return res.status(400).json({ error: `Memory lane does not exist for ${memoryId}.` });
   }
-  const group_lookup = lookup_result.rows[0];
-  const group_id = group_lookup.group_id;
+  const groupLookup = groupLookupResult.rows[0];
+  const groupId = groupLookup.group_id;
 
-  // Delete the photo
-  const deleteResult = await rds.query(
-    `DELETE FROM ml_photos WHERE photo_id = $1 AND group_id = $2 RETURNING *`,
-    [photo_id, group_id]
-  );
-
+  // Delete the photo from the database.
+  const deleteResult = await rds.query(...DELETE_PHOTO_SQL(groupId, photoId));
   if (deleteResult.rowCount === 0) {
     return res.status(400).json({ error: 'Failed to delete photo.' });
   }
 
-  // Step 4: Return the deleted photo
   return res.status(200).json({
-    message: 'Photo deleted successfully.',
-    deleted_photo: deleteResult.rows[0],
+    photo: buildPhoto(deleteResult.rows[0]),
   });
 };

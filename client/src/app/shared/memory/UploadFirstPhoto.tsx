@@ -15,7 +15,7 @@ export default function UploadFirstPhoto({ group, isAuthorized, memoryId }: Uplo
           {/* Header Section */}
           <div className="mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              {group.group_name}
+              {group.groupName}
             </h1>
             <p className="text-gray-400 text-sm md:text-base">
               Start your timeline by uploading the first photo

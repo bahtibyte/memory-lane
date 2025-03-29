@@ -1,4 +1,4 @@
-import { updateFriendAdminStatus } from '@/core/wrappers/fetch';
+import { updateFriendAdminStatus } from '@/core/wrappers/api';
 import { Friend } from '@/core/utils/types';
 
 interface AdminActionProps {
@@ -11,11 +11,11 @@ interface AdminActionProps {
 export default function AdminAction({ memory_id, self, friend, onAdminChange }: AdminActionProps) {
 
   // I am owner.
-  if (self.is_owner) {
-    if (!friend.is_confirmed) return null;
+  if (self.isOwner) {
+    if (!friend.isConfirmed) return null;
   }
   // I am admin.
-  else if (self.is_admin) {
+  else if (self.isAdmin) {
     return null;
   }
   // I am friend.
@@ -24,20 +24,15 @@ export default function AdminAction({ memory_id, self, friend, onAdminChange }: 
   }
 
   const handleAdminClick = async (admin: boolean) => {
-    const response = await updateFriendAdminStatus({
-      memory_id: memory_id,
-      friend_id: friend.friend_id,
-      is_admin: admin,
-    });
-    console.log(response);
-    if (response.friend) {
-      onAdminChange(response.friend);
+    const { data } = await updateFriendAdminStatus(memory_id, friend.friendId, admin);
+    if (data) {
+      onAdminChange(data.friend);
     }
   }
 
   return (
     <div>
-      {!friend.is_admin ? (
+      {!friend.isAdmin ? (
         <button
           onClick={() => handleAdminClick(true)}
           className="flex flex-col items-center w-[60px] gap-1.5 text-xs font-medium text-red-400 hover:text-red-500 transition-colors"

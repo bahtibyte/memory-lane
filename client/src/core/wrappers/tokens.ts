@@ -25,7 +25,7 @@ export const saveAuthenticationTokens = async (accessToken: string, refreshToken
       throw new Error('Failed to set refresh token');
     }
   } catch (error) {
-    throw error;
+    console.error('Error saving authentication tokens:', error);
   }
 };
 

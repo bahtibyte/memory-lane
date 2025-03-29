@@ -1,4 +1,4 @@
-import { addFriendsToGroup } from '@/core/wrappers/fetch';
+import { addFriendsToGroup } from '@/core/wrappers/api';
 import { Friend } from '@/core/utils/types';
 import { useState } from 'react';
 
@@ -70,17 +70,13 @@ export default function AddFriends({ memoryId, onFriendsAdded }: AddFriendsProps
     // TODO: Implement save to database
     console.log('Saving friends:', friendInputs);
 
-    const response = await addFriendsToGroup({
-      memory_id: memoryId,
-      friends: friendInputs,
-    });
+    const { data } = await addFriendsToGroup(memoryId, friendInputs);
 
     handleClear();
     setIsExpanded(false);
 
-    console.log(response);
-    if (response && response.friends) {
-      onFriendsAdded(response.friends);
+    if (data) {
+      onFriendsAdded(data.friends);
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false)

@@ -1,52 +1,83 @@
 'use client';
 
-import { Friend, User } from '@/core/utils/types';
+import { AppData, Friend } from '@/core/utils/types';
 import DisplayFriend from './friends/DisplayFriend';
 import AddFriends from './friends/AddFriends';
 
-interface EditGroupFriendsProps {
-  memoryId: string;
-  user: User;
-  friends: Friend[];
-  onFriendsAdded: (friends: Friend[]) => void;
-  onFriendRemoved: (friend: Friend) => void;
-  onAdminChange: (friend: Friend) => void;
-  onEditFriend: (friend: Friend) => void;
+const friendsSorter = (a: Friend, b: Friend) => {
+  // Owner comes first
+  if (a.isOwner) return -1;
+  if (b.isOwner) return 1;
+
+  // Admins come second
+  if (a.isAdmin && !b.isAdmin) return -1;
+  if (!a.isAdmin && b.isAdmin) return 1;
+
+  // Within admin group, sort by name
+  if (a.isAdmin && b.isAdmin) {
+    return a.profileName.localeCompare(b.profileName);
+  }
+
+  // Users without emails come last
+  if (!a.email && b.email) return 1;
+  if (a.email && !b.email) return -1;
+
+  // For users with emails, confirmed come before unconfirmed
+  if (!a.isConfirmed && b.isConfirmed) return 1;
+  if (a.isConfirmed && !b.isConfirmed) return -1;
+
+  // Sort by name within each group
+  return a.profileName.localeCompare(b.profileName);
 }
 
-export default function EditGroupFriends({ memoryId, user, friends, onFriendsAdded, onFriendRemoved, onAdminChange, onEditFriend }: EditGroupFriendsProps) {
+interface EditGroupFriendsProps {
+  memoryId: string;
+  appData: AppData;
+  setAppData: (appData: AppData) => void;
+}
 
-  const self = friends.find(friend => friend.user_id === user.user_id);
+export default function EditGroupFriends({ memoryId, appData, setAppData }: EditGroupFriendsProps) {
+
+  const { user, friends } = appData;
+  const self = friends.find(friend => friend.userId === user.userId);
 
   if (!self) {
     return null;
   }
 
-  const sortedFriends = friends.sort((a, b) => {
-    // Owner comes first
-    if (a.is_owner) return -1;
-    if (b.is_owner) return 1;
+  const sortedFriends = friends.sort(friendsSorter);
 
-    // Admins come second
-    if (a.is_admin && !b.is_admin) return -1;
-    if (!a.is_admin && b.is_admin) return 1;
+  const onFriendsAdded = (friends: Friend[]) => {
+    if (!appData) return;
+    setAppData({
+      ...appData,
+      friends: [...appData.friends, ...friends]
+    });
+  };
 
-    // Within admin group, sort by name
-    if (a.is_admin && b.is_admin) {
-      return a.profile_name.localeCompare(b.profile_name);
-    }
+  const onFriendRemoved = (friend: Friend) => {
+    if (!appData) return;
+    setAppData({
+      ...appData,
+      friends: appData.friends.filter(f => f.friendId !== friend.friendId)
+    });
+  };
 
-    // Users without emails come last
-    if (!a.email && b.email) return 1;
-    if (a.email && !b.email) return -1;
+  const onAdminChange = (friend: Friend) => {
+    if (!appData) return;
+    setAppData({
+      ...appData,
+      friends: appData.friends.map(f => f.friendId === friend.friendId ? friend : f)
+    });
+  };
 
-    // For users with emails, confirmed come before unconfirmed
-    if (!a.is_confirmed && b.is_confirmed) return 1;
-    if (a.is_confirmed && !b.is_confirmed) return -1;
-
-    // Sort by name within each group
-    return a.profile_name.localeCompare(b.profile_name);
-  });
+  const onEditFriend = (friend: Friend) => {
+    if (!appData) return;
+    setAppData({
+      ...appData,
+      friends: appData.friends.map(f => f.friendId === friend.friendId ? friend : f)
+    });
+  };
 
   return (
     <div className="bg-[#1A1A1A] border border-[#242424] rounded-lg p-4 md:p-6 mb-6">

@@ -1,20 +1,20 @@
-import { updateGroupAlias } from "@/core/wrappers/fetch";
-import { MemoryLane } from "@/core/utils/types";
+import { updateGroupAlias } from "@/core/wrappers/api";
+import { AppData } from "@/core/utils/types";
 import { useRouter } from "next/dist/client/components/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 interface EditGroupAliasProps {
   memoryId: string;
-  memoryLane: MemoryLane;
-  setMemoryLane: (data: MemoryLane) => void;
+  appData: AppData;
+  setAppData: (data: AppData) => void;
 }
 
-export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: EditGroupAliasProps) {
-  const alias_exists: boolean = memoryLane.group_data.alias_url !== null && memoryLane.group_data.alias_url !== undefined;
+export default function EditGroupAlias({ memoryId, appData, setAppData }: EditGroupAliasProps) {
+  const aliasExists: boolean = appData.group.aliasUrl !== null && appData.group.aliasUrl !== undefined;
 
   const router = useRouter();
-  const [enableCustomUrl, setEnableCustomUrl] = useState<boolean>(alias_exists);
-  const [alias, setAlias] = useState(memoryLane.group_data.alias || '');
+  const [enableCustomUrl, setEnableCustomUrl] = useState<boolean>(aliasExists);
+  const [alias, setAlias] = useState(appData.group.alias || '');
   const [showUrlSuccess, setShowUrlSuccess] = useState(false);
   const [showUrlSaveButton, setShowUrlSaveButton] = useState(false);
   const [showCancelButton, setShowCancelButton] = useState(false);
@@ -26,11 +26,10 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
   const [highlightEditButton, setHighlightEditButton] = useState(false);
 
   useEffect(() => {
-    setAlias(memoryLane.group_data.alias || '');
-  }, [memoryLane]);
+    setAlias(appData.group.alias || '');
+  }, [appData]);
 
   const handleUrlAliasUpdate = async () => {
-    console.log('handleUrlAliasUpdate', enableCustomUrl, alias);
     try {
       // Validate format before saving
       if (enableCustomUrl && alias) {
@@ -45,36 +44,33 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
         }
       }
 
-      const result = await updateGroupAlias({
-        memory_id: memoryId,
-        alias: enableCustomUrl ? alias : null
-      });
+      const { data, error } = await updateGroupAlias(memoryId, enableCustomUrl ? alias : null);
 
-      if (result.group_data) {
-        if (window.location.origin + window.location.pathname === memoryLane?.group_data.alias_url + '/edit-group' &&
-          memoryLane?.group_data.alias_url !== result.group_data.alias_url) {
-          router.push(result.group_data.alias_url + '/edit-group');
+      if (data) {
+        if (window.location.origin + window.location.pathname === appData.group.aliasUrl + '/edit-group' &&
+          appData.group.aliasUrl !== data.group.aliasUrl) {
+          router.push(data.group.aliasUrl + '/edit-group');
           return;
         }
 
-        if (window.location.origin + window.location.pathname === memoryLane?.group_data.alias_url + '/edit-group' &&
-          !result.group_data.alias) {
-          router.push(result.group_data.group_url + '/edit-group');
+        if (window.location.origin + window.location.pathname === appData.group.aliasUrl + '/edit-group' &&
+          !data.group.alias) {
+          router.push(data.group.groupUrl + '/edit-group');
           return;
         }
-        setMemoryLane({
-          ...memoryLane,
-          group_data: result.group_data,
+        setAppData({
+          ...appData,
+          group: data.group,
         });
         setShowUrlSaveButton(false);
         setShowCancelButton(false);
         setShowUrlSuccess(true);
         setUrlError(null);
-      } else if (result.error) {
-        setUrlError(result.error);
+      } else if (error) {
+        setUrlError(error);
         // Reset form state to original values
-        setEnableCustomUrl(alias_exists);
-        setAlias(memoryLane.group_data.alias || '');
+        setEnableCustomUrl(aliasExists);
+        setAlias(appData.group.alias || '');
         setIsEditingAlias(false);
         setShowUrlSaveButton(false);
         setShowCancelButton(false);
@@ -97,17 +93,16 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
     const lowerCase = newAlias.toLowerCase();
     setAlias(lowerCase);
     // Only show save button if the new alias is different from the current one
-    setShowUrlSaveButton(lowerCase !== memoryLane.group_data.alias);
+    setShowUrlSaveButton(lowerCase !== appData.group.alias);
     setShowCancelButton(true);
     setUrlError(null);
   };
 
   const handleCustomUrlToggle = (enabled: boolean) => {
-    console.log('handleCustomUrlToggle', enabled);
     setEnableCustomUrl(enabled);
 
-    setShowUrlSaveButton(enabled !== alias_exists);
-    setIsTogglingUrl(enabled !== alias_exists);
+    setShowUrlSaveButton(enabled !== aliasExists);
+    setIsTogglingUrl(enabled !== aliasExists);
     setShowCancelButton(true);
     if (!enabled) {
       setIsEditingAlias(false);
@@ -133,8 +128,8 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
     setShowCancelButton(false);
     setShowUrlSuccess(false);
     setUrlError(null);
-    setAlias(memoryLane.group_data.alias || '');
-    setEnableCustomUrl(alias_exists);
+    setAlias(appData.group.alias || '');
+    setEnableCustomUrl(aliasExists);
   };
 
   const handleEditAliasClick = () => {
@@ -176,18 +171,18 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
         </div>
       )}
 
-      {memoryLane && (
+      {appData && (
         <div className="mb-6">
           <p className="text-sm text-gray-300 mb-2">Current URL:</p>
           <div className="flex items-center gap-3 mb-4">
             <code
-              onClick={(e) => handleCopyUrl(memoryLane.group_data.group_url, e)}
+              onClick={(e) => handleCopyUrl(appData.group.groupUrl, e)}
               className="flex-1 bg-[#0E0E0E] p-3 rounded-lg text-gray-300 cursor-pointer hover:bg-[#242424] hover:text-white hover:scale-[1.01] transition-all duration-200 overflow-hidden text-ellipsis whitespace-nowrap"
             >
-              {memoryLane.group_data.group_url}
+              {appData.group.groupUrl}
             </code>
             <Link
-              href={memoryLane.group_data.group_url}
+              href={appData.group.groupUrl}
               target="_blank"
               className="px-4 py-2 bg-[#242424] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/10 transition-all duration-200 whitespace-nowrap text-sm"
             >
@@ -195,18 +190,18 @@ export default function EditGroupAlias({ memoryId, memoryLane, setMemoryLane }: 
             </Link>
           </div>
 
-          {enableCustomUrl && memoryLane.group_data.alias_url && (
+          {enableCustomUrl && appData.group.aliasUrl && (
             <>
               <p className="text-sm text-gray-300 mb-2">Custom URL:</p>
               <div className="flex items-center gap-3">
                 <code
-                  onClick={(e) => handleCopyUrl(memoryLane.group_data.alias_url!, e)}
+                  onClick={(e) => handleCopyUrl(appData.group.aliasUrl!, e)}
                   className="flex-1 bg-[#0E0E0E] p-3 rounded-lg text-gray-300 cursor-pointer hover:bg-[#242424] hover:text-white hover:scale-[1.01] transition-all duration-200 overflow-hidden text-ellipsis whitespace-nowrap"
                 >
-                  {memoryLane.group_data.alias_url}
+                  {appData.group.aliasUrl}
                 </code>
                 <Link
-                  href={memoryLane.group_data.alias_url}
+                  href={appData.group.aliasUrl}
                   target="_blank"
                   className="px-4 py-2 bg-[#242424] text-purple-300 rounded-lg hover:bg-[#2A2A2A] hover:text-purple-400 hover:scale-105 hover:shadow-lg hover:shadow-purple-300/10 transition-all duration-200 whitespace-nowrap text-sm"
                 >

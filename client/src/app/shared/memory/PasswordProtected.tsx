@@ -1,4 +1,4 @@
-import { useMemoryLane } from "@/core/context/memory-provider";
+import { useAppData } from "@/core/context/app-provider";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -7,7 +7,7 @@ interface PasswordProtectedProps {
 }
 
 export default function PasswordProtected({ memoryId }: PasswordProtectedProps) {
-  const { fetchData } = useMemoryLane();
+  const { fetchAppData } = useAppData();
 
   const [passcode, setPasscode] = useState('');
   const [passcodeError, setPasscodeError] = useState('');
@@ -16,15 +16,7 @@ export default function PasswordProtected({ memoryId }: PasswordProtectedProps) 
     e.preventDefault();
     setPasscodeError('');
 
-    try {
-      console.log("attempting passwcode, ", passcode);
-
-      await fetchData(memoryId, passcode);
-
-    } catch (error) {
-      console.log("error verifying passcode", error);
-      setPasscodeError('Failed to verify passcode');
-    }
+    await fetchAppData(memoryId, passcode);
   };
 
   return (

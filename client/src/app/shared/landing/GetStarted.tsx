@@ -1,12 +1,15 @@
 "use client";
 
-import { useAuth } from "@/core/context/auth-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import '@/styles/landing.css';
 
-export default function GetStarted() {
-  const { isAuthenticated, isLoading } = useAuth();
+interface GetStartedProps {
+  isLoading: boolean;
+  isAuthorized: boolean;
+} 
+
+export default function GetStarted({ isLoading, isAuthorized }: GetStartedProps) {
   const router = useRouter();
   const [showLoadingMessage, setShowLoadingMessage] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -21,7 +24,7 @@ export default function GetStarted() {
       return;
     }
 
-    router.push(isAuthenticated ? "/my-groups" : "/authentication");
+    router.push(isAuthorized ? "/my-groups" : "/authentication");
   };
 
   return (

@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/core/context/auth-provider';
 import { InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { saveAuthenticationTokens } from '@/core/wrappers/tokens';
-import { getUser } from '@/core/wrappers/fetch';
+import { getUser } from '@/core/wrappers/api';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/core/utils/routes';
 
@@ -13,6 +12,7 @@ import CreateAccount from '@/app/authentication/components/CreateAccount';
 import VerifyAccount from './components/VerifyAccount';
 import LoginAccount from './components/LoginAccount';
 import ForgotPassword from './components/ForgotPassword';
+import { User } from '@/core/utils/types';
 
 enum Step {
   CREATE_ACCOUNT,
@@ -22,19 +22,33 @@ enum Step {
 }
 
 export default function AuthPage() {
-  const { isAuthenticated, isLoading, setUser } = useAuth();
   const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState<Step>(Step.CREATE_ACCOUNT);
 
+  // Fetch the user from the database.
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    async function fetchUser() {
+      const { data } = await getUser();
+      if (data) {
+        setUser(data.user);
+      }
+      setIsLoading(false);
+    }
+    fetchUser();
+  }, []);
+
+  // Redirect to the my groups page if the user is authenticated.
+  useEffect(() => {
+    if (!isLoading && user) {
       router.push(Routes.MY_GROUPS_PAGE);
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, user, router]);
 
   const goToVerifyAccount = (email: string, password: string) => {
     setEmail(email);
@@ -48,23 +62,20 @@ export default function AuthPage() {
   }
 
   const completeLogin = async (response: InitiateAuthCommandOutput) => {
-    if (response.AuthenticationResult) {
-      const tokens = response.AuthenticationResult;
+    const tokens = response.AuthenticationResult;
+    if (!tokens) return;
 
-      try {
-        await saveAuthenticationTokens(tokens.AccessToken!, tokens.RefreshToken!, tokens.ExpiresIn!);
-      } catch (error) {
-        console.error("Unable to set tokens: ", error);
-      }
+    // Save the tokens in the cookie so they can be used to fetch the data.
+    await saveAuthenticationTokens(tokens.AccessToken!, tokens.RefreshToken!, tokens.ExpiresIn!);
 
-      const user = await getUser();
-      if (user) {
-        setUser(user);
-      }
+    // Fetch the user from the database, after a successful login.
+    const { data } = await getUser();
+    if (data) {
+      setUser(data.user);
     }
   }
 
-  if (isLoading || isAuthenticated) {
+  if (isLoading) {
     return <LoadingScreen />
   }
 
@@ -77,8 +88,6 @@ export default function AuthPage() {
             <CreateAccount
               onLogin={() => setStep(Step.LOGIN_ACCOUNT)}
               onSuccess={goToVerifyAccount}
-              showPassword={showPassword}
-              setShowPassword={setShowPassword}
             />
           )}
 
@@ -96,8 +105,6 @@ export default function AuthPage() {
               onForgotPassword={() => setStep(Step.FORGOT_PASSWORD)}
               onVerifyAccount={goToVerifyAccount}
               onSuccess={completeLogin}
-              showPassword={showPassword}
-              setShowPassword={setShowPassword}
               onResetPassword={handleLoginResetPassword}
             />
           )}

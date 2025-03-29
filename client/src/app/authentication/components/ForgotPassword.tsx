@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import ErrorIcon from "@/app/shared/icons/ErrorIcon";
-import { useAuth } from "@/core/context/auth-provider";
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import { useState } from "react";
 import HomeLink from "./misc/HomeLink";
+import { confirmForgotPasswordCommand, sendForgotPasswordCommand, sendLoginCommand } from "@/core/wrappers/cognito";
 
 interface ForgotPasswordProps {
   filledEmail: string | null;
@@ -13,7 +13,6 @@ interface ForgotPasswordProps {
 
 export default function ForgotPassword({ filledEmail, onBack, onSuccess }: ForgotPasswordProps) {
 
-  const { forgotPassword, confirmForgotPassword, login } = useAuth();
   const [email, setEmail] = useState(filledEmail ?? '');
   const [password, setPassword] = useState('');
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -27,7 +26,7 @@ export default function ForgotPassword({ filledEmail, onBack, onSuccess }: Forgo
     setIsLoading(true);
 
     try {
-      await forgotPassword(email);
+      await sendForgotPasswordCommand(email);
       setResetEmailSent(true);
     } catch (err: any) {
       setError(err.message || 'An error occurred while sending reset email');
@@ -42,9 +41,9 @@ export default function ForgotPassword({ filledEmail, onBack, onSuccess }: Forgo
     setIsLoading(true);
 
     try {
-      const response = await confirmForgotPassword(email, pinCode, password);
+      const response = await confirmForgotPasswordCommand(email, pinCode, password);
       if (response && response.$metadata.httpStatusCode === 200) {
-        const response = await login(email, password);
+        const response = await sendLoginCommand(email, password);
         if (response) {
           onSuccess(response);
         }

@@ -29,26 +29,26 @@ export default function UserProfileDisplay({ user, onEdit }: UserProfileDisplayP
           <div
             className="relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shrink-0"
             style={{
-              backgroundColor: getRandomPastelColor(user?.profile_name || ''),
+              backgroundColor: getRandomPastelColor(user?.profileName || ''),
               color: '#1A1A1A'
             }}
           >
-            {user?.profile_url ? (
+            {user?.profileUrl ? (
               <Image
-                src={user.profile_url}
-                alt={user.profile_name}
+                src={user.profileUrl}
+                alt={user.profileName}
                 fill
                 sizes="32px"
                 className="object-cover rounded-full"
               />
             ) : (
-              getInitialLetter(user?.profile_name || '')
+              getInitialLetter(user?.profileName || '')
             )}
           </div>
         </div>
         <div className="text-purple-300 font-medium text-sm sm:text-base relative flex items-center">
           
-          {user?.profile_name.toUpperCase()}
+          {user?.profileName.toUpperCase()}
           
           <button
             onClick={() => onEdit(true)}

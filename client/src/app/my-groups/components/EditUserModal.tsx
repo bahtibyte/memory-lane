@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { User } from "@/core/utils/types";
-import { generateS3Url, updateProfileName, updateProfileUrl } from "@/core/wrappers/fetch";
+import { generateS3Url, updateProfileName, updateProfileUrl } from "@/core/wrappers/api";
 import { TrashIcon } from "@heroicons/react/16/solid";
 import Cropper, { Area } from 'react-easy-crop';
 
@@ -20,23 +20,24 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
   const [newProfileUrl, setNewProfileUrl] = useState<string | null | undefined>();
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
-      setNewProfileName(user.profile_name);
-      setNewProfileUrl(user.profile_url);
+      setNewProfileName(user.profileName);
+      setNewProfileUrl(user.profileUrl);
     }
   }, [user]);
 
   const handleProfilePictureClick = () => {
     fileInputRef.current?.click();
   };
+
   const createCroppedImage = async (imageSrc: string, pixelCrop: Area) => {
     const image = new window.Image();
     image.src = imageSrc;
@@ -118,7 +119,7 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
         type: 'image/jpeg',
       });
 
-      const s3UrlData = await generateS3Url(croppedFile.name, 'profile');
+      const { data: s3UrlData } = await generateS3Url(croppedFile.name, 'profile');
 
       if (s3UrlData.presignedUrl) {
         const uploadResponse = await fetch(s3UrlData.presignedUrl, {
@@ -133,20 +134,17 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
           throw new Error('Failed to upload file');
         }
 
-        const result = await updateProfileUrl({
-          profile_url: s3UrlData.photo_url
-        });
+        const { data } = await updateProfileUrl(s3UrlData.photoUrl);
 
-        if (result && result.user) {
-          setNewProfileUrl(s3UrlData.photo_url);
+        if (data && data.user) {
+          setNewProfileUrl(data.user.photoUrl);
         }
 
         setShowUploadSuccess(true);
         setTimeout(() => { setShowUploadSuccess(false); }, 3000);
       }
     } catch (error) {
-      console.error('Error updating profile picture:', error);
-      setProfileError(error instanceof Error ? error.message : 'Failed to update profile picture');
+      setProfileError('Failed to update profile picture');
     } finally {
       setUploading(false);
       if (previewUrl) {
@@ -156,13 +154,10 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
   };
 
   const handleDeleteProfilePicture = async () => {
-    console.log('delete profile picture');
     setUploading(true);
 
-    const result = await updateProfileUrl({
-      profile_url: ''
-    });
-    if (result && result.user) {
+    const { data } = await updateProfileUrl('');
+    if (data && data.user) {
       setNewProfileUrl(null);
     } else {
       setProfileError('Failed to delete profile picture');
@@ -175,24 +170,21 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result = await updateProfileName({
-        profile_name: newProfileName,
-      });
-      if (result && result.user) {
-        setUser(result.user);
+      const { data } = await updateProfileName(newProfileName);
+      if (data && data.user) {
+        setUser(data.user);
         onClose();
       }
     } catch (error) {
-      console.error('Error updating profile name:', error);
-      setProfileError(error instanceof Error ? error.message : 'Failed to update profile');
+      setProfileError('Failed to update profile');
     }
   };
 
   const onCancel = () => {
-    if (user?.profile_url !== newProfileUrl && newProfileUrl) {
+    if (user?.profileUrl !== newProfileUrl && newProfileUrl) {
       setUser({
         ...user,
-        profile_url: newProfileUrl
+        profileUrl: newProfileUrl
       } as User)
     }
     onClose();
@@ -244,9 +236,9 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
                       className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-dashed border-gray-300/50 hover:border-gray-300 cursor-pointer transition-colors"
                       onClick={handleProfilePictureClick}
                     >
-                      {(previewUrl || user?.profile_url) ? (
+                      {(previewUrl || user?.profileUrl) ? (
                         <Image
-                          src={previewUrl || user?.profile_url || ''}
+                          src={previewUrl || user?.profileUrl || ''}
                           alt="Profile picture"
                           fill
                           sizes="(max-width: 128px) 128px, 128px"

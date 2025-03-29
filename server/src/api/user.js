@@ -1,6 +1,14 @@
 import { CognitoIdentityProviderClient, GetUserCommand, InitiateAuthCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { rds } from '../utils/rds.js';
 
+import { 
+  SELECT_USER_FROM_USERNAME_SQL, 
+  INSERT_USER_SQL, 
+  UPDATE_FRIENDS_EMAIL_SQL 
+} from './helpers/queries.js';
+
+import { buildUser } from './helpers/build.js';
+
 const COGNITO_CLIENT_ID = process.env.NODE_AWS_COGNITO_CLIENT_ID;
 const COGNITO_REGION = process.env.NEXT_PUBLIC_AWS_COGNITO_REGION;
 
@@ -84,34 +92,43 @@ export const get_user_id_from_username = async (username) => {
 }
 
 /**
+ * Gets the user id from the database with matching username.
+ */
+export const getUserId = async (req) => {
+  const username = req.userAuth?.username;
+  if (!username) return null;
+
+  // Get the user from the database.
+  const userResult = await rds.query(...SELECT_USER_FROM_USERNAME_SQL(username));
+  if (userResult.rows.length === 0) return null;
+
+  return userResult.rows[0].user_id;
+}
+
+/**
  * Gets the user from the database using the Cognito username. The cognito sub
  * needs to be mapped to memory lane user.
  */
 export const getUser = async (req, res) => {
-  if (!req.userAuth) {
-    return res.status(401).json({ message: 'User data not found in request.' });
+  const username = req.userAuth?.username;
+  if (!username) {
+    return res.status(401).json({ message: 'User not attached in authentication token.' });
   }
-  const username = req.userAuth.username;
 
-  const user_result = await rds.query(
-    'SELECT * FROM ml_users WHERE username = $1',
-    [username]
-  );
-
-  if (user_result.rows.length === 0) {
-    console.log('[user] User does not exist in our database.', username);
+  const userResult = await rds.query(...SELECT_USER_FROM_USERNAME_SQL(username));
+  if (userResult.rows.length === 0) {
     return await createInitialUser(req, res);
   }
 
-  const user = user_result.rows[0];
-  res.status(200).json({ user });
+  res.status(200).json({
+    user: buildUser(userResult.rows[0])
+  });
 }
 
 /**
  * Creates a new user in our database if they are not already in the database.
  */
 export const createInitialUser = async (req, res) => {
-  console.log('[user] Creating user...');
   const authHeader = req.headers.authorization;
   const accessToken = authHeader.replace('Bearer ', '');
 
@@ -120,10 +137,8 @@ export const createInitialUser = async (req, res) => {
   }));
 
   if (!response.UserAttributes) {
-    console.log('[user] Invalid authorization token');
     return res.status(401).json({ message: 'Invalid authorization token' });
   }
-  console.log('[user] User attributes: ', response.UserAttributes);
 
   // Extract cognito user attributes to insert into our own users table.
   const email = response.UserAttributes.find(attr => attr.Name === 'email')?.Value;
@@ -133,24 +148,20 @@ export const createInitialUser = async (req, res) => {
   try {
     await rds.query('BEGIN');
 
-    const create_user = await rds.query(
-      'INSERT INTO ml_users (username, email, profile_name) VALUES ($1, $2, $3) RETURNING *',
-      [username, email, profile_name]
-    );
+    // Create the user in our database.
+    const create_user = await rds.query(...INSERT_USER_SQL(username, email, profile_name));
     const user = create_user.rows[0];
 
-    console.log('[user] updating ml_friends for matching emails.');
-    await rds.query(
-      `UPDATE ml_friends 
-       SET user_id = $1, is_confirmed = true
-       WHERE email = $2;`,
-      [user.user_id, user.email]
-    )
-    await rds.query('COMMIT');
-    console.log('[user] User created successfully:', username);
+    // Update the friends table to link the user to their email.
+    await rds.query(...UPDATE_FRIENDS_EMAIL_SQL(user.user_id, email));
 
-    res.status(200).json({ user });
-  } catch {
+    await rds.query('COMMIT');
+
+    res.status(200).json({
+      user: buildUser(user)
+    });
+  } catch (err) {
+    await rds.query('ROLLBACK');
     return res.status(500).json({ message: 'Internal server error: unable to create user.' });
   }
 }

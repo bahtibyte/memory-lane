@@ -41,9 +41,9 @@ export const presignedS3Url = async (req, res) => {
 
   try {
     const presignedUrl = await getSignedUrl(s3, command, { expiresIn: 300 }); // Expires in 5 minutes
-    const photo_url = `${S3_BUCKET_URL}/${upload_name}`;
+    const photoUrl = `${S3_BUCKET_URL}/${upload_name}`;
 
-    res.status(200).json({ presignedUrl, photo_url });
+    res.status(200).json({ presignedUrl, photoUrl });
   } catch (error) {
     console.error('[s3] Error getting presigned URL:', error);
     res.status(500).json({ error: 'Error generating presigned URL' });

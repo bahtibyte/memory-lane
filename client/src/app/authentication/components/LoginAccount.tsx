@@ -2,28 +2,25 @@
 import { useState } from "react";
 import GoogleSSOForm from "./misc/GoogleSSOForm";
 import OrDivider from "./misc/OrDivider";
-import { useAuth } from "@/core/context/auth-provider";
 import { InitiateAuthCommandOutput } from "@aws-sdk/client-cognito-identity-provider";
 import ErrorIcon from "@/app/shared/icons/ErrorIcon";
 import HomeLink from "./misc/HomeLink";
+import { sendLoginCommand } from "@/core/wrappers/cognito";
 
 interface LoginAccountProps {
-  showPassword: boolean;
   onSignup: () => void;
   onForgotPassword: () => void;
   onVerifyAccount: (email: string, password: string) => void;
   onResetPassword: (email: string) => void;
   onSuccess: (response: InitiateAuthCommandOutput) => Promise<void>;
-  setShowPassword: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function LoginAccount({ showPassword, onSuccess, onSignup, onForgotPassword, onVerifyAccount, onResetPassword, setShowPassword }: LoginAccountProps) {
-
-  const { login } = useAuth();
+export default function LoginAccount({ onSuccess, onSignup, onForgotPassword, onVerifyAccount, onResetPassword }: LoginAccountProps) {
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +29,7 @@ export default function LoginAccount({ showPassword, onSuccess, onSignup, onForg
     setIsLoading(true);
 
     try {
-      const response = await login(email, password);
+      const response = await sendLoginCommand(email, password);
       if (response) {
         onSuccess(response);
       }

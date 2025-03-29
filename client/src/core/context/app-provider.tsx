@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState } from "react";
-import { AppData } from "../utils/types";
-import { getMainApp } from "../wrappers/api";
+import { createContext, useContext, useEffect, useState } from "react";
+import { AppData, User } from "../utils/types";
+import { getMainApp, getUser } from "../wrappers/api";
 
 // Minimum 2 seconds between fetches to avoid rate limiting.
 const FETCH_COOLDOWN = 2000;
@@ -31,11 +31,14 @@ function shouldRejectFetch(memoryId: string | null, failedToLoad: boolean, appDa
  */
 interface AppDataContextType {
   isLoading: boolean;
+  loadingUser: boolean;
   isAuthorized: boolean;
   protectedLane: boolean;
   failedToLoad: boolean;
   appData: AppData | null;
+  user: User | null;
   fetchAppData: (memoryId: string | null, passcode: string | null) => Promise<void>;
+  setAppData: (appData: AppData) => void;
 }
 
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
@@ -47,11 +50,27 @@ const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
  */
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [appData, setAppData] = useState<AppData | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
   const [protectedLane, setProtectedLane] = useState<boolean>(false);
   const [failedToLoad, setFailedToLoad] = useState<boolean>(false);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+
+  // Fetch the user from the database on load.
+  useEffect(() => {
+    async function initAuth() {
+      setLoadingUser(true);
+      const { data } = await getUser();
+      if (data) {
+        setUser(data.user);
+        setIsAuthorized(data.user ? true : false);
+      }
+      setLoadingUser(false);
+    }
+    initAuth();
+  }, []);
 
   const fetchAppData = async (memoryId: string | null, passcode: string | null) => {
     // Does not meet the criteria to fetch data.
@@ -68,7 +87,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     // Fetch the data from the server and sets appropriate app states.
     const { data, code } = await getMainApp(memoryId, passcode);
 
-    const userExists = data.user && data.user !== undefined && data.user !== null;
+    const userExists = data && data.user !== undefined && data.user !== null;
     setIsAuthorized(userExists);
     if (code === 403) {
       setProtectedLane(true);
@@ -79,18 +98,21 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Everything is loaded, set the loading state to false.
-    setIsLoading(false);
+    setIsLoading(false)
   }
 
   return (
     <AppDataContext.Provider
       value={{
         isLoading,
+        loadingUser,
         isAuthorized,
         protectedLane,
         failedToLoad,
         appData,
+        user,
         fetchAppData,
+        setAppData
       }}
     >
       {children}

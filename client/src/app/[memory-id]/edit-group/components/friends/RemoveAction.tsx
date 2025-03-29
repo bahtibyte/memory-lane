@@ -1,4 +1,4 @@
-import { removeFriendFromGroup } from '@/core/wrappers/fetch';
+import { removeFriendFromGroup } from '@/core/wrappers/api';
 import { Friend } from '@/core/utils/types';
 import { useState } from 'react';
 
@@ -24,25 +24,21 @@ export default function RemoveAction({ memoryId, self, friend, onRemove }: Remov
   };
 
   const handleRemove = async () => {
-    const response = await removeFriendFromGroup({
-      memory_id: memoryId,
-      friend_id: friend.friend_id,
-    });
-    console.log('remove response', response);
-    if (response && response.friend) {
-      onRemove(response.friend);
+    const { data } = await removeFriendFromGroup(memoryId, friend.friendId);
+    if (data) {
+      onRemove(data.friend);
     }
     setShowConfirm(false);
     setShowRemoveButton(true);
   }
 
   // I am owner.
-  if (self.is_owner) {
-    if (friend.is_admin) return null;
+  if (self.isOwner) {
+    if (friend.isAdmin) return null;
   }
   // I am admin.
-  else if (self.is_admin) {
-    if (friend.is_admin || friend.is_owner) return null;
+  else if (self.isAdmin) {
+    if (friend.isAdmin || friend.isOwner) return null;
   }
   // I am friend.
   else {

@@ -1,26 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import GoogleSSOForm from "./misc/GoogleSSOForm";
-import { useAuth } from "@/core/context/auth-provider";
 import OrDivider from "./misc/OrDivider";
 import ErrorIcon from "@/app/shared/icons/ErrorIcon";
 import HomeLink from "./misc/HomeLink";
+import { sendSignUpCommand } from "@/core/wrappers/cognito";
 
 interface CreateAccountProps {
   onLogin: () => void;
   onSuccess: (email: string, password: string) => void;
-  showPassword: boolean;
-  setShowPassword: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function CreateAccount({ onLogin, onSuccess, showPassword, setShowPassword }: CreateAccountProps) {
-  const { signUp } = useAuth();
-
+export default function CreateAccount({ onLogin, onSuccess }: CreateAccountProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,7 +26,7 @@ export default function CreateAccount({ onLogin, onSuccess, showPassword, setSho
     setIsLoading(true);
 
     try {
-      const response = await signUp(name, email, password);
+      const response = await sendSignUpCommand(name, email, password);
       if (!response) {
         setError('Signup failed. Please try again.');
       } else if (response.UserConfirmed === false) {

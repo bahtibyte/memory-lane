@@ -1,7 +1,12 @@
 import GetStarted from "./GetStarted";
 import ViewDemo from "./ViewDemo";
 
-export default function LandingSection() {
+interface LandingSectionProps {
+  isLoading: boolean;
+  isAuthorized: boolean;
+}
+
+export default function LandingSection({ isLoading, isAuthorized }: LandingSectionProps) {
   return (
     <div className="relative flex flex-col w-screen min-w-full">
       <div className="flex flex-col  w-[95%] md:w-[80%] mx-auto">
@@ -27,7 +32,10 @@ export default function LandingSection() {
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-purple-300"></div>
           </div>
           <div className="absolute right-16 flex gap-8">
-            <GetStarted />
+            <GetStarted
+              isLoading={isLoading}
+              isAuthorized={isAuthorized}
+            />
             <ViewDemo />
           </div>
         </div>
@@ -52,7 +60,10 @@ export default function LandingSection() {
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-purple-300"></div>
           </div>
           <div className="absolute right-8 flex gap-4">
-            <GetStarted />
+            <GetStarted
+              isLoading={isLoading}
+              isAuthorized={isAuthorized}
+            />
             <ViewDemo />
           </div>
         </div>

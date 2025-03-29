@@ -5,7 +5,7 @@ import RemoveAction from './RemoveAction';
 import FriendFlair from './FriendFlair';
 import { useState } from 'react';
 import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { updateFriendInfo } from '@/core/wrappers/fetch';
+import { updateFriendInfo } from '@/core/wrappers/api';
 
 interface DisplayFriendProps {
   memoryId: string;
@@ -19,7 +19,7 @@ interface DisplayFriendProps {
 
 export default function DisplayFriend({ memoryId, user, self, friend, onRemove, onAdminChange, onEditFriend }: DisplayFriendProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [tempName, setTempName] = useState(friend.profile_name);
+  const [tempName, setTempName] = useState(friend.profileName);
   const [tempEmail, setTempEmail] = useState(friend.email ?? '');
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
 
@@ -36,7 +36,7 @@ export default function DisplayFriend({ memoryId, user, self, friend, onRemove, 
     return `hsl(${h}, 70%, 85%)`;
   };
 
-  const is_user_owner = friend.user_id === user.user_id;
+  const isUserOwner = friend.userId === user.userId;
 
   const validateForm = () => {
     const newErrors: { name?: string; email?: string } = {};
@@ -63,27 +63,22 @@ export default function DisplayFriend({ memoryId, user, self, friend, onRemove, 
       return;
     }
 
-    const response = await updateFriendInfo({
-      memory_id: memoryId,
-      friend_id: friend.friend_id,
-      profile_name: tempName,
-      email: tempEmail,
-    });
+    const { data } = await updateFriendInfo(memoryId, friend.friendId, tempName, tempEmail);
 
-    if (response.error) {
-      setErrors({ email: response.error });
+    if (data.error) {
+      setErrors({ email: data.error });
       return;
     }
 
-    if (response.friend) {
-      onEditFriend(response.friend);
+    if (data) {
+      onEditFriend(data.friend);
       setIsEditing(false);
       setErrors({});
     }
   };
 
   const handleCancel = () => {
-    setTempName(friend.profile_name);
+    setTempName(friend.profileName);
     setTempEmail(friend.email ?? '');
     setIsEditing(false);
     setErrors({});
@@ -97,20 +92,20 @@ export default function DisplayFriend({ memoryId, user, self, friend, onRemove, 
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium shrink-0 relative"
             style={{
-              backgroundColor: getRandomPastelColor(friend.profile_name),
+              backgroundColor: getRandomPastelColor(friend.profileName),
               color: '#1A1A1A'
             }}
           >
-            {friend.profile_url ? (
+            {friend.profileUrl ? (
               <Image
-                src={friend.profile_url}
-                alt={friend.profile_name}
+                src={friend.profileUrl}
+                alt={friend.profileName}
                 fill
                 sizes="40px"
                 className="object-cover rounded-full"
               />
             ) : (
-              getInitialLetter(friend.profile_name)
+              getInitialLetter(friend.profileName)
             )}
           </div>
 
@@ -170,10 +165,10 @@ export default function DisplayFriend({ memoryId, user, self, friend, onRemove, 
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-white truncate">
-                      {friend.profile_name}
+                      {friend.profileName}
                     </span>
                     <FriendFlair friend={friend} />
-                    {!friend.is_confirmed && (
+                    {!friend.isConfirmed && (
                       <button
                         onClick={() => setIsEditing(true)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -191,7 +186,7 @@ export default function DisplayFriend({ memoryId, user, self, friend, onRemove, 
           </div>
         </div>
 
-        {!is_user_owner && (
+        {!isUserOwner && (
           <div className="flex items-start gap-8">
             <RemoveAction
               memoryId={memoryId}

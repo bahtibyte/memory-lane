@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "../styles/globals.css";
 import { Roboto } from 'next/font/google';
-import { MemoryLaneProvider } from '@/core/context/memory-provider';
-import { AuthProvider } from "@/core/context/auth-provider";
 import { Toaster } from 'react-hot-toast';
 import { toastConfig } from '@/core/config/toast';
 import { AppDataProvider } from "@/core/context/app-provider";
@@ -44,12 +42,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={roboto.className}>
         <AppDataProvider>
-          <AuthProvider>
-            <MemoryLaneProvider>
-              {children}
-              <Toaster {...toastConfig} />
-            </MemoryLaneProvider>
-          </AuthProvider>
+          {children}
+          <Toaster {...toastConfig} />
         </AppDataProvider>
       </body>
     </html>
