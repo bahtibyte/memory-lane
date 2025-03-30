@@ -22,7 +22,7 @@ export default function Timeline({ photos, scrollProgress, setSelectedImage }: T
 
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, []);
+  }, [setSelectedImage]);
 
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>, photoUrl: string) => {
     const img = event.target as HTMLImageElement;

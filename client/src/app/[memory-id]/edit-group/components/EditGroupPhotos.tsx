@@ -14,13 +14,11 @@ export default function EditGroupPhotos({ memoryId, photos, onDeletePhoto }: Edi
   const handleDeletePhoto = async (photoId: number) => {
     if (!confirm('Are you sure you want to delete this photo?')) return;
 
-    try {
-      const { data } = await deletePhoto(memoryId, photoId);
-      if (data) {
-        onDeletePhoto(photoId);
-        toast.success('Photo deleted successfully');
-      }
-    } catch (error) {
+    const { data } = await deletePhoto(memoryId, photoId);
+    if (data) {
+      onDeletePhoto(photoId);
+      toast.success('Photo deleted successfully');
+    } else {
       toast.error('Failed to delete photo');
     }
   };

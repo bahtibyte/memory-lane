@@ -41,14 +41,14 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
   const createCroppedImage = async (imageSrc: string, pixelCrop: Area) => {
     const image = new window.Image();
     image.src = imageSrc;
-    
+
     return new Promise<Blob>((resolve) => {
       image.onload = () => {
         const canvas = document.createElement('canvas');
         canvas.width = pixelCrop.width;
         canvas.height = pixelCrop.height;
         const ctx = canvas.getContext('2d');
-        
+
         if (ctx) {
           ctx.drawImage(
             image,
@@ -62,7 +62,7 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
             pixelCrop.height
           );
         }
-        
+
         canvas.toBlob((blob) => {
           if (blob) resolve(blob);
         }, 'image/jpeg', 0.95);
@@ -102,54 +102,49 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
   const handleCropConfirm = async () => {
     if (!previewUrl || !croppedAreaPixels || !selectedFile) return;
 
-    try {
-      // Create the cropped image first
-      const croppedImageBlob = await createCroppedImage(previewUrl, croppedAreaPixels);
-      const croppedPreviewUrl = URL.createObjectURL(croppedImageBlob);
-      setPreviewUrl(croppedPreviewUrl);
-      
-      // Close the cropper UI immediately
-      setShowCropper(false);
-      
-      // Then start the upload process
-      setUploading(true);
-      setProfileError(null);
-      
-      const croppedFile = new File([croppedImageBlob], selectedFile.name, {
-        type: 'image/jpeg',
+    // Create the cropped image first
+    const croppedImageBlob = await createCroppedImage(previewUrl, croppedAreaPixels);
+    const croppedPreviewUrl = URL.createObjectURL(croppedImageBlob);
+    setPreviewUrl(croppedPreviewUrl);
+
+    // Close the cropper UI immediately
+    setShowCropper(false);
+
+    // Then start the upload process
+    setUploading(true);
+    setProfileError(null);
+
+    const croppedFile = new File([croppedImageBlob], selectedFile.name, {
+      type: 'image/jpeg',
+    });
+
+    const { data: s3UrlData } = await generateS3Url(croppedFile.name, 'profile');
+
+    if (s3UrlData.presignedUrl) {
+      const uploadResponse = await fetch(s3UrlData.presignedUrl, {
+        method: 'PUT',
+        body: croppedFile,
+        headers: {
+          'Content-Type': croppedFile.type,
+        },
       });
 
-      const { data: s3UrlData } = await generateS3Url(croppedFile.name, 'profile');
-
-      if (s3UrlData.presignedUrl) {
-        const uploadResponse = await fetch(s3UrlData.presignedUrl, {
-          method: 'PUT',
-          body: croppedFile,
-          headers: {
-            'Content-Type': croppedFile.type,
-          },
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload file');
-        }
-
-        const { data } = await updateProfileUrl(s3UrlData.photoUrl);
-
-        if (data && data.user) {
-          setNewProfileUrl(data.user.photoUrl);
-        }
-
-        setShowUploadSuccess(true);
-        setTimeout(() => { setShowUploadSuccess(false); }, 3000);
+      if (!uploadResponse.ok) {
+        setProfileError('Failed to update profile picture');
       }
-    } catch (error) {
-      setProfileError('Failed to update profile picture');
-    } finally {
-      setUploading(false);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+
+      const { data } = await updateProfileUrl(s3UrlData.photoUrl);
+
+      if (data && data.user) {
+        setNewProfileUrl(data.user.photoUrl);
       }
+
+      setShowUploadSuccess(true);
+      setTimeout(() => { setShowUploadSuccess(false); }, 3000);
+    }
+    setUploading(false);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
     }
   };
 
@@ -169,13 +164,11 @@ export default function EditUserProfile({ user, setUser, onClose }: EditUserProf
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const { data } = await updateProfileName(newProfileName);
-      if (data && data.user) {
-        setUser(data.user);
-        onClose();
-      }
-    } catch (error) {
+    const { data } = await updateProfileName(newProfileName);
+    if (data && data.user) {
+      setUser(data.user);
+      onClose();
+    } else {
       setProfileError('Failed to update profile');
     }
   };

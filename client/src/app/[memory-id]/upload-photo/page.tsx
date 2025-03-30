@@ -9,11 +9,12 @@ import AccessDenied from '@/app/shared/memory/AccessDenied';
 import PhotoUpload from './components/PhotoUpload';
 import { useAppData } from '@/core/context/app-provider';
 import PageNotFound from '@/app/shared/PageNotFound';
+import FailedToLoad from '@/app/shared/memory/FailedToLoad';
 
 export default function UploadPage() {
   const memoryId = useParams()['memory-id'] as string;
 
-  const { appData, isLoading, isAuthorized, protectedLane, failedToLoad, fetchAppData, setAppData } = useAppData();
+  const { appData, isLoading, isAuthorized, failedToLoad, fetchAppData, setAppData } = useAppData();
   const [uploadComplete, setUploadComplete] = useState(false);
 
   const groupName = appData?.group.groupName || 'Loading...';
@@ -34,18 +35,10 @@ export default function UploadPage() {
 
   useEffect(() => { fetchAppData(memoryId, null); }, [memoryId, fetchAppData]);
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (!isAuthorized) {
-    return <AccessDenied />
-  }
-
-  if (!appData) {
-    return <PageNotFound />
-  }
-
+  if (isLoading) return <LoadingScreen />;
+  if (!isAuthorized) return <AccessDenied />;
+  if (failedToLoad) return <FailedToLoad />;
+  if (!appData) return <PageNotFound />;
 
   return (
     <div className="min-h-screen bg-[#0E0E0E] p-4 md:p-8">

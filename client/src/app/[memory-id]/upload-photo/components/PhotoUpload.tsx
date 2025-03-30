@@ -34,10 +34,10 @@ export default function PhotoUpload({ memoryId, onSuccess }: PhotoUploadProps) {
         }
 
         // Check if file is HEIC and reject it
-        const isHeic = file.type === 'image/heic' || 
-                      file.type === 'image/heif' || 
-                      file.name.toLowerCase().endsWith('.heic') ||
-                      file.name.toLowerCase().endsWith('.heif');
+        const isHeic = file.type === 'image/heic' ||
+          file.type === 'image/heif' ||
+          file.name.toLowerCase().endsWith('.heic') ||
+          file.name.toLowerCase().endsWith('.heif');
 
         if (isHeic) {
           throw new Error('HEIC files are not supported. Please convert to JPEG or PNG before uploading.');
@@ -47,7 +47,7 @@ export default function PhotoUpload({ memoryId, onSuccess }: PhotoUploadProps) {
         setDate(new Date(file.lastModified).toISOString().split('T')[0]);
 
         // Get S3 presigned URL
-        const { data:s3UrlData} = await generateS3Url(file.name, 'memories');
+        const { data: s3UrlData } = await generateS3Url(file.name, 'memories');
 
         if (s3UrlData.presignedUrl) {
           // Upload file to S3
@@ -98,26 +98,21 @@ export default function PhotoUpload({ memoryId, onSuccess }: PhotoUploadProps) {
       return;
     }
 
-    try {
-      const { data } = await createPhoto(
-        memoryId,
-        title,
-        caption,
-        date,
-        photoUrl
-      );
+    const { data } = await createPhoto(
+      memoryId,
+      title,
+      caption,
+      date,
+      photoUrl
+    );
 
-      if (data) {
-        onSuccess(data.photo);
-        resetForm();
-      } else {
-        setError('Failed to upload photo. Please try again.');
-      }
-    } catch (error) {
-      setError('An error occurred while uploading the photo.');
-    } finally {
-      setIsLoading(false);
+    if (data) {
+      onSuccess(data.photo);
+      resetForm();
+    } else {
+      setError('Failed to upload photo. Please try again.');
     }
+    setIsLoading(false);
   };
 
   const resetForm = () => {
@@ -156,7 +151,7 @@ export default function PhotoUpload({ memoryId, onSuccess }: PhotoUploadProps) {
             onChange={(e) => handlePhotoChange(e.target.files?.[0] || null)}
             className="hidden"
           />
-           {isUploadingToS3 ? (
+          {isUploadingToS3 ? (
             <div className="text-sm text-purple-300 flex items-center justify-center gap-2">
               <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -220,7 +215,7 @@ export default function PhotoUpload({ memoryId, onSuccess }: PhotoUploadProps) {
             </button>
 
             <h2 className="text-white text-xl md:text-2xl font-bold mb-4 md:mb-6">Add Photo Details</h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
               <div>
                 <label htmlFor="title" className="block text-white-300 text-sm font-medium mb-2">

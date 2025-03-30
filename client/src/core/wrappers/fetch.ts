@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   getCookies,
   saveAccessToken,
@@ -7,7 +8,8 @@ import {
 
 const API_ENDPOINT = `${process.env.NEXT_PUBLIC_SERVER_ADDRESS}/api`;
 
-const ACCESS_TOKEN_EXPIRE_BUFFER = 50000; // 1 day
+// 23 hours, refresh access token 1 hour before expiry.
+const ACCESS_TOKEN_EXPIRE_BUFFER = 23 * 60 * 60 * 1000; 
 const nullAuthorization = 'Bearer null';
 
 /**
@@ -102,11 +104,12 @@ async function getAuthorization(): Promise<string> {
 
   // Access token expired. Refresh tokens using backend.
   if (isExpired) {
-    const { ok, data } = await refreshAccessToken();
-    if (!ok) {
+    const response = await refreshAccessToken();
+    if (!response.ok) {
       return nullAuthorization;
     }
 
+    const data = await response.json();
     if (!data.access_token || !data.expires_in) {
       return nullAuthorization;
     }
@@ -126,7 +129,8 @@ async function getAuthorization(): Promise<string> {
  * @returns New access token and expires in.
  */
 async function refreshAccessToken() {
-  return await post(`refresh-access-token`, {
+  return await fetch(`${API_ENDPOINT}/refresh-access-token`, {
+    method: 'get',
     credentials: 'include'
   });
 }
